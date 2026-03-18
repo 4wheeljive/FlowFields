@@ -3,4 +3,12 @@ This project began with this Reddit post from StefanPetrick:
 
 Further info to be added.
 
+Some early raw test footage:
+https://youtu.be/PCdHbcO4sa0&t=7m45s
+
+Some of Stefan's recent experiments:
+https://www.youtube.com/watch?v=iig2UNUMshA
+
+
+
 Copyright and licensing info to be added.
