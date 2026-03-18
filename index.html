@@ -1,0 +1,3036 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Color Trails</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 10px;
+            background-color: #000000;
+            color: #bebebe;
+        }
+        h1 {
+            color: white;
+            text-align: center;
+            font-size: 1.5em;
+        }
+        .section {
+            border: 1px solid #696969;
+            background-color: #000000;
+            padding: 20px;
+            margin: 5px 0;  
+            border-radius: 8px;
+        }
+        .label {
+            color: white;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+        ble-connection-panel {
+            display: block;
+            margin-bottom: 20px;
+        }
+        animation-selector {
+            display: block;
+        }
+        layer-controls {
+            display: block;
+        }
+        preset-controls {
+            display: block;
+        }
+        .status {
+            margin-top: 5px;
+            padding: 10px;
+            background-color: #333;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+            word-wrap: break-word;
+            word-break: break-all;
+            overflow-wrap: break-word;
+        }
+        .maingrid {
+            display: grid;
+            grid-template-columns: 1fr 1fr ;
+            grid-template-rows: .5fr .5fr .5fr .5fr .3fr .3fr;
+            font-size: .9em;
+        }
+        .section.mainControl {
+            padding: 5px;
+            text-align: center;
+            grid-column-start: 1;
+            grid-column-end: 2;
+            grid-row-start: 1;
+            grid-row-end: 2;  
+        }
+        .section.log { 
+            padding: 5px;
+            grid-column-start: 1;
+            grid-column-end: 2;
+            grid-row-start: 2;
+            grid-row-end: 3; 
+        }
+        .section.patternControl {
+            padding: 5px;
+            grid-column-start: 2;
+            grid-column-end: 3;
+            grid-row-start: 1;
+            grid-row-end: 2; 
+        }
+        .section.audioControl {
+            padding: 5px;
+            grid-column-start: 2;
+            grid-column-end: 3;
+            grid-row-start: 2;
+            grid-row-end: 4; 
+        }
+        .credits {
+            text-align: center;
+            margin-top: 10px;
+            color: #aaaaaa;
+            font-size: .8rem;
+            padding: 5px;
+            grid-column-start: 1;
+            grid-column-end: 3;
+            grid-row-start: 6;
+            grid-row-end: 7;
+        }
+        .control-group {
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 8px;
+            margin: 5px 0;
+        }
+        .control-group-label {
+            color: #888;
+            font-size: 0.8em;
+            margin-bottom: 5px;
+        }
+        /* Slider styling — white thumb on grey track */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            background: #555;
+            border-radius: 3px;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: none;
+            cursor: pointer;
+        }
+        input[type="range"]::-moz-range-track {
+            height: 6px;
+            background: #555;
+            border-radius: 3px;
+        }
+        /* Checkbox styling — white check on dark background */
+        input[type="checkbox"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #555;
+            border-radius: 3px;
+            background: #222;
+            cursor: pointer;
+            vertical-align: middle;
+            position: relative;
+        }
+        input[type="checkbox"]:checked {
+            background: #555;
+            border-color: #555;
+        }
+        input[type="checkbox"]:checked::after {
+            content: '✓';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #fff;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<!-- *********************************************************************************** -->
+<body>
+   
+    <h1>Color Trails</h1>
+
+    <div class="maingrid">
+
+        <!-- Connection Panel Component -->
+        <div class="section mainControl">
+            <ble-connection-panel device-name="Color Trails"></ble-connection-panel>
+            <div class="label">Display: 
+                <control-button 
+                    label="On" 
+                    data-my-number="98">
+                </control-button>
+                <control-button 
+                    label="Off" 
+                    data-my-number="99">
+                </control-button>
+                <control-button 
+                    label="Sync Viz State" 
+                    data-my-number="92">
+                </control-button>
+                <control-button 
+                    label="Sync Audio State" 
+                    data-my-number="93">
+                </control-button>
+                <control-button 
+                    label="Sync Bus State" 
+                    data-my-number="94">
+                </control-button>
+            </div>
+            <div class = "control-group">
+                <control-slider 
+                    label="Brightness" 
+                    parameter-id="inBright"
+                    min="5" 
+                    max="150" 
+                    step="5" 
+                    default-value="75"
+                    data-used="true">
+                </control-slider>
+                <control-dropdown 
+                    label="Ease Sat" 
+                    parameter-id="inEaseSat"
+                    default-value="0">
+                    None, 
+                    In Quad, 
+                    Out Quad, 
+                    In-Out Quad, 
+                    In Cubic, 
+                    Out Cubic, 
+                    In-Out Cubic, 
+                    In Sine, 
+                    Out Sine, 
+                    In-Out Sine
+                </control-dropdown>
+                            
+                <control-dropdown 
+                    label="Ease Lum" 
+                    parameter-id="inEaseLum"
+                    default-value="0">
+                    None, 
+                    In Quad, 
+                    Out Quad, 
+                    In-Out Quad, 
+                    In Cubic, 
+                    Out Cubic, 
+                    In-Out Cubic, 
+                    In Sine, 
+                    Out Sine, 
+                    In-Out Sine
+                </control-dropdown>
+            </div>
+
+            <div class = "control-group">
+                <control-checkbox 
+                    text-align = left
+                    label="Mapping Override" 
+                    data-my-number="11"
+                    unchecked>
+                </control-checkbox>
+                <control-dropdown 
+                    label="Mapping" 
+                    parameter-id="inOverrideMapping"
+                    default-value="0">
+                    TopDownProgressive,
+                    TopDownSerpentine,
+                    BottomUpProgressive,
+                    BottomUpSerpentine,
+                    VerticalTopDownProgressive,
+                    VerticalTopDownSerpentine
+                </control-dropdown>
+            </div>
+   
+            <div class = "control-group">
+                <preset-controls></preset-controls>
+            </div>
+
+            <div class = "control-group">
+                <program-selector current="0"></program-selector>
+            </div>
+            <div class = "control-group">
+                <mode-selector current="0"></mode-selector> 
+            </div>
+
+        </div> 
+
+        <!-- Event Log -->  
+        <div class="status section log" >
+            <div><strong>Last BLE Message Sent:</strong> <span id="lastMessage">None</span></div>
+            <div><strong>Component Events:</strong></div>
+            <div id="eventLog" style="max-height: 225px; overflow-y: auto;"></div>
+        </div>
+
+        <!-- Pattern Control Parameters -->
+        <div class="section patternControl">
+                
+            <parameter-settings></parameter-settings> 
+
+            <span style="display: flex; justify-content: flex-end;">
+                <control-button 
+                    label="Reset All (disabled)" 
+                    data-my-number="95">
+                </control-button>
+            </span>
+
+            <!--<div class = "control-group" data-visualizers="animartrix">-->
+                <!-- Layer Selector -->     
+            <!--    <span class="label">Layers: </span>           
+                <layer-selector></layer-selector>
+            </div>  
+        
+            <div>
+                <control-dropdown
+                    label="Color Palette"
+                    parameter-id="inPalNum"
+                    data-visualizers="waves,audiotest"
+                    default-value="0">
+                    Sunset_Real,
+                    es_rivendell_15,
+                    es_ocean_breeze_036,
+                    rgi_15,
+                    retro2_16,
+                    Analogous_1,
+                    es_pinksplash_08,
+                    Coral_reef,
+                    es_ocean_breeze_068,
+                    es_pinksplash_07,
+                    es_vintage_01,
+                    departure,
+                    es_landscape_64,
+                    es_landscape_33,
+                    rainbowsherbet,
+                    gr65_hult,
+                    gr64_hult,
+                    GMT_drywet,
+                    ib_jul01,
+                    es_vintage_57,
+                    ib15,
+                    Fuschia_7,
+                    es_emerald_dragon_08,
+                    lava,
+                    fire,
+                    Colorfull,
+                    Magenta_Evening,
+                    Pink_Purple,
+                    es_autumn_19,
+                    BlacK_Blue_Magenta_White,
+                    BlacK_Magenta_Red,
+                    BlacK_Red_Magenta_Yellow,
+                    Blue_Cyan_Yellow
+                </control-dropdown>
+
+                <control-checkbox 
+                    label="Rotate waves" 
+                    data-my-number="10"
+                    data-visualizers="waves"
+                    checked>
+                </control-checkbox>
+
+                <control-checkbox 
+                    label="AngleFreezeX" 
+                    data-my-number="21"
+                    data-visualizers="cube"
+                    unchecked>
+                </control-checkbox>
+                <control-checkbox 
+                    label="AngleFreezeY" 
+                    data-my-number="22"
+                    data-visualizers="cube"
+                    unchecked>
+                </control-checkbox>
+                <control-checkbox 
+                    label="AngleFreezeZ" 
+                    data-my-number="23"
+                    data-visualizers="cube"
+                    unchecked>
+                </control-checkbox>
+                
+                <div class = "control-group">
+                    <control-checkbox 
+                        label="Manual Scene Mode" 
+                        data-my-number="12"
+                        data-visualizers="horizons"
+                        unchecked>
+                    </control-checkbox>
+                    
+                    <control-checkbox 
+                        label="Manual Cycle Duration Mode" 
+                        data-my-number="13"
+                        data-visualizers="horizons"
+                        unchecked>
+                    </control-checkbox>
+                </div>
+               
+                <div class = "control-group">
+                    <control-button 
+                        label="Rotate Upper Palette" 
+                        data-my-number="151"
+                        data-visualizers="horizons">
+                    </control-button>
+                    
+                    <control-button 
+                        label="Rotate Lower Palette" 
+                        data-my-number="152"
+                        data-visualizers="horizons">
+                    </control-button>
+                    
+                    <control-button 
+                        label="Restart" 
+                        data-my-number="153"
+                        data-visualizers="horizons">
+                    </control-button>
+                </div>  -->
+
+                <control-button
+                    label="Trigger"
+                    data-my-number="160"
+                    data-visualizers="fxwave2d, animartrix">
+                </control-button>
+                
+                <!--<div class = "control-group" data-visualizers="animartrix">
+                    <control-slider 
+                        label="Color Order" 
+                        parameter-id="inColOrd"
+                        data-visualizers="animartrix"
+                        min="0" 
+                        max="5" 
+                        step="1" 
+                        default-value="0"
+                        data-used="true">
+                    </control-slider>
+                    <control-slider 
+                        label="Red" 
+                        parameter-id="inRed"
+                        data-visualizers="animartrix"
+                        min=".1" 
+                        max="3" 
+                        step=".1" 
+                        default-value="1"
+                        data-used="true">
+                    </control-slider>
+                    <control-slider 
+                        label="Green" 
+                        parameter-id="inGreen"
+                        data-visualizers="animartrix"
+                        min=".1" 
+                        max="3" 
+                        step=".1" 
+                        default-value="1"
+                        data-used="true">
+                    </control-slider>
+                    <control-slider 
+                        label="Blue" 
+                        parameter-id="inBlue"
+                        data-visualizers="animartrix"
+                        min=".1" 
+                        max="3" 
+                        step=".1" 
+                        default-value="1"
+                        data-used="true">
+                    </control-slider>
+                </div>
+            </div> -->       
+        </div> <!--section patternControl -->
+        
+        <!-- Audio Control Parameters -->
+        <div class="section audioControl">
+            <!--<div><control-checkbox 
+                label="Enable audio: " 
+                data-my-number="5"
+                checked>
+            </control-checkbox></div>
+            <div><control-checkbox 
+                label="Auto gain control: " 
+                data-my-number="6"
+                checked>
+            </control-checkbox></div>
+            <div><control-checkbox 
+                label="Auto noise floor: " 
+                data-my-number="7"
+                checked>
+            </control-checkbox></div>
+            <div><control-checkbox 
+                label="Max bins (32): " 
+                data-my-number="8"
+                unchecked>
+            </control-checkbox></div> -->   
+            <div>
+                <audio-settings></audio-settings>
+            </div>
+            <div>
+                <bus-settings></bus-settings>
+            </div>
+        </div>
+    </div> <!-- class="maingrid" -->
+
+    <!-- ***************************************************************************************************************** -->
+
+    <script>
+
+        //BLE MANAGEMENT ********************************************************************************* 
+
+        // Define BLE Specs and Global Variables
+        var deviceName = 'Color Trails';
+        var bleService = '19b10000-e8f2-537e-4f6c-d104768a1214';
+        var ButtonCharacteristic = '19b10001-e8f2-537e-4f6c-d104768a1214';
+        var CheckboxCharacteristic = '19b10002-e8f2-537e-4f6c-d104768a1214';
+        var NumberCharacteristic = '19b10003-e8f2-537e-4f6c-d104768a1214';
+        var StringCharacteristic = '19b10004-e8f2-537e-4f6c-d104768a1214';
+
+        var bleDevice;
+        var bleServer;
+        var bleServiceFound;
+        var buttonCharacteristicFound;
+        var checkboxCharacteristicFound;
+        var numberCharacteristicFound;
+        var stringCharacteristicFound;
+
+        let deviceConnected = false;
+        let lastValueSent = '';
+        
+        // BLE Connect/Disconnect Functions *************************************
+
+        // Check if BLE is available
+        function isWebBluetoothEnabled() {
+            if (!navigator.bluetooth) {
+                console.log("Web Bluetooth API is not available in this browser!");
+                updateBLEStatus("Web Bluetooth API is not available in this browser!", '#d13a30');
+                return false;
+            }
+            console.log('Web Bluetooth API supported in this browser.');
+            return true;
+        }
+
+        // Connect to BLE Device
+        function connectToDevice() {
+            if (!isWebBluetoothEnabled()) {
+                return;
+            }
+
+            console.log('Initializing Bluetooth...');
+            logEvent('Initializing Bluetooth...');
+            updateBLEStatus('Connecting...', '#ffa500');
+            
+            navigator.bluetooth.requestDevice({
+                filters: [{name: deviceName}],
+                optionalServices: [bleService]
+            })
+            .then(device => {
+                bleDevice = device;
+                console.log('Device Selected:', device.name);
+                logEvent(`Device Selected: ${device.name}`);
+                updateBLEStatus(`Connected to ${device.name}`, '#24af37');
+                device.addEventListener('gattserverdisconnected', onDisconnected);
+                return device.gatt.connect();
+            })
+            .then(gattServer =>{
+                bleServer = gattServer;
+                console.log("Connected to GATT Server");
+                logEvent("Connected to GATT Server");
+                return bleServer.getPrimaryService(bleService);
+            })
+            .then(service => {
+                bleServiceFound = service;
+                console.log("Service discovered:", service.uuid);
+                logEvent("Service discovered");
+
+                // Get characteristics
+                return Promise.all([
+                    service.getCharacteristic(ButtonCharacteristic),
+                    service.getCharacteristic(CheckboxCharacteristic), 
+                    service.getCharacteristic(NumberCharacteristic),
+                    service.getCharacteristic(StringCharacteristic)
+
+                ]);
+            })
+            .then(characteristics => {
+                [buttonCharacteristicFound, checkboxCharacteristicFound, numberCharacteristicFound, stringCharacteristicFound] = characteristics;
+                
+                // Set up notifications for all characteristics
+                buttonCharacteristicFound.addEventListener('characteristicvaluechanged', handleButtonCharacteristicChange);
+                buttonCharacteristicFound.startNotifications();
+                
+                checkboxCharacteristicFound.addEventListener('characteristicvaluechanged', handleCheckboxCharacteristicChange);
+                checkboxCharacteristicFound.startNotifications();
+                
+                numberCharacteristicFound.addEventListener('characteristicvaluechanged', handleNumberCharacteristicChange);
+                numberCharacteristicFound.startNotifications();
+                
+                stringCharacteristicFound.addEventListener('characteristicvaluechanged', handleStringCharacteristicChange);
+                stringCharacteristicFound.startNotifications();
+                
+                deviceConnected = true;
+                logEvent("✅ BLE Connected with all characteristics ready!");
+                updateBLEStatus(`Connected and ready!`, '#24af37');
+                
+                // Update BLE state and sync initial state
+                window.BLEState.setConnected(true);
+                syncInitialState();
+            })
+            .catch(error => {
+                console.log('Something went wrong. ' + error);
+                logEvent(`❌ Connection failed: ${error.message}`);
+                updateBLEStatus(`Connection failed: ${error.message}`, '#d13a30');
+            });
+        } // connectToDevice
+
+        // Sync initial state after BLE connection
+        async function syncInitialState() {
+            console.log('Querying device state...');
+            logEvent('Syncing initial state from device...');
+
+            // Add small delay to ensure characteristic listeners are fully established
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Request visualizer state (program, mode, visualizer params)
+            await sendButtonCharacteristic(92);
+            // Small delay between requests to avoid BLE congestion
+            await new Promise(resolve => setTimeout(resolve, 200));
+            // Request audio state (global audio params)
+            await sendButtonCharacteristic(93);
+            await new Promise(resolve => setTimeout(resolve, 200));
+            // Request bus state (per-bus beat/envelope params)
+            await sendButtonCharacteristic(94);
+        }
+
+        function onDisconnected(event) {
+            const deviceName = event && event.target && event.target.device ? event.target.device.name : 'Unknown Device';
+            console.log('Device Disconnected:', deviceName);
+            logEvent(`Device Disconnected: ${deviceName}`);
+            updateBLEStatus('Device disconnected', '#d13a30');
+            deviceConnected = false;
+            
+            // Update BLE state
+            window.BLEState.setConnected(false);
+            
+            /*
+            setTimeout(() => {
+                connectToDevice();
+            }, 2000);
+            */
+        }
+
+        function disconnectDevice() {
+            console.log("Disconnect Device.");
+            if (bleServer && bleServer.connected) {
+                bleServer.disconnect();
+            }
+            console.log("Device Disconnected");
+            logEvent("Device Disconnected");
+            updateBLEStatus('Disconnected', '#d13a30');
+            deviceConnected = false;
+            
+            // Update BLE state
+            window.BLEState.setConnected(false);
+        }
+               
+        // BLE State Management ************************************
+        window.BLEState = {
+            connected: false,
+            
+            setConnected(connected) {
+                console.log(`BLEState: ${connected}`);
+                this.connected = connected;
+                //is this duplicative of anything else that updates components upon connection? 
+                this.notifyComponents();
+            },
+            
+            notifyComponents() {
+                console.log('BLEState: Notifying components of state change');
+                // Only update connection-dependent UI (show/hide based on connection)
+                const components = document.querySelectorAll('program-selector, mode-selector, parameter-settings, audio-settings');
+                components.forEach(component => {
+                    if (typeof component.updateConnectionState === 'function') {
+                        component.updateConnectionState();
+                    }
+                });
+                // Update dynamic controls visibility
+                updateDynamicControls();
+            }
+        };
+
+        // Update the global BLE status display
+        window.updateBLEStatus = function(status, color) {
+            console.log('updateBLEStatus called:', status, color);
+            
+            const connectionPanel = document.querySelector('ble-connection-panel');
+            if (connectionPanel && typeof connectionPanel.updateStatus === 'function') {
+                try {
+                    connectionPanel.updateStatus(status, color);
+                    console.log('✅ Connection panel status updated');
+                } catch (error) {
+                    console.error('❌ Error updating connection panel:', error);
+                }
+            } else {
+                console.log('⚠️ Connection panel not found or not ready yet');
+            }
+        };
+
+        logEvent('Page loaded');
+
+
+        // Handle characteristic change events *****************************
+        
+        function handleButtonCharacteristicChange(event) {
+            const changeReceived = new TextDecoder().decode(event.target.value);
+            console.log("Button receipt:", changeReceived);
+            logEvent(`Button confirmed: ${changeReceived}`);
+            applyReceivedButton(changeReceived);
+        }
+
+        function handleCheckboxCharacteristicChange(event) {
+            const changeReceived = new TextDecoder().decode(event.target.value);
+            const receivedDoc = JSON.parse(changeReceived);
+            console.log("Checkbox receipt:", receivedDoc.id, "-", receivedDoc.val);
+            logEvent(`Checkbox confirmed: ${receivedDoc.id} = ${receivedDoc.val}`);
+            applyReceivedCheckbox(receivedDoc);
+        }
+
+        function handleNumberCharacteristicChange(event) {
+            const changeReceived = new TextDecoder().decode(event.target.value);
+            const receivedDoc = JSON.parse(changeReceived);
+            console.log("Number receipt:", receivedDoc.id, "-", receivedDoc.val);
+            logEvent(`Number confirmed: ${receivedDoc.id} = ${receivedDoc.val}`);
+            applyReceivedNumber(receivedDoc);
+        }
+
+        function handleStringCharacteristicChange(event) {
+            const changeReceived = new TextDecoder().decode(event.target.value);
+            const receivedDoc = JSON.parse(changeReceived);
+            console.log("String receipt:", receivedDoc.id, "-", receivedDoc.val);
+            logEvent(`String confirmed: ${receivedDoc.id} = ${receivedDoc.val}`);
+            applyReceivedString(receivedDoc);
+        }
+
+
+        // Characteristic Send Functions *************************************
+        
+        window.sendButtonCharacteristic = function(buttonValue) {
+            if (!deviceConnected || !buttonCharacteristicFound) {
+                console.error("Bluetooth is not connected. Cannot write to button characteristic.");
+                logEvent("⚠️ Bluetooth is not connected. Cannot write to button characteristic.");
+                return;
+            }
+
+            const data = new Uint8Array([buttonValue]);
+            
+            buttonCharacteristicFound.writeValue(data)
+                .then(() => {
+                    lastValueSent = buttonValue.toString();
+                    document.getElementById('lastMessage').textContent = `Button: ${buttonValue}`;
+                    console.log("✅ Button value written:", buttonValue);
+                    logEvent(`✅ Sent button: ${buttonValue}`);
+                })
+                .catch(error => {
+                    console.error("Error writing to button characteristic:", error);
+                    logEvent(`❌ Button send failed: ${error.message}`);
+                });
+        };
+
+
+        window.sendCheckboxCharacteristic = function(checkboxId, value) {
+            if (!deviceConnected || !checkboxCharacteristicFound) {
+                console.error("Bluetooth is not connected. Cannot write to checkbox characteristic.");
+                logEvent("⚠️ Bluetooth is not connected. Cannot write to checkbox characteristic.");
+                return;
+            }
+
+            var sendDoc = {
+                "id": checkboxId,
+                "val": value
+            };
+            var sendString = JSON.stringify(sendDoc);
+            var sendBuffer = str2ab(sendString);
+
+            checkboxCharacteristicFound.writeValue(sendBuffer)
+                .then(() => {
+                    lastValueSent = sendString;
+                    document.getElementById('lastMessage').textContent = sendString;
+                    console.log("✅ Checkbox value written:", sendString);
+                    logEvent(`✅ Sent checkbox: ${sendString}`);
+                })
+                .catch(error => {
+                    console.error("Error writing to checkbox characteristic:", error);
+                    logEvent(`❌ Checkbox send failed: ${error.message}`);
+                });
+        };
+
+
+        window.sendNumberCharacteristic = function(inputID, inputValue) {
+            if (!deviceConnected || !numberCharacteristicFound) {
+                console.error("Bluetooth is not connected. Cannot write to number characteristic.");
+                logEvent("⚠️ Bluetooth is not connected. Cannot write to number characteristic.");
+                return;
+            }
+
+            var sendDoc = {
+                "id": inputID,
+                "val": inputValue
+            };
+            var sendString = JSON.stringify(sendDoc);
+            var sendBuffer = str2ab(sendString);
+
+            numberCharacteristicFound.writeValue(sendBuffer)
+                .then(() => {
+                    lastValueSent = sendString;
+                    document.getElementById('lastMessage').textContent = sendString;
+                    console.log("✅ Number value written:", sendString);
+                    logEvent(`✅ Sent number: ${sendString}`);
+                })
+                .catch(error => {
+                    console.error("Error writing to number characteristic:", error);
+                    logEvent(`❌ Number send failed: ${error.message}`);
+                });
+        };
+
+        window.sendBusParamCharacteristic = function(paramId, value, busId) {
+            if (!deviceConnected || !numberCharacteristicFound) {
+                console.error("Bluetooth is not connected. Cannot write to number characteristic.");
+                logEvent("⚠️ Bluetooth is not connected. Cannot write to number characteristic.");
+                return;
+            }
+            var sendDoc = { "id": paramId, "val": value, "bus": busId };
+            var sendString = JSON.stringify(sendDoc);
+            var sendBuffer = str2ab(sendString);
+            numberCharacteristicFound.writeValue(sendBuffer)
+                .then(() => {
+                    lastValueSent = sendString;
+                    document.getElementById('lastMessage').textContent = sendString;
+                    console.log("✅ Bus param written:", sendString);
+                    logEvent(`✅ Sent bus param: ${sendString}`);
+                })
+                .catch(error => {
+                    console.error("Error writing bus param:", error);
+                    logEvent(`❌ Bus param send failed: ${error.message}`);
+                });
+        };
+
+        window.sendStringCharacteristic = function(inputID, inputValue) {
+            if (!deviceConnected || !stringCharacteristicFound) {
+                console.error("Bluetooth is not connected. Cannot write to string characteristic.");
+                logEvent("⚠️ Bluetooth is not connected. Cannot write to string characteristic.");
+                return;
+            }
+
+            var sendDoc = {
+                "id": inputID,
+                "val": inputValue
+            };
+            var sendString = JSON.stringify(sendDoc);
+            var sendBuffer = str2ab(sendString);
+
+            stringCharacteristicFound.writeValue(sendBuffer)
+                .then(() => {
+                    lastValueSent = sendString;
+                    document.getElementById('lastMessage').textContent = sendString;
+                    console.log("✅ String value written:", sendString);
+                    logEvent(`✅ Sent string: ${sendString}`);
+                })
+                .catch(error => {
+                    console.error("Error writing to string characteristic:", error);
+                    logEvent(`❌ String send failed: ${error.message}`);
+                });
+        };
+
+
+        // ******************************************************************************************************
+        // PROGRAM AND MODE *************************************************************************************
+
+        // Program Constants (parallel to ESP32 enum) ************************
+        const Programs = {
+            COLORTRAILS: 0
+        };
+
+        // Program display names (parallel to C++ PROGRAM_NAMES)
+        const PROGRAM_NAMES = [
+            "COLORTRAILS"
+        ];
+
+        // Mode definitions (parallel to C++ mode arrays)
+        const COLORTRAILS_MODES = ["ORBITAL", "LISSAJOUS", "BORDERRECT"];
+
+        // Mode count lookup (parallel to C++ MODE_COUNTS)
+        const MODE_COUNTS = [3];
+
+        
+        // ******************************************************************************************************
+        // PARAMETER REGISTRY AND VISUALIZER SYSTEM *************************************************************
+
+        // Parameter registry with standard ranges
+        const VISUALIZER_PARAMETER_REGISTRY = {
+           
+            //ColorTrails
+            fadeRate: {min: 0.80000, max: 0.99999, default: 0.99922, step: 0.00001},
+            orbitSpeed: {min: 0.01, max: 25, default: 0.35, step: 0.01},
+            colorSpeed: {min: 0.01, max: 2, default: 0.10, step: 0.01},
+            circleDiam: {min: 0.1, max: 5, default: 1.5, step: 0.1},
+            orbitDiam: {min: 1, max: 20, default: 10, step: 0.5},
+            endpointSpeed: {min: 0.01, max: 2, default: 0.35, step: 0.01},
+            colorShift: {min: 0.01, max: 1, default: 0.10, step: 0.01},
+            lineAmplitude: {min: 1, max: 20, default: 13.5, step: 0.5},
+            xSpeed: {min: -5, max: 5, default: -1.73, step: 0.01},
+            ySpeed: {min: -5, max: 5, default: -1.72, step: 0.01},
+            xAmplitude: {min: 0.1, max: 3, default: 1.0, step: 0.01},
+            yAmplitude: {min: 0.1, max: 3, default: 1.0, step: 0.01},
+            xFrequency: {min: 0.05, max: 4.00, default: 0.33, step: 0.01},
+            yFrequency: {min: 0.05, max: 4.00, default: 0.32, step: 0.01},
+            xShift: {min: 0.1, max: 5, default: 1.8, step: 0.1},
+            yShift: {min: 0.1, max: 5, default: 1.8, step: 0.1},
+            variationIntensity: {min: 0, max: 8, default: 4, step: 0.1},
+            variationSpeed: {min: 0, max: 4, default: 1, step: 0.1},
+            modulateAmplitude: {min: 0, max: 1, default: 0, step: 1},
+
+        };
+
+        // Visualizer parameter mappings
+        const VISUALIZER_PARAMS = {
+            "colortrails-orbital":["fadeRate", "orbitSpeed", "colorSpeed", "circleDiam", "orbitDiam", "endpointSpeed", "colorShift", "lineAmplitude", "xSpeed", "ySpeed", "xAmplitude", "yAmplitude", "xFrequency", "yFrequency", "xShift", "yShift", "variationIntensity", "variationSpeed", "modulateAmplitude"],
+            "colortrails-lissajous":["fadeRate", "orbitSpeed", "colorSpeed", "circleDiam", "orbitDiam", "endpointSpeed", "colorShift", "lineAmplitude", "xSpeed", "ySpeed", "xAmplitude", "yAmplitude", "xFrequency", "yFrequency", "xShift", "yShift", "variationIntensity", "variationSpeed", "modulateAmplitude"],
+            "colortrails-borderrect":["fadeRate", "orbitSpeed", "colorSpeed", "circleDiam", "orbitDiam", "endpointSpeed", "colorShift", "lineAmplitude", "xSpeed", "ySpeed", "xAmplitude", "yAmplitude", "xFrequency", "yFrequency", "xShift", "yShift", "variationIntensity", "variationSpeed", "modulateAmplitude"]
+        };
+
+        const AUDIO_PARAMETER_REGISTRY = {
+            noiseGateOpen: {min: 0, max: 500, default: 70, step: 1},
+            noiseGateClose: {min: 0, max: 500, default: 50, step: 1}, //audioFloor: {min: 0, max: 1, default: 0, step: 0.05},
+            audioGain: {min: 0.1, max: 3, default: 1, step: 0.1},
+            avLevelerTarget: {min: 0.1, max: 1, default: 0.5, step: 0.05},
+            //autoFloorAlpha: {min: 0.01, max: 1, default: 0.01, step: 0.01},
+            //autoFloorMin: {min: 0, max: 1, default: 0, step: 0.05},
+            //autoFloorMax: {min: 0, max: 1, default: .5, step: 0.05},
+
+        };
+
+        const AUDIO_PARAMS = {
+            "audio":
+                ["noiseGateOpen", "noiseGateClose",  "audioGain", "avLevelerTarget", 
+                //"audioFloor", "autoFloorAlpha", "autoFloorMin", "autoFloorMax"
+             ]
+        };
+
+        const BUS_PARAMETER_REGISTRY = {
+            threshold:      {min: 0, max: 1,    default: 0.40, step: 0.01},
+            minBeatInterval: {min: 0, max: 1000, default: 250, step: 10},
+            expDecayFactor: {min: 0, max: 1,    default: 0.90, step: 0.01},
+            rampAttack:     {min: 0, max: 500,  default: 0,    step: 10},
+            rampDecay:      {min: 0, max: 1000, default: 300,  step: 10},
+            peakBase:       {min: 0, max: 2,    default: 1.0,  step: 0.1},
+        };
+
+        // Helper functions *********************************************
+
+        function getParameterLabel(paramName) {
+            return paramName.charAt(0).toUpperCase() + paramName.slice(1);
+        }
+
+        function getParameterId(paramName) {
+            return 'in' + paramName.charAt(0).toUpperCase() + paramName.slice(1);
+        }
+
+        function getCurrentVisualizer() {
+            const programSelector = document.querySelector('program-selector');
+            const modeSelector = document.querySelector('mode-selector');
+            
+            if (!programSelector || !modeSelector) return null;
+            
+            const programIndex = programSelector.currentProgram;
+            if (isNaN(programIndex) || programIndex < 0 || programIndex >= PROGRAM_NAMES.length) return null;
+            
+            const program = PROGRAM_NAMES[programIndex].toLowerCase();
+            const modes = getProgramModes(programIndex);
+            
+            // Return program-mode format for programs with modes
+            if (modes.length > 0 && modeSelector.currentMode >= 0 && modeSelector.currentMode < modes.length) {
+                const mode = modes[modeSelector.currentMode].toLowerCase();
+                return `${program}-${mode}`;
+            }
+            
+            return program;
+        }
+
+        function getProgramModes(numProgram) {
+            switch(numProgram) {
+                case Programs.COLORTRAILS: return COLORTRAILS_MODES;
+                default: return [];
+            }
+        }
+
+        // Check if visualizer matches any pattern in the list
+        // Supports exact match ("cube") and prefix match ("animartrix" matches "animartrix-polarwaves")
+        function visualizerMatches(visualizer, patterns) {
+            if (!visualizer) return false;
+            return patterns.some(pattern =>
+                visualizer === pattern || visualizer.startsWith(pattern + '-')
+            );
+        }
+
+        // Update visibility of dynamic controls based on current visualizer
+        function updateDynamicControls() {
+            const visualizer = getCurrentVisualizer();
+
+            // Find ALL elements with data-visualizers attribute anywhere in the document
+            const allControls = document.querySelectorAll('[data-visualizers]');
+
+            allControls.forEach(control => {
+                const patterns = control.dataset.visualizers
+                    .split(',')
+                    .map(v => v.trim().toLowerCase());
+
+                if (visualizerMatches(visualizer, patterns)) {
+                    control.style.display = '';
+                } else {
+                    control.style.display = 'none';
+                }
+            });
+
+            // Handle the dynamicControl section visibility separately
+            const dynamicContainer = document.querySelector('.dynamicControl');
+            if (dynamicContainer) {
+                const visibleChildren = dynamicContainer.querySelectorAll('[data-visualizers]');
+                const visibleCount = Array.from(visibleChildren).filter(c => c.style.display !== 'none').length;
+                dynamicContainer.style.display = visibleCount > 0 ? '' : 'none';
+            }
+
+            logEvent(`Dynamic controls updated for: ${visualizer}`);
+        }
+
+        // *************************************************************************************
+        // FUNCTIONS TO APPLY NOTIFICATIONS FROM PROGRAM ***************************************
+
+        function applyReceivedButton(changeReceived){
+        
+            // Sync program
+            if ( changeReceived < 20 ) {
+                const programSelector = document.querySelector('program-selector');
+                if (programSelector) {
+                    programSelector.updateDisplayProgram(changeReceived) ;
+                }
+                                
+                // Update ModeSelector modes based on new program
+                const modeSelector = document.querySelector('mode-selector');
+                if (modeSelector) {
+                    modeSelector.updateModes();
+                    // also need to get current mode and update mode display; or shoud/does updateModes do this?
+                }
+
+                // Update ParameterSettings based on new program
+                const parameterSettings = document.querySelector('parameter-settings');
+                if (parameterSettings) {
+                    parameterSettings.updateParameters();
+                }
+                updateDynamicControls();
+            }
+
+            // Sync mode
+            if ( changeReceived >= 20 && changeReceived < 40 ) {
+                const modeValue = changeReceived - 20;
+                const modeSelector = document.querySelector('mode-selector');
+                if (modeSelector) {
+                    modeSelector.updateDisplayMode(modeValue);
+                }
+
+                // Update ParameterSettings based on new mode
+                const parameterSettings = document.querySelector('parameter-settings');
+                if (parameterSettings) {
+                    parameterSettings.updateParameters();
+                }
+                updateDynamicControls();
+            }
+
+        }
+    
+        function applyReceivedCheckbox(receivedDoc) {
+            const receivedID = receivedDoc.id;
+            const receivedValue = receivedDoc.val;
+
+            const checkbox = document.querySelector(`.control-checkbox[data-my-number="${receivedID.replace('cx','')}"]`);
+            if (checkbox) {
+                checkbox.checked = !!receivedValue;
+            }
+
+        }
+        
+        // Debounce timer for ParameterSettings re-render
+        let parameterUpdateTimeout = null;
+        
+        function applyReceivedNumber(receivedDoc) {
+        
+            const parameterID = receivedDoc.id;
+            const parameterVal = receivedDoc.val;
+            
+            console.log(`applyReceivedNumber called with ID: "${parameterID}", value: ${parameterVal}`);
+
+            // Try to find a standalone control-slider element first
+            const controlSlider = document.querySelector(`control-slider[parameter-id="${parameterID}"]`);
+            
+            if (controlSlider) {
+                controlSlider.updateValue(parameterVal);
+                console.log(`✅ Updated control-slider ${parameterID} to value ${parameterVal}`);
+                return;
+            }
+
+            const controlDropdown = document.querySelector(`control-dropdown[parameter-id="${parameterID}"]`);
+            if (controlDropdown) {
+                controlDropdown.setValue(parseInt(parameterVal));
+                console.log(`✅ Updated control-dropdown ${parameterID} to value ${parameterVal}`);
+                return;
+            }
+
+            // For ParameterSettings, try to update the slider directly
+            const parameterSettings = document.querySelector('parameter-settings');
+            if (parameterSettings) {
+                // Use the existing updateParameterValues method
+                parameterSettings.updateParameterValues(parameterID, parameterVal);
+                console.log(`✅ Updated ParameterSettings slider ${parameterID} to value ${parameterVal}`);
+            } else {
+                console.warn(`❌ No ParameterSettings component found`);
+            }
+
+            const audioSettings = document.querySelector('audio-settings');
+            if (audioSettings) {
+                audioSettings.updateParameterValues(parameterID, parameterVal);
+                console.log(`✅ Updated AudioSettings slider ${parameterID} to value ${parameterVal}`);
+            }
+         
+        }
+
+        function applyReceivedString(receivedDoc) {
+            const receivedID = receivedDoc.id;
+            const receivedValue = receivedDoc.val;
+
+            if (receivedID === "visualizerState") {
+                console.log("Received visualizer state:", receivedValue);
+                logEvent("Visualizer state received");
+
+                try {
+                    // val may be a nested object (new) or a JSON string (legacy)
+                    const state = typeof receivedValue === 'string' ? JSON.parse(receivedValue) : receivedValue;
+
+                    // Atomic sync: set program and mode WITHOUT triggering intermediate re-renders.
+                    // applyReceivedButton() calls updateParameters() which rebuilds sliders with
+                    // defaults, so calling it twice (program then mode) causes the second call to
+                    // wipe slider values before we apply actual device values.
+
+                    // 1. Update ProgramSelector display only (no cascade)
+                    const programSelector = document.querySelector('program-selector');
+                    if (programSelector) {
+                        const numProgram = parseInt(state.program);
+                        programSelector.currentProgram = numProgram;
+                        const buttons = programSelector.querySelectorAll('.prog-btn');
+                        buttons.forEach((button, i) => {
+                            button.style.backgroundColor = i === numProgram ? '#7f7f7f' : '#2e2e2e';
+                        });
+                        const currentDisplay = programSelector.querySelector('.current-prog');
+                        if (currentDisplay) currentDisplay.textContent = numProgram;
+                    }
+
+                    // 2. Update ModeSelector (rebuild for new program, highlight correct mode)
+                    const modeSelector = document.querySelector('mode-selector');
+                    if (modeSelector) {
+                        modeSelector.setModesList();
+                        modeSelector.render();
+                        modeSelector.attachEventListeners();
+                        if (state.mode !== undefined) {
+                            const numMode = parseInt(state.mode);
+                            modeSelector.currentMode = numMode;
+                            const modeButtons = modeSelector.querySelectorAll('.mode-btn');
+                            modeButtons.forEach((button, i) => {
+                                button.style.backgroundColor = i === numMode ? '#7f7f7f' : '#2e2e2e';
+                            });
+                            const modeDisplay = modeSelector.querySelector('.current-mode');
+                            if (modeDisplay) modeDisplay.textContent = numMode;
+                        }
+                    }
+
+                    // 3. Render ParameterSettings once with the correct visualizer
+                    const parameterSettings = document.querySelector('parameter-settings');
+                    if (parameterSettings) {
+                        parameterSettings.updateParameters();
+                    }
+                    updateDynamicControls();
+
+                    // 4. Apply device parameter values to the now-correct sliders
+                    if (state.parameters) {
+                        Object.entries(state.parameters).forEach(([paramName, paramValue]) => {
+                            const paramDoc = {
+                                id: "in" + paramName.charAt(0).toUpperCase() + paramName.slice(1),
+                                val: paramValue
+                            };
+                            applyReceivedNumber(paramDoc);
+                        });
+                    }
+
+                    console.log("Visualizer state sync complete");
+                    logEvent("Visualizer state sync complete");
+
+                } catch (error) {
+                    console.error("Error parsing visualizer state:", error);
+                    logEvent("Error parsing visualizer state: " + error.message);
+                }
+            }
+
+            if (receivedID === "audioState") {
+                console.log("Received audio state:", receivedValue);
+                logEvent("Audio state received");
+
+                try {
+                    const state = JSON.parse(receivedValue);
+                    if (state.parameters) {
+                        const audioSettings = document.querySelector('audio-settings');
+                        Object.entries(state.parameters).forEach(([paramName, paramValue]) => {
+                            const paramId = getParameterId(paramName);
+                            // Update AudioSettings sliders
+                            if (audioSettings) {
+                                audioSettings.updateParameterValues(paramId, paramValue);
+                            }
+                            // Also update any standalone control-sliders with this param ID
+                            const controlSlider = document.querySelector(`control-slider[parameter-id="${paramId}"]`);
+                            if (controlSlider) {
+                                controlSlider.updateValue(paramValue);
+                            }
+                        });
+                    }
+                    logEvent("Audio state sync complete");
+                } catch (error) {
+                    console.error("Error parsing audio state:", error);
+                    logEvent("Error parsing audio state: " + error.message);
+                }
+            }
+
+            if (receivedID === "busState") {
+                console.log("Received bus state:", receivedValue);
+
+                try {
+                    // Per-bus format: {"bus":0,"parameters":{"threshold":0.25,...}}
+                    const state = JSON.parse(receivedValue);
+                    const busId = state.bus;
+                    const busSettings = document.querySelector('bus-settings');
+                    if (busSettings && state.parameters) {
+                        Object.entries(state.parameters).forEach(([paramName, paramValue]) => {
+                            busSettings.syncInputs(busId, paramName, paramValue);
+                        });
+                    }
+                    logEvent(`Bus ${busId} state synced`);
+                } catch (error) {
+                    console.error("Error parsing bus state:", error);
+                    logEvent("Error parsing bus state: " + error.message);
+                }
+            }
+        }
+
+
+        //*****************************************************************************************************
+        // WEB COMPONENTS *************************************************************************************
+
+        // BLE CONNECTION PANEL *****************************************
+    
+        class BLEConnectionPanel extends HTMLElement {
+            constructor() {
+                super();
+                this.deviceName = this.getAttribute('device-name') || 'Aurora Portal';
+            }
+
+            connectedCallback() {
+                this.render();
+                this.attachEventListeners();
+                logEvent('BLE Connection Panel initialized');
+            }
+
+            render() {  
+                this.innerHTML = `
+                    <div style="
+                        background-color: rgb(36, 36, 36);
+                        padding: 15px;
+                        border-radius: 4px;
+                        text-align: center;
+                        border: 1px solid #696969;
+                    ">
+                        <button class="connect-btn" style="
+                            background-color: #7f7f7f;
+                            color: white;
+                            border: none;
+                            border-radius: 4px;
+                            padding: 8px 16px;
+                            margin: 0 5px;
+                            cursor: pointer;
+                        ">Connect</button>
+                        
+                        <button class="disconnect-btn" style="
+                            background-color: #2e2e2e;
+                            color: white;
+                            border: none;
+                            border-radius: 4px;
+                            padding: 8px 16px;
+                            margin: 0 5px;
+                            cursor: pointer;
+                        ">Disconnect</button>
+                        
+                        <div style="margin-top: 10px; color: white;">
+                            Status: <span class="ble-status" style="color: #d13a30; ">Disconnected</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            attachEventListeners() {
+                const connectBtn = this.querySelector('.connect-btn');
+                const disconnectBtn = this.querySelector('.disconnect-btn');
+
+                connectBtn.addEventListener('click', () => {
+                    connectToDevice();
+                });
+
+                disconnectBtn.addEventListener('click', () => {
+                    disconnectDevice();
+                });
+            }
+
+            updateStatus(status, color) {
+                console.log('BLE Panel updateStatus called:', status, color);
+                
+                const statusElement = this.querySelector('.ble-status');
+                if (statusElement) {
+                    statusElement.textContent = status;
+                    statusElement.style.color = color;
+                    console.log('✅ BLE status updated successfully');
+                } else {
+                    console.error('❌ BLE status element not found in component');
+                }
+            }
+        } // BLEConnectionPanel
+
+        // GENERAL CONTROL COMPONENTS **********************************************************************************
+
+        // Control Button **************************
+
+		class ControlButton extends HTMLElement {
+            constructor() {
+                super();
+                // Get attributes
+                this.label = this.getAttribute('label') ;
+                this.buttonNumber = this.getAttribute('data-my-number');
+            }
+
+            connectedCallback() {
+                this.render();
+                this.attachEventListeners();
+                logEvent(`Control Button '${this.label}' initialized`);
+            }
+			
+			render() {
+                this.innerHTML = `
+					<button class="con-button" style="
+						background-color: #7f7f7f;
+						color: white;
+						border: none;
+						border-radius: 4px;
+						padding: 5px;
+                        margin: 10px;
+						cursor: pointer;
+					">${this.label}</button>
+				`;
+			}
+				
+			attachEventListeners() {
+                const buttons = this.querySelectorAll('.con-button');
+                buttons.forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const buttonVal = parseInt(this.buttonNumber);
+                        logEvent(`Button pressed: ${this.label} (button ${buttonVal})`);
+                        this.processButton(buttonVal);
+                    });
+                });
+            }
+
+            processButton(buttonVal){
+
+                if (buttonVal > 20) { sendButtonCharacteristic(buttonVal); }
+
+                //if (buttonVal == 91) { }  // update parametersUsed when refreshing UI 
+
+            }
+        } // ControlButton
+
+    // Control Checkbox ***********************************
+
+		class ControlCheckbox extends HTMLElement {
+            constructor() {
+                super();
+                // Get attributes
+                this.label = this.getAttribute('label') ;
+                this.checkboxNum = this.getAttribute('data-my-number');
+				this.isChecked = this.getAttribute('checked')
+            }
+
+            connectedCallback() {
+                this.render();
+                this.attachEventListeners();
+                logEvent(`Control Checkbox '${this.label}' initialized`);
+            }
+			
+			render() {
+                let isChecked = false;
+                if (this.hasAttribute('unchecked')) {
+                    isChecked = false;
+                } else if (this.hasAttribute('checked')) {
+                    isChecked = this.getAttribute('checked') !== 'false';
+                } else {
+                    isChecked = false; // default to unchecked
+                }
+                
+                this.innerHTML = `
+				  ${this.label}: <input type="checkbox" class="control-checkbox" data-my-number="${this.checkboxNum}" 
+				   ${isChecked ? 'checked' : ''}
+				   style="transform: scale(1.2);">
+                `
+			}
+				
+            attachEventListeners() {
+                const checkboxes = this.querySelectorAll('.control-checkbox');
+                checkboxes.forEach(checkbox => {
+                    checkbox.addEventListener('change', (e) => {
+                        const checkboxId = e.target.getAttribute('data-my-number');
+                        const isChecked = e.target.checked;
+                        this.checkboxes = isChecked;
+                        
+                        // Send checkbox characteristic
+                        const checkboxRef = `cx${checkboxId}`;
+                        window.sendCheckboxCharacteristic(checkboxRef, isChecked);
+                        logEvent(`Checkbox ${checkboxId} ${isChecked ? 'enabled' : 'disabled'} (${checkboxId})`);
+
+                        //if (checkboxId === "5") {
+                        //    setAudioEnabledState(isChecked);
+                        //}
+                    });
+                });
+            }
+          	
+        } // ControlCheckbox
+
+        // Control Slider ***********************************
+
+        class ControlSlider extends HTMLElement {
+            constructor() {
+                super();
+                
+                // Get attributes
+                this.label = this.getAttribute('label') || 'Parameter';
+                this.parameterId = this.getAttribute('parameter-id') || 'param';
+                this.min = parseFloat(this.getAttribute('min')) || 0;
+                this.max = parseFloat(this.getAttribute('max')) || 100;
+                this.step = parseFloat(this.getAttribute('step')) || 1;
+                this.defaultValue = parseFloat(this.getAttribute('default-value'));
+                this.dataIndex = parseFloat(this.getAttribute('data-index')) || 99;
+                this.dataUsed = this.getAttribute('data-used') || 'true';
+                                
+                // Internal state
+                this.currentValue = this.defaultValue;
+                this.debounceTimer = null;
+                this.isSending = false;
+                this.isUsed = Boolean(this.dataUsed === 'true');
+
+            }
+
+            connectedCallback() {
+                this.render();
+                this.attachEventListeners();
+                logEvent(`Parameter Slider '${this.label}' initialized`);
+            }
+
+            render() {
+                this.innerHTML = `
+                    <div class="parameter-slider-container" style="
+                        display: flex;
+                        align-items: center;
+                        gap: 15px;
+                        padding: 5px;
+                        background-color: rgb(36, 36, 36);
+                        border-radius: 4px;
+                        border: 1px solid ${this.isSending ? '#ffa500' : '#696969'};
+                        margin-bottom: 3px;
+                        transition: border-color 0.3s ease;
+                    ">
+                        <label style="  
+                            flex: 0 0 100px;
+                            color: ${this.isUsed ? '#d1d1d1' : '#3d3d3d'};
+
+                        ">${this.label}:</label>
+                        
+                        <input type="range" 
+                            class="param-range"
+                            min="${this.min}" 
+                            max="${this.max}" 
+                            step="${this.step}"
+                            value="${this.currentValue}"
+                            style="
+                                flex: 2;
+                                min-width: 200px;
+                            ">
+                        
+                        <input type="number" 
+                            class="param-number"
+                            min="${this.min}" 
+                            max="${this.max}" 
+                            step="${this.step}"
+                            value="${this.currentValue}"
+                            style="
+                                flex: 0 0 80px;
+                                background-color: #2a2a2a;
+                                color: white;
+                                border: 1px solid #696969;
+                                border-radius: 3px;
+                                padding: 5px;
+                                text-align: center;
+                            ">
+                        
+                        <button class="param-reset" style="
+                            flex: 0 0 40px;
+                            background-color: #1d1d1d;
+                            color: white;
+                            border: none;
+                            border-radius: 4px;
+                            padding: 4px;
+                            cursor: pointer;
+                        ">↻</button>
+                    </div>
+                `;
+            }
+
+            attachEventListeners() {
+                const rangeInput = this.querySelector('.param-range');
+                const numberInput = this.querySelector('.param-number');
+                const resetButton = this.querySelector('.param-reset');
+
+                rangeInput.addEventListener('input', (e) => {
+                    const newValue = parseFloat(e.target.value);
+                    this.updateValue(newValue);
+                    this.debouncedSend(newValue);
+                });
+
+                numberInput.addEventListener('input', (e) => {
+                    const newValue = parseFloat(e.target.value);
+                    if (!isNaN(newValue) && newValue >= this.min && newValue <= this.max) {
+                        this.updateValue(newValue);
+                        this.sendValue(newValue);
+                    }
+                });
+
+                numberInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        const newValue = parseFloat(e.target.value);
+                        if (!isNaN(newValue) && newValue >= this.min && newValue <= this.max) {
+                            this.updateValue(newValue);
+                            this.sendValue(newValue);
+                        }
+                    }
+                });
+
+                resetButton.addEventListener('click', () => {
+                    this.updateValue(this.defaultValue);
+                    this.sendValue(this.defaultValue);
+                    logEvent(`Parameter '${this.label}' reset to ${this.defaultValue}`);
+                });
+            }
+
+            updateValue(newValue) {
+                this.currentValue = newValue;
+                
+                const rangeInput = this.querySelector('.param-range');
+                const numberInput = this.querySelector('.param-number');
+                
+                rangeInput.value = newValue;
+                numberInput.value = newValue;
+            }
+
+            debouncedSend(value) {
+                if (this.debounceTimer) {
+                    clearTimeout(this.debounceTimer);
+                }
+                
+                this.setSendingState(true);
+                
+                this.debounceTimer = setTimeout(() => {
+                    this.sendValue(value);
+                }, 300);
+            }
+
+            sendValue(value) {
+                window.sendNumberCharacteristic(this.parameterId, value);
+                this.setSendingState(false);
+            }
+
+            setSendingState(isSending) {
+                this.isSending = isSending;
+                const container = this.querySelector('.parameter-slider-container');
+                if (container) {
+                    container.style.borderColor = isSending ? '#ffa500' : '#4a9eff';
+                }
+            }
+
+            setValue(newValue) {
+                if (newValue >= this.min && newValue <= this.max) {
+                    this.updateValue(newValue);
+                }
+            }
+
+            getValue() {
+                return this.currentValue;
+            }
+        } // ControlSlider
+
+        // Control Dropdown ***********************************
+
+        class ControlDropdown extends HTMLElement {
+            constructor() {
+                super();
+                
+                // Get attributes
+                this.label = this.getAttribute('label') || 'Option';
+                this.parameterId = this.getAttribute('parameter-id') || 'dropdown';
+                this.defaultValue = parseInt(this.getAttribute('default-value')) || 0;
+                
+                // Parse options from content or default to empty array
+                this.options = this.parseOptions();
+                
+                // Internal state
+                this.currentValue = this.defaultValue;
+                this.isSending = false;
+                
+                // Validate default value is within options range
+                if (this.currentValue < 0 || this.currentValue >= this.options.length) {
+                    this.currentValue = 0;
+                }
+            }
+
+            parseOptions() {
+                // Get options from text content between tags, split by newlines/commas
+                const content = this.textContent.trim();
+                if (content) {
+                    return content.split(/[,\n]/).map(s => s.trim()).filter(s => s);
+                }
+                return ['Option 1', 'Option 2', 'Option 3']; // Default options
+            }
+
+            connectedCallback() {
+                this.render();
+                this.attachEventListeners();
+                logEvent(`Control Dropdown '${this.label}' initialized with ${this.options.length} options`);
+            }
+
+            render() {
+                const optionElements = this.options.map((option, index) => 
+                    `<option value="${index}" ${index === this.currentValue ? 'selected' : ''}>${option}</option>`
+                ).join('');
+
+                this.innerHTML = `
+                    <div class="dropdown-container" style="
+                        display: flex;
+                        align-items: center;
+                        gap: 15px;
+                        padding: 5px;
+                        background-color: rgb(36, 36, 36);
+                        border-radius: 4px;
+                        border: 1px solid ${this.isSending ? '#ffa500' : '#696969'};
+                        margin-bottom: 3px;
+                        transition: border-color 0.3s ease;
+                    ">
+                        <label style="
+                            flex: 0 0 100px;
+                            color: #d1d1d1;
+                        ">${this.label}:</label>
+                        
+                        <select class="dropdown-select" style="
+                            flex: 1;
+                            background-color: #2a2a2a;
+                            color: white;
+                            border: 1px solid #696969;
+                            border-radius: 3px;
+                            padding: 8px;
+                            font-size: 14px;
+                            cursor: pointer;
+                        ">
+                            ${optionElements}
+                        </select>
+                        
+                        <div class="dropdown-value" style="
+                            flex: 0 0 40px;
+                            text-align: center;
+                            color: #a0a0a0;
+                            font-size: 0.9em;
+                        ">${this.currentValue}</div>
+                    </div>
+                `;
+            }
+
+            attachEventListeners() {
+                const selectElement = this.querySelector('.dropdown-select');
+                
+                selectElement.addEventListener('change', (e) => {
+                    const newValue = parseInt(e.target.value);
+                    this.updateValue(newValue);
+                    this.sendValue(newValue);
+                });
+            }
+
+            updateValue(newValue) {
+                this.currentValue = newValue;
+                
+                const selectElement = this.querySelector('.dropdown-select');
+                const valueDisplay = this.querySelector('.dropdown-value');
+                
+                if (selectElement) selectElement.value = newValue;
+                if (valueDisplay) valueDisplay.textContent = newValue;
+            }
+
+            sendValue(value) {
+                this.setSendingState(true);
+                window.sendNumberCharacteristic(this.parameterId, value);
+                
+                setTimeout(() => {
+                    this.setSendingState(false);
+                }, 1000);
+                
+                logEvent(`Dropdown '${this.label}' set to: ${this.options[value]} (${value})`);
+            }
+
+            setSendingState(isSending) {
+                this.isSending = isSending;
+                const container = this.querySelector('.dropdown-container');
+                if (container) {
+                    container.style.borderColor = isSending ? '#ffa500' : '#696969';
+                }
+            }
+
+            // Method to update value from external source (like BLE notifications)
+            setValue(newValue) {
+                if (newValue >= 0 && newValue < this.options.length) {
+                    this.updateValue(newValue);
+                }
+            }
+
+            getValue() {
+                return this.currentValue;
+            }
+        } // ControlDropdown
+
+        // GROUPED/AUTO-RENDERED COMPONENTS *************************************************************************
+
+        // Program Selector ***************************
+       
+        class ProgramSelector extends HTMLElement {
+            constructor() {
+                super();
+                this.currentProgram = parseInt(this.getAttribute('current')) || 0;
+                // Ensure valid number (parseInt can return NaN)
+                if (isNaN(this.currentProgram)) this.currentProgram = 0;
+                this.programs = PROGRAM_NAMES;
+            }
+
+            connectedCallback() {
+                this.render();
+                this.attachEventListeners();
+                this.updateDisplayProgram();
+                logEvent('Program Selector initialized');
+            }
+
+            render() {
+                // Check if BLE is connected
+                if (!window.BLEState || !window.BLEState.connected) {
+                    this.innerHTML = `
+                        <div style="
+                            background-color: #000000;
+                            padding: 10px;
+                            border-radius: 4px;
+                            border: none;
+                            text-align: center;
+                            color: #a0a0a0;
+                            font-style: italic;
+                        ">
+                            Connect device for program options
+                        </div>
+                    `;
+                    return;
+                }
+
+                const buttonGrid = this.programs.map((name, index) => `
+                    <button class="prog-btn" data-index="${index}" style="
+                        background-color: ${index === this.currentProgram ? '#7f7f7f' : '#2e2e2e'};
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        padding: 8px 12px;
+                        margin: 4px;
+                        cursor: pointer;
+                        font-size: 0.8em;
+                        min-width: 100px;
+                    ">${name}</button>
+                `).join('');
+
+                this.innerHTML = `
+                    <div style="
+                        background-color: #000000;
+                        padding: 10px;
+                        border-radius: 4px;
+                        border: none;
+                    ">
+                        <div style="
+                            display: flex;
+                            flex-wrap: wrap;
+                            justify-content: center;
+                            gap: 5px;
+                            margin-bottom: 15px;
+                        ">
+                            ${buttonGrid}
+                        </div>
+                        <div style="text-align: center; color: #a0a0a0;">
+                            Current Program: <span class="current-prog" style="color: white;">${this.currentProgram}</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            attachEventListeners() {
+                const buttons = this.querySelectorAll('.prog-btn');
+                buttons.forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const newProgram = parseInt(e.target.getAttribute('data-index'));
+                        this.selectProgram(newProgram);
+                        //this.updateDisplayProgram(newProgram);  
+                            // don't trigger directly; selectProgram will update device, which will send receipt -->
+                            // applyButtonReceived --> updateDisplayProgram  
+                    });
+                });
+            }
+
+            selectProgram(newProgram) {
+                
+                this.currentProgram = newProgram;
+
+                // Send BLE command (button value 0-19 maps to programs 0-19)
+                const buttonValue = newProgram;
+                window.sendButtonCharacteristic(buttonValue);
+                logEvent(`Program selected: ${this.programs[newProgram]} (button ${buttonValue})`);
+
+                // Not necessary: device will send button receipt --> applyButtonReceived --> 
+                        // updateDisplayProgram --> updateModes -->  [ updateDisplayModes (won't work because no relevant existing mode) ]
+                // Update ModeSelector modes based on new program
+                /*const modeSelector = document.querySelector('mode-selector');
+                if (modeSelector) {
+                    modeSelector.updateModes();
+                }*/
+
+                // Update ParameterSettings based on new program
+                const parameterSettings = document.querySelector('parameter-settings');
+                if (parameterSettings) {
+                    parameterSettings.updateParameters();
+                }
+                updateDynamicControls();
+            }
+
+            updateDisplayProgram(newProgram) {
+                
+                // Convert to number to ensure proper comparison
+                const numProgram = parseInt(newProgram);
+                this.currentProgram = numProgram;
+                
+                // Update button styles
+                const buttons = this.querySelectorAll('.prog-btn');
+                console.log(`updateDisplayProgram: index=${numProgram}, found ${buttons.length} buttons`);
+                buttons.forEach((button, i) => {
+                    const newColor = i === numProgram ? '#7f7f7f' : '#2e2e2e';
+                    button.style.backgroundColor = newColor;
+                    console.log(`Button ${i}: color set to ${newColor}`);
+                });
+
+                // Update current display
+                const currentDisplay = this.querySelector('.current-prog');
+                if (currentDisplay) {
+                    currentDisplay.textContent = numProgram;
+                }
+
+                // Update ModeSelector modes based on new program
+                const modeSelector = document.querySelector('mode-selector');
+                if (modeSelector && modeSelector.updateModes) {
+                    modeSelector.updateModes();
+                    modeSelector.updateDisplayMode(0);
+                }
+            }
+
+            updateConnectionState() {
+                console.log('ProgramSelector: updateConnectionState called');
+                this.render();
+                
+                // Reattach event listeners if connected
+                if (window.BLEState && window.BLEState.connected) {
+                    this.attachEventListeners();
+                }
+                
+            }
+
+        } // ProgramSelector
+
+        // Mode Selector ****************************
+       
+        class ModeSelector extends HTMLElement {
+            constructor() {
+                super();
+                this.currentMode = parseInt(this.getAttribute('current')) || 0;
+                // Ensure valid number (parseInt can return NaN)
+                if (isNaN(this.currentMode)) this.currentMode = 0;
+                this.setModesList();
+			}
+
+            setModesList() {
+                // Get current program from ProgramSelector
+                const programSelector = document.querySelector('program-selector');
+                const currentProgram = programSelector ? programSelector.currentProgram : 0;
+                this.modes = getProgramModes(currentProgram);
+            }
+
+            connectedCallback() {
+                this.setModesList(); // Update modes based on current program
+                this.render();
+                this.updateModes();
+                this.attachEventListeners();
+                logEvent('Mode Selector initialized');
+            }
+
+            updateModes() {
+                this.setModesList();
+                this.render();
+                this.updateDisplayMode(this.currentMode); 
+                this.attachEventListeners();
+            }
+
+            render() {
+                // Check if BLE is connected
+                if (!window.BLEState || !window.BLEState.connected) {
+                    this.innerHTML = `
+                        <div style="
+                            background-color: #000000;
+                            padding: 10px;
+                            border-radius: 4px;
+                            border: none;
+                            text-align: center;
+                            color: #a0a0a0;
+                            font-style: italic;
+                        ">
+                            Connect device for mode options
+                        </div>
+                    `;
+                    return;
+                }
+
+                const buttonGrid = this.modes.map((name, index) => `
+                    <button class="mode-btn" data-index="${index}" style="
+                        background-color: ${index === this.currentMode ? '#7f7f7f' : '#2e2e2e'};
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        padding: 8px 12px;
+                        margin: 4px;
+                        cursor: pointer;
+                        font-size: 0.8em;
+                        min-width: 100px;
+                    ">${name}</button>
+                `).join('');
+
+                this.innerHTML = `
+                    <div style="
+                        background-color: #000000;
+                        padding: 10px;
+                        border-radius: 4px;
+                        border: none;
+                    ">
+                        <div style="
+                            display: flex;
+                            flex-wrap: wrap;
+                            justify-content: center;
+                            gap: 5px;
+                            margin-bottom: 15px;
+                        ">
+                            ${buttonGrid}
+                        </div>
+                        <div style="text-align: center; color: #a0a0a0;">
+                            Current Mode: <span class="current-mode" style="color: white;">${this.currentMode}</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            attachEventListeners() {
+                const buttons = this.querySelectorAll('.mode-btn');
+                buttons.forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const newMode = parseInt(e.target.getAttribute('data-index'));
+                        this.selectMode(newMode);
+                        this.updateDisplayMode(newMode);
+                    });
+                });
+            }
+
+            selectMode(newMode) {
+                
+                this.currentMode = newMode;
+
+                // Send BLE command (button value 20-39 maps to modes 0-19)
+                const buttonValue = newMode + 20;
+                window.sendButtonCharacteristic(buttonValue);
+                logEvent(`Mode selected: ${this.modes[newMode]} (button ${buttonValue})`);
+
+                // Update ParameterSettings based on new mode
+                const parameterSettings = document.querySelector('parameter-settings');
+                if (parameterSettings) {
+                    parameterSettings.updateParameters();
+                }
+                updateDynamicControls();
+            }
+
+            updateDisplayMode(newMode) {
+                
+                // Convert to number to ensure proper comparison
+                const numMode = parseInt(newMode);
+                this.currentMode = numMode;
+                
+                // Update button styles
+                const buttons = this.querySelectorAll('.mode-btn');
+                console.log(`updateDisplayMode: index=${numMode}, found ${buttons.length} buttons`);
+                buttons.forEach((button, i) => {
+                    const newColor = i === numMode ? '#7f7f7f' : '#2e2e2e';
+                    button.style.backgroundColor = newColor;
+                    console.log(`Button ${i}: color set to ${newColor}`);
+                });
+
+                // Update current display
+                const currentDisplay = this.querySelector('.current-mode');
+                if (currentDisplay) {
+                    currentDisplay.textContent = numMode;
+                }
+            }
+
+            updateConnectionState() {
+                console.log('ModeSelector: updateConnectionState called');
+                this.render();
+                
+                // Reattach event listeners if connected
+                if (window.BLEState && window.BLEState.connected) {
+                    this.attachEventListeners();
+                }
+            }
+        } // ModeSelector
+      
+        // Parameter Settings  ********************************
+
+        class ParameterSettings extends HTMLElement {
+            constructor() {
+                super();
+                this.currentVisualizer = null;
+                this.sliders = [];
+            }
+
+            connectedCallback() {
+                //this.render();
+                this.updateParameters()
+                logEvent('Parameter Settings initialized');
+            }
+
+            //Display applicable parameter sliders (does not update slider values displayed)
+            updateParameters() {
+                const visualizer = getCurrentVisualizer();
+                
+                //is this correct? should evaluate
+                //if (visualizer === this.currentVisualizer) {
+                //    return; // No change needed
+                //  }
+                
+                this.currentVisualizer = visualizer;
+                this.render();
+                logEvent(`Parameter Settings updated for visualizer: ${visualizer}`);
+            }
+
+            render() {
+                // Check if BLE is connected
+                if (!window.BLEState || !window.BLEState.connected) {
+                    this.innerHTML = `
+                        <div style="
+                            background-color: rgb(36, 36, 36);
+                            padding: 10px;
+                            border-radius: 4px;
+                            border: 1px solid #696969;
+                            text-align: center;
+                            color: #a0a0a0;
+                            font-style: italic;
+                        ">
+                            Connect device to see parameters
+                        </div>
+                    `;
+                    return;
+                }
+
+                const visualizer = this.currentVisualizer;
+                const parameters = visualizer ? VISUALIZER_PARAMS[visualizer] : [];
+                
+                if (!parameters || parameters.length === 0) {
+                    this.innerHTML = `
+                        <div style="
+                            background-color: rgb(36, 36, 36);
+                            padding: 10px;
+                            border-radius: 4px;
+                            border: 1px solid #696969;
+                            text-align: center;
+                            color: #a0a0a0;
+                        ">
+                            No parameters available for current visualizer
+                        </div>
+                    `;
+                    return;
+                }
+
+                const sliderHTML = parameters.map(paramName => {
+                    const config = VISUALIZER_PARAMETER_REGISTRY[paramName];
+                    if (!config) return '';
+
+                    const label = getParameterLabel(paramName);
+                    const parameterId = getParameterId(paramName);
+                    const displayVal = config.decimals != null ? parseFloat(config.default).toFixed(config.decimals) : config.default;
+
+                    return `
+                        <div class="parameter-slider-container" style="
+                            display: flex;
+                            align-items: center;
+                            gap: 15px;
+                            padding: 5px;
+                            background-color: rgb(36, 36, 36);
+                            border-radius: 4px;
+                            border: 1px solid #696969;
+                            margin-bottom: 3px;
+                            transition: border-color 0.3s ease;
+                        ">
+                            <label style="  
+                                flex: 0 0 100px;
+                                color: #d1d1d1;
+                            ">${label}:</label>
+                            
+                            <input type="range" 
+                                class="param-range"
+                                data-param-name="${paramName}"
+                                data-param-id="${parameterId}"
+                                min="${config.min}" 
+                                max="${config.max}" 
+                                step="${config.step}"
+                                value="${config.default}"
+                                style="
+                                    flex: 2;
+                                    min-width: 200px;
+                                ">
+                            
+                            <input type="number" 
+                                class="param-number"
+                                data-param-name="${paramName}"
+                                data-param-id="${parameterId}"
+                                min="${config.min}" 
+                                max="${config.max}" 
+                                step="${config.step}"
+                                value="${config.default}"
+                                style="
+                                    flex: 0 0 80px;
+                                    background-color: #2a2a2a;
+                                    color: white;
+                                    border: 1px solid #696969;
+                                    border-radius: 3px;
+                                    padding: 5px;
+                                    text-align: center;
+                                ">
+                            
+                            <button class="param-reset" data-param-name="${paramName}" data-default="${config.default}" style="
+                                flex: 0 0 40px;
+                                background-color: #1d1d1d;
+                                color: white;
+                                border: none;
+                                border-radius: 4px;
+                                padding: 4px;
+                                cursor: pointer;
+                            ">↻</button>
+                        </div>
+                    `;
+                }).join('');
+
+                this.innerHTML = `
+                    <div style="
+                        background-color: #000000;
+                        padding: 10px;
+                        border-radius: 4px;
+                        border: none;
+                    ">
+                        <div style="
+                            color: #a0a0a0;
+                            margin-bottom: 10px;
+                            text-align: center;
+                            font-size: 0.9em;
+                        ">
+                            Parameters for: <span style="color: white;">${visualizer || 'None'}</span>
+                        </div>
+                        ${sliderHTML}
+                    </div>
+                `;
+                
+                this.attachEventListeners();
+            }
+
+            attachEventListeners() {
+                // Range sliders
+                const rangeInputs = this.querySelectorAll('.param-range');
+                rangeInputs.forEach(input => {
+                    input.addEventListener('input', (e) => {
+                        const value = parseFloat(e.target.value);
+                        const paramId = e.target.getAttribute('data-param-id');
+                        const paramName = e.target.getAttribute('data-param-name');
+                        //what is purpose of working with both paramId and paramName here?
+                        this.updateSliderValues(paramName, value);
+                        //the following sends change to device; needs paramId (i.e., inParam) 
+                        this.debouncedSend(paramId, value);
+                    });
+                });
+
+                // Number inputs
+                const numberInputs = this.querySelectorAll('.param-number');
+                numberInputs.forEach(input => {
+                    input.addEventListener('input', (e) => {
+                        const value = parseFloat(e.target.value);
+                        const paramId = e.target.getAttribute('data-param-id');
+                        const paramName = e.target.getAttribute('data-param-name');
+                        const config = VISUALIZER_PARAMETER_REGISTRY[paramName];
+                        
+                        if (!isNaN(value) && value >= config.min && value <= config.max) {
+                            this.updateSliderValues(paramName, value);
+                            this.sendValue(paramId, value);
+                        }
+                    });
+
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            const value = parseFloat(e.target.value);
+                            const paramId = e.target.getAttribute('data-param-id');
+                            const paramName = e.target.getAttribute('data-param-name');
+                            const config = VISUALIZER_PARAMETER_REGISTRY[paramName];
+
+                            if (!isNaN(value) && value >= config.min && value <= config.max) {
+                                this.updateSliderValues(paramName, value);
+                                this.sendValue(paramId, value);
+                            }
+                        }
+                    });
+                });
+
+                // Reset buttons
+                const resetButtons = this.querySelectorAll('.param-reset');
+                resetButtons.forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const paramName = e.target.getAttribute('data-param-name');
+                        const defaultValue = parseFloat(e.target.getAttribute('data-default'));
+                        const parameterId = getParameterId(paramName);
+                        
+                        this.updateSliderValues(paramName, defaultValue);
+                        this.sendValue(parameterId, defaultValue);
+                        logEvent(`Parameter '${getParameterLabel(paramName)}' reset to ${defaultValue}`);
+                    });
+                });
+            }
+
+            updateSliderValues(paramName, value) {
+                const rangeInput = this.querySelector(`input[type="range"][data-param-name="${paramName}"]`);
+                const numberInput = this.querySelector(`input[type="number"][data-param-name="${paramName}"]`);
+
+                if (rangeInput) rangeInput.value = value;
+                if (numberInput) numberInput.value = value;
+            }
+
+            // This is almost identical to updateSliderValues; only difference is paramId vs paramName input; necessary?
+            updateParameterValues(paramId, value) {
+                const rangeInput = this.querySelector(`input[type="range"][data-param-id="${paramId}"]`);
+                const numberInput = this.querySelector(`input[type="number"][data-param-id="${paramId}"]`);
+
+                if (rangeInput) rangeInput.value = value;
+                if (numberInput) numberInput.value = value;
+            }
+
+            debouncedSend(paramId, value) {
+                if (this.debounceTimer) {
+                    clearTimeout(this.debounceTimer);
+                }
+                
+                this.setSendingState(paramId, true);
+                
+                this.debounceTimer = setTimeout(() => {
+                    this.sendValue(paramId, value);
+                }, 300);
+            }
+
+            sendValue(paramId, value) {
+                window.sendNumberCharacteristic(paramId, value);
+                this.setSendingState(paramId, false);
+            }
+
+            setSendingState(paramId, isSending) {
+                const container = this.querySelector(`input[data-param-id="${paramId}"]`)?.closest('.parameter-slider-container');
+                if (container) {
+                    container.style.borderColor = isSending ? '#ffa500' : '#696969';
+                }
+            }
+
+            updateConnectionState() {
+                console.log('ParameterSettings: updateConnectionState called');
+                
+                // Only re-render if we're going from connected to disconnected state
+                // If we're connecting, don't render - let updateParameters() handle it after device sync
+                if (!window.BLEState || !window.BLEState.connected) {
+                    this.render(); // Show "Connect device" message when disconnected
+                }
+            }
+        } // ParameterSettings
+
+        // Audio Settings  ********************************
+
+        class AudioSettings extends HTMLElement {
+            constructor() {
+                super();
+                //this.currentVisualizer = null;
+                this.sliders = [];
+            }
+
+            connectedCallback() {
+                //this.render();
+                this.updateParameters()
+                logEvent('Audio Settings initialized');
+            }
+
+            //Display applicable audio  sliders (does not update slider values displayed)
+            updateParameters() {
+                //const visualizer = getCurrentVisualizer();
+                //this.currentVisualizer = visualizer;
+                this.render();
+                logEvent(`Audio Settings updated`);
+            }
+
+            render() {
+
+                const parameters = AUDIO_PARAMS["audio"] || [];
+                
+                if (!parameters || parameters.length === 0) {
+                    this.innerHTML = `
+                        <div style="
+                            background-color: rgb(36, 36, 36);
+                            padding: 10px;
+                            border-radius: 4px;
+                            border: 1px solid #696969;
+                            text-align: center;
+                            color: #a0a0a0;
+                        ">
+                            No audio parameters available
+                        </div>
+                    `;
+                    return;
+                }
+
+                const sliderHTML = parameters.map(paramName => {
+                    const config = AUDIO_PARAMETER_REGISTRY[paramName];
+                    if (!config) return '';
+                    
+                    const label = getParameterLabel(paramName);
+                    const parameterId = getParameterId(paramName);
+                    
+                    return `
+                        <div class="parameter-slider-container" style="
+                            display: flex;
+                            align-items: center;
+                            gap: 15px;
+                            padding: 5px;
+                            background-color: rgb(36, 36, 36);
+                            border-radius: 4px;
+                            border: 1px solid #696969;
+                            margin-bottom: 3px;
+                            transition: border-color 0.3s ease;
+                        ">
+                            <label style="  
+                                flex: 0 0 100px;
+                                color: #d1d1d1;
+                            ">${label}:</label>
+                            
+                            <input type="range" 
+                                class="param-range"
+                                data-param-name="${paramName}"
+                                data-param-id="${parameterId}"
+                                min="${config.min}" 
+                                max="${config.max}" 
+                                step="${config.step}"
+                                value="${config.default}"
+                                style="
+                                    flex: 2;
+                                    min-width: 200px;
+                                ">
+                            
+                            <input type="number" 
+                                class="param-number"
+                                data-param-name="${paramName}"
+                                data-param-id="${parameterId}"
+                                min="${config.min}" 
+                                max="${config.max}" 
+                                step="${config.step}"
+                                value="${config.default}"
+                                style="
+                                    flex: 0 0 80px;
+                                    background-color: #2a2a2a;
+                                    color: white;
+                                    border: 1px solid #696969;
+                                    border-radius: 3px;
+                                    padding: 5px;
+                                    text-align: center;
+                                ">
+                            
+                            <button class="param-reset" data-param-name="${paramName}" data-default="${config.default}" style="
+                                flex: 0 0 40px;
+                                background-color: #1d1d1d;
+                                color: white;
+                                border: none;
+                                border-radius: 4px;
+                                padding: 4px;
+                                cursor: pointer;
+                            ">↻</button>
+                        </div>
+                    `;
+                }).join('');
+
+                this.innerHTML = `
+                    <div style="
+                        background-color: #000000;
+                        padding: 10px;
+                        border-radius: 4px;
+                        border: none;
+                    ">
+                        <div style="
+                            color: #a0a0a0;
+                            margin-bottom: 10px;
+                            text-align: center;
+                            font-size: 0.9em;
+                        ">
+                            Audio parameters
+                        </div>
+                        ${sliderHTML}
+                    </div>
+                `;
+                
+                this.attachEventListeners();
+                //this.updateParameterValues; // test*****************
+            }
+
+            attachEventListeners() {
+                // Range sliders
+                const rangeInputs = this.querySelectorAll('.param-range');
+                rangeInputs.forEach(input => {
+                    input.addEventListener('input', (e) => {
+                        const value = parseFloat(e.target.value);
+                        const paramId = e.target.getAttribute('data-param-id');
+                        const paramName = e.target.getAttribute('data-param-name');
+                        //what is purpose of working with both paramId and paramName here?
+                        this.updateSliderValues(paramName, value);
+                        //the following sends change to device; needs paramId (i.e., inParam) 
+                        this.debouncedSend(paramId, value);
+                    });
+                });
+
+                // Number inputs
+                const numberInputs = this.querySelectorAll('.param-number');
+                numberInputs.forEach(input => {
+                    input.addEventListener('input', (e) => {
+                        const value = parseFloat(e.target.value);
+                        const paramId = e.target.getAttribute('data-param-id');
+                        const paramName = e.target.getAttribute('data-param-name');
+                        const config = AUDIO_PARAMETER_REGISTRY[paramName];
+                        
+                        if (!isNaN(value) && value >= config.min && value <= config.max) {
+                            this.updateSliderValues(paramName, value);
+                            this.sendValue(paramId, value);
+                        }
+                    });
+
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            const value = parseFloat(e.target.value);
+                            const paramId = e.target.getAttribute('data-param-id');
+                            const paramName = e.target.getAttribute('data-param-name');
+                            const config = AUDIO_PARAMETER_REGISTRY[paramName];
+                            
+                            if (!isNaN(value) && value >= config.min && value <= config.max) {
+                                this.updateSliderValues(paramName, value);
+                                this.sendValue(paramId, value);
+                            }
+                        }
+                    });
+                });
+
+                // Reset buttons
+                const resetButtons = this.querySelectorAll('.param-reset');
+                resetButtons.forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const paramName = e.target.getAttribute('data-param-name');
+                        const defaultValue = parseFloat(e.target.getAttribute('data-default'));
+                        const parameterId = getParameterId(paramName);
+                        
+                        this.updateSliderValues(paramName, defaultValue);
+                        this.sendValue(parameterId, defaultValue);
+                        logEvent(`Parameter '${getParameterLabel(paramName)}' reset to ${defaultValue}`);
+                    });
+                });
+            }
+
+            updateSliderValues(paramName, value) {
+                const rangeInput = this.querySelector(`input[type="range"][data-param-name="${paramName}"]`);
+                const numberInput = this.querySelector(`input[type="number"][data-param-name="${paramName}"]`);
+
+                if (rangeInput) rangeInput.value = value;
+                if (numberInput) numberInput.value = value;
+            }
+
+            // This is almost identical to updateSliderValues; only difference is paramId vs paramName input; necessary?
+            updateParameterValues(paramId, value) {
+                const rangeInput = this.querySelector(`input[type="range"][data-param-id="${paramId}"]`);
+                const numberInput = this.querySelector(`input[type="number"][data-param-id="${paramId}"]`);
+
+                if (rangeInput) rangeInput.value = value;
+                if (numberInput) numberInput.value = value;
+            }
+
+            debouncedSend(paramId, value) {
+                if (this.debounceTimer) {
+                    clearTimeout(this.debounceTimer);
+                }
+                
+                this.setSendingState(paramId, true);
+                
+                this.debounceTimer = setTimeout(() => {
+                    this.sendValue(paramId, value);
+                }, 300);
+            }
+
+            sendValue(paramId, value) {
+                window.sendNumberCharacteristic(paramId, value);
+                this.setSendingState(paramId, false);
+            }
+
+            setSendingState(paramId, isSending) {
+                const container = this.querySelector(`input[data-param-id="${paramId}"]`)?.closest('.parameter-slider-container');
+                if (container) {
+                    container.style.borderColor = isSending ? '#ffa500' : '#696969';
+                }
+            }
+
+            updateConnectionState() {
+                console.log('AudioSettings: updateConnectionState called');
+
+                // Always re-render so controls are visible regardless of connection state
+                this.render();
+            }
+            
+            //updateAudioState() {
+            //    this.render();
+            //}
+        } // AudioSettings
+
+
+        // Bus Settings *******************************
+
+        class BusSettings extends HTMLElement {
+            constructor() {
+                super();
+                this.debounceTimers = {};
+            }
+
+            connectedCallback() {
+                this.render();
+                logEvent('Bus Settings initialized');
+            }
+
+            render() {
+                const busLabels = ['Bus A', 'Bus B', 'Bus C'];
+
+                const busGroupsHTML = busLabels.map((busLabel, busId) => {
+                    const sliderRows = Object.entries(BUS_PARAMETER_REGISTRY).map(([paramName, config]) => {
+                        const label = getParameterLabel(paramName);
+                        const parameterId = getParameterId(paramName);
+                        return `
+                            <div class="parameter-slider-container"
+                                data-bus-id="${busId}"
+                                data-param-id="${parameterId}"
+                                style="
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 15px;
+                                    padding: 5px;
+                                    background-color: rgb(36, 36, 36);
+                                    border-radius: 4px;
+                                    border: 1px solid #696969;
+                                    margin-bottom: 3px;
+                                    transition: border-color 0.3s ease;
+                                ">
+                                <label style="flex: 0 0 100px; color: #d1d1d1;">${label}:</label>
+                                <input type="range"
+                                    class="bus-param-range"
+                                    data-bus-id="${busId}"
+                                    data-param-name="${paramName}"
+                                    data-param-id="${parameterId}"
+                                    min="${config.min}" max="${config.max}" step="${config.step}" value="${config.default}"
+                                    style="flex: 2; min-width: 200px;">
+                                <input type="number"
+                                    class="bus-param-number"
+                                    data-bus-id="${busId}"
+                                    data-param-name="${paramName}"
+                                    data-param-id="${parameterId}"
+                                    min="${config.min}" max="${config.max}" step="${config.step}" value="${config.default}"
+                                    style="
+                                        flex: 0 0 80px;
+                                        background-color: #2a2a2a;
+                                        color: white;
+                                        border: 1px solid #696969;
+                                        border-radius: 3px;
+                                        padding: 5px;
+                                        text-align: center;
+                                    ">
+                                <button class="bus-param-reset"
+                                    data-bus-id="${busId}"
+                                    data-param-name="${paramName}"
+                                    data-default="${config.default}"
+                                    style="
+                                        flex: 0 0 40px;
+                                        background-color: #1d1d1d;
+                                        color: white;
+                                        border: none;
+                                        border-radius: 4px;
+                                        padding: 4px;
+                                        cursor: pointer;
+                                    ">↻</button>
+                            </div>
+                        `;
+                    }).join('');
+
+                    return `
+                        <div class="bus-group" style="margin-bottom: 8px;">
+                            <div style="
+                                color: #888;
+                                font-size: 0.8em;
+                                margin-bottom: 4px;
+                                padding: 3px 6px;
+                                background-color: #1a1a1a;
+                                border-radius: 3px;
+                            ">${busLabel}</div>
+                            ${sliderRows}
+                        </div>
+                    `;
+                }).join('');
+
+                this.innerHTML = `
+                    <div style="background-color: #000000; padding: 10px; border-radius: 4px; border: none;">
+                        <div style="color: #a0a0a0; margin-bottom: 10px; text-align: center; font-size: 0.9em;">
+                            Bus parameters
+                        </div>
+                        ${busGroupsHTML}
+                    </div>
+                `;
+
+                this.attachEventListeners();
+            }
+
+            attachEventListeners() {
+                this.querySelectorAll('.bus-param-range').forEach(input => {
+                    input.addEventListener('input', (e) => {
+                        const value = parseFloat(e.target.value);
+                        const paramId = e.target.getAttribute('data-param-id');
+                        const paramName = e.target.getAttribute('data-param-name');
+                        const busId = parseInt(e.target.getAttribute('data-bus-id'));
+                        this.syncInputs(busId, paramName, value);
+                        this.debouncedSend(busId, paramId, value);
+                    });
+                });
+
+                this.querySelectorAll('.bus-param-number').forEach(input => {
+                    input.addEventListener('input', (e) => {
+                        const value = parseFloat(e.target.value);
+                        const paramId = e.target.getAttribute('data-param-id');
+                        const paramName = e.target.getAttribute('data-param-name');
+                        const busId = parseInt(e.target.getAttribute('data-bus-id'));
+                        const config = BUS_PARAMETER_REGISTRY[paramName];
+                        if (!isNaN(value) && value >= config.min && value <= config.max) {
+                            this.syncInputs(busId, paramName, value);
+                            this.sendValue(busId, paramId, value);
+                        }
+                    });
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            const value = parseFloat(e.target.value);
+                            const paramId = e.target.getAttribute('data-param-id');
+                            const paramName = e.target.getAttribute('data-param-name');
+                            const busId = parseInt(e.target.getAttribute('data-bus-id'));
+                            const config = BUS_PARAMETER_REGISTRY[paramName];
+                            if (!isNaN(value) && value >= config.min && value <= config.max) {
+                                this.syncInputs(busId, paramName, value);
+                                this.sendValue(busId, paramId, value);
+                            }
+                        }
+                    });
+                });
+
+                this.querySelectorAll('.bus-param-reset').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const paramName = e.target.getAttribute('data-param-name');
+                        const defaultValue = parseFloat(e.target.getAttribute('data-default'));
+                        const busId = parseInt(e.target.getAttribute('data-bus-id'));
+                        const parameterId = getParameterId(paramName);
+                        this.syncInputs(busId, paramName, defaultValue);
+                        this.sendValue(busId, parameterId, defaultValue);
+                        logEvent(`Bus ${busId} '${getParameterLabel(paramName)}' reset to ${defaultValue}`);
+                    });
+                });
+            }
+
+            syncInputs(busId, paramName, value) {
+                const range = this.querySelector(`input.bus-param-range[data-bus-id="${busId}"][data-param-name="${paramName}"]`);
+                const number = this.querySelector(`input.bus-param-number[data-bus-id="${busId}"][data-param-name="${paramName}"]`);
+                if (range) range.value = value;
+                if (number) number.value = value;
+            }
+
+            debouncedSend(busId, paramId, value) {
+                const key = `${busId}_${paramId}`;
+                if (this.debounceTimers[key]) clearTimeout(this.debounceTimers[key]);
+                this.setSendingState(busId, paramId, true);
+                this.debounceTimers[key] = setTimeout(() => {
+                    this.sendValue(busId, paramId, value);
+                }, 300);
+            }
+
+            sendValue(busId, paramId, value) {
+                window.sendBusParamCharacteristic(paramId, value, busId);
+                this.setSendingState(busId, paramId, false);
+            }
+
+            setSendingState(busId, paramId, isSending) {
+                const containers = this.querySelectorAll(`.parameter-slider-container[data-bus-id="${busId}"][data-param-id="${paramId}"]`);
+                containers.forEach(c => c.style.borderColor = isSending ? '#ffa500' : '#696969');
+            }
+
+            updateConnectionState() {
+                this.render();
+            }
+        } // BusSettings
+
+
+        // Bin Mixer *******************************
+
+        class BinMixer extends HTMLElement {
+
+        }
+
+        // Layer Selector  ***************************************
+
+        /*
+        class LayerSelector extends HTMLElement {
+            constructor() {
+                super();
+                this.layers = {
+                    layer1: true,
+                    layer2: true, 
+                    layer3: true,
+                    layer4: true,
+                    layer5: true,
+                    layer6: true,
+                    layer7: true,
+                    layer8: true,
+                    layer9: true
+                };
+            }
+
+            connectedCallback() {
+                this.render();
+                this.attachEventListeners();
+                logEvent('Layer Selector initialized');
+            }
+
+            render() {
+                const layerCheckboxes = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => `
+                    <label style="
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        color: #a0a0a0;
+                        cursor: pointer;
+                        margin: 0 10px;
+                    ">
+                        <span style="margin-bottom: 5px; ">${num}</span>
+                        <input type="checkbox" class="layer-checkbox" data-layer="layer${num}" 
+                               ${this.layers[`layer${num}`] ? 'checked' : ''}
+                               style="transform: scale(1.2);">
+                    </label>
+                `).join('');
+
+                this.innerHTML = `
+                    <div style="
+                        background-color: rgb(36, 36, 36);
+                        padding: 10px;
+                        border-radius: 4px;
+                        border: ;
+                    ">
+                        <div style="
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            gap: 20px;
+                        ">
+                            ${layerCheckboxes}
+                        </div>
+                    </div>
+                `;
+            }
+
+            attachEventListeners() {
+                const checkboxes = this.querySelectorAll('.layer-checkbox');
+                checkboxes.forEach(checkbox => {
+                    checkbox.addEventListener('change', (e) => {
+                        const layerId = e.target.getAttribute('data-layer');
+                        const isChecked = e.target.checked;
+                        
+                        this.layers[layerId] = isChecked;
+                        
+                        // Send checkbox characteristic
+                        const checkboxId = `cx${layerId.charAt(0).toUpperCase() + layerId.slice(1)}`;
+                        window.sendCheckboxCharacteristic(checkboxId, isChecked);
+                        logEvent(`Layer ${layerId} ${isChecked ? 'enabled' : 'disabled'} (${checkboxId})`);
+                    });
+                });
+            }
+        } // LayerSelector
+        */
+       
+        // Presets ***********************************************
+       
+        class Presets extends HTMLElement {
+            constructor() {
+                super();
+                this.presets = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
+            }
+
+            connectedCallback() {
+                this.render();
+                this.attachEventListeners();
+                logEvent('Presets initialized');
+            }
+
+            render() {
+                const buttonGrid_presetsSave = this.presets.map((name, index) => `
+                    <button class="preset-save" data-index="${index}" style="
+                        background-color: #1d1d1d;
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        padding: 6px;
+                        margin: 4px;
+                        cursor: pointer;
+                        font-size: 1em;
+                        min-width: 15px;
+                    ">&#x2935</button>
+                `).join('');
+
+
+                const buttonGrid_presetsLoad = this.presets.map((name, index) => `
+                    <button class="preset-load" data-index="${index}" style="
+                        background-color: #1d1d1d;
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        padding: 6px;
+                        margin: 4px;
+                        cursor: pointer;
+                        font-size:1em;
+                        min-width: 15px;
+                    ">&#x2934</button>
+                `).join('');
+
+                this.innerHTML = `
+                    <div style="
+                        background-color: #000000;
+                        padding: 5px;
+                        border-radius: 4px;
+                        border: none;
+                    ">
+                      
+                        <div style="
+                            display: flex;
+                            justify-content: space-evenly;
+                            align-items: center;
+                            gap: 4px;
+                            margin-bottom: 0px;
+                        ">
+                            <span style="width: 45px;">Presets:</span>
+                            <div style="display: flex; justify-content: space-evenly; flex: 1; gap: 4px;">
+                                <span>1</span> <span>2</span> <span>3</span> <span>4</span> <span>5</span>
+                                <span>6</span> <span>7</span> <span>8</span> <span>9</span> <span>10</span>
+                            </div>
+                        </div>
+                    
+                        <div style="
+                            display: flex;  
+                            justify-content: space-evenly;
+                            align-items: center;
+                            gap: 4px;
+                            margin-bottom: 0px;
+                        ">
+                            <span style="width: 45px;">Save:</span>     
+                            ${buttonGrid_presetsSave}
+                        </div>
+                       
+                        <div style="
+                            display: flex;
+                            justify-content: space-evenly;
+                            align-items: center;
+                            gap: 4px;
+                            margin-bottom: 0px;
+                        ">
+                            <span style="width: 45px;">Load:</span>    
+                            ${buttonGrid_presetsLoad}
+                        </div>
+
+                    </div>
+                `;
+            }
+
+            attachEventListeners() {
+                const saveButtons = this.querySelectorAll('.preset-save');
+                saveButtons.forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const presetNumber = parseInt(e.target.getAttribute('data-index')) + 1;
+                        this.savePreset(presetNumber);
+                    });
+                });
+
+                const loadButtons = this.querySelectorAll('.preset-load');
+                loadButtons.forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const presetNumber = parseInt(e.target.getAttribute('data-index')) + 1;
+                        this.loadPreset(presetNumber);
+                    });
+                });
+            }
+
+            savePreset(presetNumber){
+                const buttonValue = presetNumber + 100;
+                window.sendButtonCharacteristic(buttonValue);
+                logEvent(`Preset saved: ${presetNumber}`);
+            }
+
+            loadPreset(presetNumber){
+                const buttonValue = presetNumber + 120;
+                window.sendButtonCharacteristic(buttonValue);
+                logEvent(`Preset loaded: ${presetNumber}`);
+            }
+        } // Presets
+
+        //**********************************************************************************************************
+
+        // Register all custom elements
+        customElements.define('ble-connection-panel', BLEConnectionPanel);
+        customElements.define('control-button', ControlButton);
+        customElements.define('control-checkbox', ControlCheckbox);
+        customElements.define('control-slider', ControlSlider);
+        customElements.define('control-dropdown', ControlDropdown);
+        customElements.define('program-selector', ProgramSelector);
+        customElements.define('mode-selector', ModeSelector);
+        customElements.define('parameter-settings', ParameterSettings);
+        customElements.define('audio-settings', AudioSettings);
+        customElements.define('bus-settings', BusSettings);
+
+        //setTimeout(initAudioEnabledStateFromUI, 0);
+        //customElements.define('layer-selector', LayerSelector);
+        customElements.define('preset-controls', Presets);
+
+        // Wait for all components to be ready
+        function waitForComponents() {
+            const requiredComponents = [
+                'ble-connection-panel',
+                'control-button',
+                'control-checkbox',
+                'control-slider',
+                'control-dropdown',
+                'program-selector',
+                'mode-selector',
+                'parameter-settings',
+                //'layer-selector',
+                'preset-controls'
+            ];
+            
+            const allReady = requiredComponents.every(tag => {
+                const element = document.querySelector(tag);
+                return element && element.isConnected;
+            });
+            
+            if (allReady) {
+                console.log('✅ All Web Components are ready');
+                logEvent('✅ All Web Components loaded and ready');
+               } else {
+                console.log('⚠️ Waiting for Web Components to initialize...');
+                setTimeout(waitForComponents, 100);
+            }
+        }
+        
+        // Start component readiness check
+        setTimeout(waitForComponents, 100);
+
+
+        // UTILITY FUNCTIONS **************************************************************
+
+        function str2ab(str) {
+            var buf = new ArrayBuffer(str.length*2);
+            var bufView = new Uint8Array(buf);
+            for (var i=0, strLen=str.length; i < strLen; i++) {
+                bufView[i] = str.charCodeAt(i);
+            }
+            return buf;
+        }
+
+        function logEvent(message) {
+            const log = document.getElementById('eventLog');
+            const timestamp = new Date().toLocaleTimeString();
+            log.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+    </script>
+
+</body>
+</html>
