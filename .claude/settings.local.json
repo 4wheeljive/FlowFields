@@ -16,7 +16,8 @@
       "Bash(find c:/Users/Jeff/Documents/Coding/PlatformIO/Projects/AuroraPortal/lib/FastLED/src/fl -maxdepth 1 -name s*)",
       "Bash(where pio:*)",
       "Read(//c/Users/Jeff/.platformio/penv/Scripts/**)",
-      "Bash(~/.platformio/penv/Scripts/pio.exe run:*)"
+      "Bash(~/.platformio/penv/Scripts/pio.exe run:*)",
+      "Bash(find /c/Users/Jeff/Documents/Coding/PlatformIO/Projects/ColorTrails/src -type f \\\\\\(-name *.h -o -name *.hpp -o -name *.cpp \\\\\\))"
     ],
     "deny": [],
     "ask": []

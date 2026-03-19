@@ -4,23 +4,12 @@ CREDITS:
  - colortrails based on visualizer by Stefan Petrick first introduced here:
 			https://www.reddit.com/r/FastLED/comments/1rny5j3/i_used_codex_for_the_first_time/
 */
-//===================================================================================================================
+//===============================================================================================================
 
 #include <Arduino.h>
 
 //#define FASTLED_OVERCLOCK 1.2
 #include <FastLED.h>
-
-//#include "fl/sketch_macros.h"
-//#include "fl/xymap.h"
-
-//#include "fl/math_macros.h"  
-//#include "fl/time_alpha.h"  
-//#include "fl/ui.h"         
-//#include "fl/fx/fx.h" 		
-//#include "fl/fx/2d/blend.h"	
-//#include "fl/fx/2d/wave.h"	
-//#include "fl/fx/fx2d.h"  
 
 //#include "reference/palettes.h"
 

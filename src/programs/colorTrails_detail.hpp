@@ -31,7 +31,8 @@ namespace colorTrails {
 
     static unsigned long t0;
     static unsigned long lastFrameMs;
-    uint8_t lastEmitter = 255;  // force initial setup on first frame
+    uint8_t lastEmitter = 255;    // force initial setup on first frame
+    uint8_t lastFlowField = 255;  // force initial setup on first frame
 
 
     // ═══════════════════════════════════════════════════════════════════
@@ -267,7 +268,8 @@ namespace colorTrails {
 
     enum FlowFieldType : uint8_t {
         FLOW_NOISE = 0,
-        // future: FLOW_SPIRAL, FLOW_CENTER, FLOW_OUTWARD, FLOW_POLARWARP, ...
+        FLOW_SPIRAL,
+        // future: FLOW_CENTER, FLOW_OUTWARD, FLOW_POLARWARP, ...
         FLOW_COUNT
     };
 
@@ -276,7 +278,8 @@ namespace colorTrails {
     using FlowPrepFn    = void(*)(float t);
     using FlowAdvectFn  = void(*)(float dt);
 
-        // ═══════════════════════════════════════════════════════════════════
+    
+    // ═══════════════════════════════════════════════════════════════════
     //  COLOR FLOW FIELDS ===============================================
     // ═══════════════════════════════════════════════════════════════════
 
@@ -298,41 +301,10 @@ namespace colorTrails {
 
     */
 
-    // --- Flow field parameter structs ---
-
-    struct NoiseFlowParams {
-        float xSpeed     = -1.73f;   // Noise scroll speed  (column axis)
-        float ySpeed     = -1.72f;   // Noise scroll speed  (row axis)
-        float xAmplitude =  1.00f;   // Noise amplitude     (column axis)
-        float yAmplitude =  1.00f;   // Noise amplitude     (row axis)
-        float xFrequency =  0.33f;   // Noise spatial scale (column axis) (aka "xScale")
-        float yFrequency =  0.32f;   // Noise spatial scale (row axis) (aka "yScale")
-        float xShift     =  1.8f;    // Max horizontal shift per row  (pixels)
-        float yShift     =  1.8f;    // Max vertical shift per column (pixels)
-        bool  use2DNoise =  true;    // false = 1D Perlin, true = 2D Perlin
-    };
-
-    // Live flow field param instance
-    NoiseFlowParams noiseFlow;
-
-    // future:
-    //SpiralFlowParams spiralFlow;
-    //CenterFlowParams centerFlow;
-    // etc.
 
     // ═══════════════════════════════════════════════════════════════════
     //  MODULATORS ======================================================
     // ═══════════════════════════════════════════════════════════════════
-
-    // Amplitude modulation: slow 1D Perlin noise modulates xAmplitude/yAmplitude
-
-    struct AmpModParams {
-        float intensity = 4.0f;    // Depth of amplitude modulation (0 = off)
-        float speed     = 1.0f;    // Temporal speed of the variation noise
-        bool  active    = false;   // on/off
-    };
-
-    AmpModParams ampMod;
 
     // future:
     //Modulator sin/beatsin8/???;
@@ -361,22 +333,16 @@ namespace colorTrails {
         float colorSpeed = 0.10f;
         float circleDiam = 1.5f;
         float orbitDiam  = 10.f;
-        //                       xSpeed, ySpeed, xAmp, yAmp, xFreq, yFreq, xShft, yShtf, 2D noise
-        NoiseFlowParams noiseFlow{-1.73f, -1.72f, 1.0f, 1.0f, 0.33f, 0.32f, 1.8f, 1.8f, true};
     };
 
     struct LissajousParams {
         float endpointSpeed = 0.35f;
         float colorShift    = 0.10f;
         float lineAmplitude = (MIN_DIMENSION - 4) * 0.75f;
-        //                       xSpeed, ySpeed, xAmp, yAmp, xFreq, yFreq, xShft, yShtf, 2D noise
-        NoiseFlowParams noiseFlow{0.1f, 0.1f,   1.0f, 1.0f, 0.33f, 0.32f, 1.8f, 1.8f, true};
     };
 
     struct BorderRectParams {
         float colorShift = 0.10f;
-        //                       xSpeed, ySpeed, xAmp, yAmp, xFreq, yFreq, xShft, yShtf, 2D noise
-        NoiseFlowParams noiseFlow{-1.73f, -1.72f, 0.75f, 0.75f, 0.33f, 0.32f, 1.8f, 1.8f, true};;
     };
 
     // Live emitter param instances
@@ -417,6 +383,8 @@ namespace colorTrails {
     };
 
     CtVizConfig vizConfig;
+
+    #include "flow_noise.h"
 
 
     // ═══════════════════════════════════════════════════════════════════
@@ -488,135 +456,6 @@ namespace colorTrails {
 
 
     // ═══════════════════════════════════════════════════════════════════
-    //  AMPLITUDE MODULATOR
-    // ═══════════════════════════════════════════════════════════════════
-    //  Slow 1D Perlin noise modulates the flow field's xAmplitude/yAmplitude.
-    //  Operates on working copies (does not mutate base noiseFlow params).
-
-    static void applyAmpModulation(float t, float& xAmp, float& yAmp) {
-        if (!ampMod.active) return;
-
-        float nVarX = ampVarX.noise(t * 0.16f * ampMod.speed);
-        float nVarY = ampVarY.noise(t * 0.13f * ampMod.speed + 17.0f);
-
-        float selfMod = 0.5f + 0.5f * ((nVarX + nVarY) * 0.5f);
-        float effVariation = ampMod.intensity * selfMod;
-
-        xAmp = clampf(xAmp + nVarX * 0.45f * effVariation, 0.10f, 1.0f);
-        yAmp = clampf(yAmp + nVarY * 0.45f * effVariation, 0.10f, 1.0f);
-    }
-
-
-    // ═══════════════════════════════════════════════════════════════════
-    //  NOISE FLOW FIELD
-    // ═══════════════════════════════════════════════════════════════════
-
-    // --- Profile builders ---
-
-    static void sampleProfile1D(const Perlin1D &n, float t, float speed,
-                                float amp, float scale, int count, float *out) {
-        const float freq  = 0.23f;
-        const float phase = t * speed;
-        for (int i = 0; i < count; i++) {
-            float v = n.noise(i * freq * scale + phase);
-            out[i]  = clampf(v * amp, -1.0f, 1.0f);
-        }
-    }
-
-    static void sampleProfile2D(const Perlin2D &n, float t, float speed,
-                                float amp, float scale, int count, float *out) {
-        const float freq   = 0.23f;
-        const float scrollY = t * speed;
-        for (int i = 0; i < count; i++) {
-            float v = n.noise(i * freq * scale, scrollY);
-            out[i]  = clampf(v * amp, -1.0f, 1.0f);
-        }
-    }
-
-    // --- Prepare: build noise profiles, apply modulator, apply flips ---
-
-    static void noiseFlowPrepare(float t) {
-        // Working copies of amplitude (modulator may alter these)
-        float workXAmp = noiseFlow.xAmplitude;
-        float workYAmp = noiseFlow.yAmplitude;
-
-        if (vizConfig.useAmpMod) {
-            applyAmpModulation(t, workXAmp, workYAmp);
-        }
-
-        // Build noise profiles
-        if (noiseFlow.use2DNoise) {
-            sampleProfile2D(noise2X, t, noiseFlow.xSpeed, workXAmp,
-                            noiseFlow.xFrequency, WIDTH,  xProf);
-            sampleProfile2D(noise2Y, t, noiseFlow.ySpeed, workYAmp,
-                            noiseFlow.yFrequency, HEIGHT, yProf);
-        } else {
-            sampleProfile1D(noiseX, t, noiseFlow.xSpeed, workXAmp,
-                            noiseFlow.xFrequency, WIDTH,  xProf);
-            sampleProfile1D(noiseY, t, noiseFlow.ySpeed, workYAmp,
-                            noiseFlow.yFrequency, HEIGHT, yProf);
-        }
-
-        // Apply axis flip toggles
-        if (vizConfig.flipVertical) {
-            for (int i = 0; i < WIDTH / 2; i++) {
-                float tmp = xProf[i];
-                xProf[i] = xProf[WIDTH - 1 - i];
-                xProf[WIDTH - 1 - i] = tmp;
-            }
-        }
-        if (vizConfig.flipHorizontal) {
-            for (int i = 0; i < HEIGHT / 2; i++) {
-                float tmp = yProf[i];
-                yProf[i] = yProf[HEIGHT - 1 - i];
-                yProf[HEIGHT - 1 - i] = tmp;
-            }
-        }
-    }
-
-    // --- Advect: two-pass fractional advection (bilinear interpolation) + fade ---
-
-    static void noiseFlowAdvect(float dt) {
-        // The original Python applied fadeRate once per frame at 60 FPS.
-        // Scale the exponent by actual dt so decay rate is frame-rate-independent.
-        float fadePerSec = fl::powf(vizConfig.fadeRate, 60.0f);
-        float fade = fl::powf(fadePerSec, dt);
-
-        // Pass 1 — horizontal row shift  (Y-noise drives X movement)
-        for (int y = 0; y < HEIGHT; y++) {
-            float sh = yProf[y] * noiseFlow.xShift;
-            for (int x = 0; x < WIDTH; x++) {
-                float sx  = fmodPos((float)x - sh, (float)WIDTH);
-                int   ix0 = (int)fl::floorf(sx) % WIDTH;
-                int   ix1 = (ix0 + 1) % WIDTH;
-                float f   = sx - fl::floorf(sx);
-                float inv = 1.0f - f;
-                tR[y][x] = gR[y][ix0] * inv + gR[y][ix1] * f;
-                tG[y][x] = gG[y][ix0] * inv + gG[y][ix1] * f;
-                tB[y][x] = gB[y][ix0] * inv + gB[y][ix1] * f;
-            }
-        }
-
-        // Pass 2 — vertical column shift  (X-noise drives Y movement) + dim
-        for (int x = 0; x < WIDTH; x++) {
-            float sh = xProf[x] * noiseFlow.yShift;
-            for (int y = 0; y < HEIGHT; y++) {
-                float sy  = fmodPos((float)y - sh, (float)HEIGHT);
-                int   iy0 = (int)fl::floorf(sy) % HEIGHT;
-                int   iy1 = (iy0 + 1) % HEIGHT;
-                float f   = sy - fl::floorf(sy);
-                float inv = 1.0f - f;
-                // truncate to integer — Python's Pygame surface stores uint8,
-                // so int(value) kills sub-1.0 residuals every frame.
-                gR[y][x] = fl::floorf((tR[iy0][x] * inv + tR[iy1][x] * f) * fade);
-                gG[y][x] = fl::floorf((tG[iy0][x] * inv + tG[iy1][x] * f) * fade);
-                gB[y][x] = fl::floorf((tB[iy0][x] * inv + tB[iy1][x] * f) * fade);
-            }
-        }
-    }
-
-
-    // ═══════════════════════════════════════════════════════════════════
     //  DISPATCH TABLES
     // ═══════════════════════════════════════════════════════════════════
 
@@ -633,6 +472,8 @@ namespace colorTrails {
     const FlowAdvectFn FLOW_ADVECT[] = {
         noiseFlowAdvect,      // FLOW_NOISE
     };
+
+    constexpr uint8_t FLOW_DISPATCH_COUNT = sizeof(FLOW_PREPARE) / sizeof(FLOW_PREPARE[0]);
 
 
     // ═══════════════════════════════════════════════════════════════════
@@ -659,19 +500,14 @@ namespace colorTrails {
         ampVarY.init(202);
     }
 
-    // Helper: get the NoiseFlowParams owned by the active emitter
-    static const NoiseFlowParams& activeEmitterNoiseFlow() {
-        switch (vizConfig.emitter) {
-            case EMITTER_LISSAJOUS:  return lissajous.noiseFlow;
-            case EMITTER_BORDERRECT: return borderRect.noiseFlow;
-            default:                 return orbital.noiseFlow;
-        }
-    }
 
-    // Push all component defaults into cVars (called on mode change)
+
+    // Push emitter + universal defaults into cVars (called on emitter/mode change)
     static void pushDefaultsToCVars() {
         // Universal
         cFadeRate       = vizConfig.fadeRate;
+        cFlipVertical   = vizConfig.flipVertical;
+        cFlipHorizontal = vizConfig.flipHorizontal;
         // Emitter: orbital
         cOrbitSpeed     = orbital.orbitSpeed;
         cColorSpeed     = orbital.colorSpeed;
@@ -681,26 +517,13 @@ namespace colorTrails {
         cEndpointSpeed  = lissajous.endpointSpeed;
         cColorShift     = lissajous.colorShift;
         cLineAmplitude  = lissajous.lineAmplitude;
-        // NoiseFlow — load from active emitter's defaults
-        const NoiseFlowParams& nf = activeEmitterNoiseFlow();
-        noiseFlow = nf;  // copy emitter defaults into live instance
-        cXSpeed         = nf.xSpeed;
-        cYSpeed         = nf.ySpeed;
-        cXAmplitude     = nf.xAmplitude;
-        cYAmplitude     = nf.yAmplitude;
-        cXFrequency     = nf.xFrequency;
-        cYFrequency     = nf.yFrequency;
-        cXShift         = nf.xShift;
-        cYShift         = nf.yShift;
-        // Amplitude modulator
-        cVariationIntensity = ampMod.intensity;
-        cVariationSpeed     = ampMod.speed;
-        cModulateAmplitude  = ampMod.active ? 1 : 0;
     }
 
     // Read cVars into component structs (called every frame)
     static void syncFromCVars() {
         vizConfig.fadeRate       = cFadeRate;
+        vizConfig.flipVertical   = cFlipVertical;
+        vizConfig.flipHorizontal = cFlipHorizontal;
         orbital.orbitSpeed       = cOrbitSpeed;
         orbital.colorSpeed       = cColorSpeed;
         orbital.circleDiam       = cCircleDiam;
@@ -709,19 +532,8 @@ namespace colorTrails {
         lissajous.colorShift     = cColorShift;
         lissajous.lineAmplitude  = cLineAmplitude;
         borderRect.colorShift    = cColorShift;
-        noiseFlow.xSpeed         = cXSpeed;
-        noiseFlow.ySpeed         = cYSpeed;
-        noiseFlow.xAmplitude     = cXAmplitude;
-        noiseFlow.yAmplitude     = cYAmplitude;
-        noiseFlow.xFrequency     = cXFrequency;
-        noiseFlow.yFrequency     = cYFrequency;
-        noiseFlow.xShift         = cXShift;
-        noiseFlow.yShift         = cYShift;
-        // Amplitude modulator
-        ampMod.intensity         = cVariationIntensity;
-        ampMod.speed             = cVariationSpeed;
-        ampMod.active            = (cModulateAmplitude > 0);
-        vizConfig.useAmpMod      = ampMod.active;
+        // Flow field + modulator
+        syncFlowFromCVars();
     }
 
     void runColorTrails() {
@@ -738,7 +550,13 @@ namespace colorTrails {
             sendVisualizerState();
         }
 
-
+        // Detect flow field changes
+        uint8_t currentFlowField = (uint8_t)vizConfig.flowField;
+        if (currentFlowField < FLOW_DISPATCH_COUNT && currentFlowField != lastFlowField) {
+            lastFlowField = currentFlowField;
+            pushFlowDefaultsToCVars();
+            sendVisualizerState();
+        }
 
         // Sync UI-controlled values into component structs
         syncFromCVars();

@@ -411,6 +411,19 @@
                     </control-button>
                 </div>  -->
 
+                <control-checkbox
+                    label="Flip Vertical"
+                    data-my-number="30"
+                    data-visualizers="colortrails"
+                    unchecked>
+                </control-checkbox>
+                <control-checkbox
+                    label="Flip Horizontal"
+                    data-my-number="31"
+                    data-visualizers="colortrails"
+                    unchecked>
+                </control-checkbox>
+
                 <control-button
                     label="Trigger"
                     data-my-number="160"
@@ -891,13 +904,16 @@
            
             //ColorTrails
             fadeRate: {min: 0.80000, max: 0.99999, default: 0.99922, step: 0.00001},
+            
             orbitSpeed: {min: 0.01, max: 25, default: 0.35, step: 0.01},
             colorSpeed: {min: 0.01, max: 2, default: 0.10, step: 0.01},
             circleDiam: {min: 0.1, max: 5, default: 1.5, step: 0.1},
             orbitDiam: {min: 1, max: 20, default: 10, step: 0.5},
+            
             endpointSpeed: {min: 0.01, max: 2, default: 0.35, step: 0.01},
             colorShift: {min: 0.01, max: 1, default: 0.10, step: 0.01},
             lineAmplitude: {min: 1, max: 20, default: 13.5, step: 0.5},
+            
             xSpeed: {min: -5, max: 5, default: -1.73, step: 0.01},
             ySpeed: {min: -5, max: 5, default: -1.72, step: 0.01},
             xAmplitude: {min: 0.1, max: 3, default: 1.0, step: 0.01},
@@ -906,6 +922,7 @@
             yFrequency: {min: 0.05, max: 4.00, default: 0.32, step: 0.01},
             xShift: {min: 0.1, max: 5, default: 1.8, step: 0.1},
             yShift: {min: 0.1, max: 5, default: 1.8, step: 0.1},
+            
             variationIntensity: {min: 0, max: 8, default: 4, step: 0.1},
             variationSpeed: {min: 0, max: 4, default: 1, step: 0.1},
             modulateAmplitude: {min: 0, max: 1, default: 0, step: 1},

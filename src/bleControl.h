@@ -213,6 +213,8 @@ float cYSpeed = -1.72f;
 float cVariationIntensity = 4.0f;
 float cVariationSpeed = 1.0f;
 uint8_t cModulateAmplitude = 1;
+bool cFlipVertical = false;
+bool cFlipHorizontal = false;
 
 
 ArduinoJson::JsonDocument sendDoc;
@@ -696,7 +698,10 @@ void processCheckbox(String receivedID, bool receivedValue ) {
    if (receivedID == "cx7") {autoFloor = receivedValue;};
    
    if (receivedID == "cx11") {mappingOverride = receivedValue;};
-   
+
+   if (receivedID == "cx30") {cFlipVertical = receivedValue;};
+   if (receivedID == "cx31") {cFlipHorizontal = receivedValue;};
+
 }
 
 void processString(String receivedID, String receivedValue ) {
