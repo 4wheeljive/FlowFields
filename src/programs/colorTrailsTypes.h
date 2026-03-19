@@ -30,23 +30,68 @@ namespace colorTrails {
     uint8_t lastEmitter = 255;    // force initial setup on first frame
     uint8_t lastFlowField = 255;  // force initial setup on first frame
 
-    #define num_oscillators 10
 
-    struct oscillators {
-        float master_speed; // global transition speed
-        float offset[num_oscillators];  // oscillators can be shifted by a time offset
-        float ratio[num_oscillators]; // speed ratios for the individual oscillators
-    };
+    // ═══════════════════════════════════════════════════════════════════
+    //  MATH HELPERS
+    // ═══════════════════════════════════════════════════════════════════
 
-    struct modulators {
-        float linear[num_oscillators];      // returns 0 to FLT_MAX
-        float radial[num_oscillators];      // returns 0 to 2*PI
-        float directional[num_oscillators]; // returns -1 to 1
-        float noise_angle[num_oscillators]; // returns 0 to 2*PI
-    };
+    // Non-negative float modulo (matches Python's % for positive m).
+    static inline float fmodPos(float x, float m) {
+        float r = fl::fmodf(x, m);
+        return r < 0.0f ? r + m : r;
+    }
 
-    oscillators timings;         // oscillator inputs; all time/speed settings in one place
-    modulators move;            // oscillator outputs; all oscillator based movers and shifters at one place
+    static inline float clampf(float v, float lo, float hi) {
+        return (v < lo) ? lo : (v > hi) ? hi : v;
+    }
+
+    static inline uint8_t f2u8(float v) {
+        int i = (int)v;
+        if (i < 0)   return 0;
+        if (i > 255) return 255;
+        return (uint8_t)i;
+    }
+
+    // Wrapper functions that take radians and return float (-1.0 to 1.0)
+    // Using FastLED's sin32/cos32 approximations for better performance
+    constexpr float RADIANS_TO_SIN32 = 2671177.0f;  // 16777216 / (2*PI)
+    constexpr float SIN32_TO_FLOAT = 1.0f / 2147418112.0f;  // reciprocal for multiply instead of divide
+
+    inline float sin_fast(float angle_radians) {
+        uint32_t angle_sin32 = (uint32_t)(angle_radians * RADIANS_TO_SIN32);
+        return fl::sin32(angle_sin32) * SIN32_TO_FLOAT;
+    }
+
+    inline float cos_fast(float angle_radians) {
+        uint32_t angle_cos32 = (uint32_t)(angle_radians * RADIANS_TO_SIN32);
+        return fl::cos32(angle_cos32) * SIN32_TO_FLOAT;
+    }
+
+    /*
+    // Combined sin+cos from a single LUT pass — one radians->uint32 conversion,
+    // shared table lookups. Used in render_value where both are needed for the
+    // same angle.
+    struct SinCosResult { float sin_val; float cos_val; };
+
+    inline SinCosResult sincos_fast(float angle_radians) {
+        uint32_t angle = (uint32_t)(angle_radians * RADIANS_TO_SIN32);
+        fl::SinCos32 sc = fl::sincos32(angle);
+        return { sc.sin_val * SIN32_TO_FLOAT, sc.cos_val * SIN32_TO_FLOAT };
+    }
+    */
+
+    #define FL_SIN_F(x) sin_fast(x)
+    #define FL_COS_F(x) cos_fast(x)
+
+    /*
+    // IEEE 754 bit-trick fast power for base in [0,1]. ~5% error, 10-20x faster than powf.
+    inline float fastpow(float base, float exp) {
+        union { float f; int32_t i; } v = { base };
+        v.i = (int32_t)(exp * (v.i - 1065353216) + 1065353216);
+        return v.f;
+    }
+    */
+
 
 
     // ═══════════════════════════════════════════════════════════════════
@@ -153,25 +198,53 @@ namespace colorTrails {
 
 
     // ═══════════════════════════════════════════════════════════════════
-    //  MATH HELPERS
+    //  MODULATORS
     // ═══════════════════════════════════════════════════════════════════
 
-    // Non-negative float modulo (matches Python's % for positive m).
-    static inline float fmodPos(float x, float m) {
-        float r = fl::fmodf(x, m);
-        return r < 0.0f ? r + m : r;
-    }
+    #define num_timers 10
 
-    static inline float clampf(float v, float lo, float hi) {
-        return (v < lo) ? lo : (v > hi) ? hi : v;
-    }
+    struct timers {
+        float offset[num_timers];  // timers can be separated by a time offset
+        float ratio[num_timers];   // ratio determines time-sensitivity
+    };
 
-    static inline uint8_t f2u8(float v) {
-        int i = (int)v;
-        if (i < 0)   return 0;
-        if (i > 255) return 255;
-        return (uint8_t)i;
-    }
+    struct modulators {
+        float linear[num_timers];      // returns 0 to FLT_MAX
+        float radial[num_timers];      // returns 0 to 2*PI
+        float directional[num_timers]; // returns -1 to 1
+        float noise_angle[num_timers]; // returns 0 to 2*PI
+    };
+
+    timers timings;     // timer inputs; all time/speed settings in one place
+    modulators move;    // timer outputs; all time-based modulators in one place
+
+    
+    void calculate_modulators(timers &timings) {
+
+            float runtime = fl::millis(); 
+
+            for (uint8_t i = 0; i < num_timers; i++) {
+
+                // continously rising offsets, returns 0 to max_float
+                move.linear[i] = 
+                    (runtime + timings.offset[i]) * timings.ratio[i];
+
+                // angle offsets for continous rotation, returns 0 to 2 * PI
+                move.radial[i] = 
+                    fl::fmodf(move.linear[i], 2 * PI); 
+
+                // directional offsets or factors, returns -1 to 1
+                move.directional[i] = 
+                    fl::sinf(move.radial[i]); 
+
+                /*
+                // noise based angle offset, returns 0 to 2 * PI
+                move.noise_angle[i] =
+                    PI * (1.f + Perlin1D::noise(move.linear[i]));
+                */
+            
+            }
+        }
 
 
     // ═══════════════════════════════════════════════════════════════════
@@ -272,7 +345,8 @@ namespace colorTrails {
     // ═══════════════════════════════════════════════════════════════════
 
     enum EmitterType : uint8_t {
-        EMITTER_ORBITAL = 0,
+        EMITTER_ORBITALDOTS = 0,
+        EMITTER_SWARMINGDOTS,
         EMITTER_LISSAJOUS,
         EMITTER_BORDERRECT,
         // future: EMITTER_TRIANGLE, ...
@@ -298,11 +372,18 @@ namespace colorTrails {
 
     // --- Emitter parameter structs ---
 
-    struct OrbitalParams {
+    struct OrbitalDotsParams {
         float orbitSpeed = 3.0f;
         float colorSpeed = 0.10f;
         float dotDiam = 1.5f;
         float orbitDiam  = 10.f;
+    };
+
+    struct SwarmingDotsParams {
+        float swarmSpeed  = 0.5f;    // overall speed of swarming motion
+        float swarmSpread = 1.0f;    // 0 = tight cluster, 1 = normal, >1 = wide spread
+        float colorSpeed  = 0.10f;   // rainbow color cycling
+        float dotDiam     = 1.5f;    // dot size
     };
 
     struct LissajousParams {
@@ -316,9 +397,10 @@ namespace colorTrails {
     };
 
     // Live emitter param instances
-    OrbitalParams    orbital;
-    LissajousParams  lissajous;
-    BorderRectParams borderRect;
+    OrbitalDotsParams   orbitalDots;
+    SwarmingDotsParams  swarmingDots;
+    LissajousParams     lissajous;
+    BorderRectParams    borderRect;
 
 
     // ═══════════════════════════════════════════════════════════════════
@@ -332,7 +414,7 @@ namespace colorTrails {
         bool  flipHorizontal = false;
 
         // Active component selections
-        EmitterType   emitter   = EMITTER_ORBITAL;  // tied to / selected by MODE
+        EmitterType   emitter   = EMITTER_ORBITALDOTS;  // tied to / selected by MODE
         FlowFieldType flowField = FLOW_NOISE; // only option for now;
                                               // will add new UI panel w/ buttons to select
 

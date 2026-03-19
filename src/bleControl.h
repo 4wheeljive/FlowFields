@@ -49,20 +49,22 @@ extern uint8_t MODE;
   };
 
   // Mode names in PROGMEM
-   const char orbital_str[] PROGMEM = "orbital";
+   const char orbitaldots_str[] PROGMEM = "orbitaldots";
+   const char swarmingdots_str[] PROGMEM = "swarmingdots";
    const char lissajous_str[] PROGMEM = "lissajous";
    const char borderrect_str[] PROGMEM = "borderrect";
 
    const char* const COLORTRAILS_MODES[] PROGMEM = {
-         orbital_str, lissajous_str, borderrect_str
+         orbitaldots_str, swarmingdots_str, lissajous_str, borderrect_str
       };
 
-   const uint8_t MODE_COUNTS[] = {3};
+   const uint8_t MODE_COUNTS[] = {4};
 
    // Visualizer parameter mappings - PROGMEM arrays for memory efficiency
    // Individual parameter arrays for each visualizer
    const char* const COLORTRAILS_PARAMS[] PROGMEM = {
        "fadeRate", "orbitSpeed", "colorSpeed", "dotDiam", "orbitDiam",
+       "swarmSpeed", "swarmSpread",
        "endpointSpeed", "colorShift", "lineAmplitude",
        "xSpeed", "ySpeed", "xAmplitude", "yAmplitude",
        "xFrequency", "yFrequency", "xShift", "yShift",
@@ -79,9 +81,10 @@ extern uint8_t MODE;
    // String-based lookup table - mirrors JavaScript VISUALIZER_PARAMS
    // Can number values be replace by an array element count?
    const VisualizerParamEntry VISUALIZER_PARAM_LOOKUP[] PROGMEM = {
-      {"colortrails-orbital", COLORTRAILS_PARAMS, 19},
-      {"colortrails-lissajous", COLORTRAILS_PARAMS, 19},
-      {"colortrails-borderrect", COLORTRAILS_PARAMS, 19}
+      {"colortrails-orbitaldots", COLORTRAILS_PARAMS, 21},
+      {"colortrails-swarmingdots", COLORTRAILS_PARAMS, 21},
+      {"colortrails-lissajous", COLORTRAILS_PARAMS, 21},
+      {"colortrails-borderrect", COLORTRAILS_PARAMS, 21}
    };
 
   class VisualizerManager {
@@ -203,6 +206,8 @@ float cYShift = 1.8f;
 float cOrbitDiam = 10.0f;
 float cColorSpeed = 0.10f;
 float cDotDiam = 1.5f;
+float cSwarmSpeed = 0.5f;
+float cSwarmSpread = 1.0f;
 float cEndpointSpeed = 0.35f;
 float cColorShift = 0.10f;
 float cLineAmplitude = 13.5f;
@@ -354,6 +359,8 @@ void sendReceiptString(String receivedID, String receivedValue) {
    X(float, OrbitDiam, 10.0f) \
    X(float, ColorSpeed, 0.10f) \
    X(float, DotDiam, 1.5f) \
+   X(float, SwarmSpeed, 0.5f) \
+   X(float, SwarmSpread, 1.0f) \
    X(float, EndpointSpeed, 0.35f) \
    X(float, ColorShift, 0.10f) \
    X(float, LineAmplitude, 13.5f) \

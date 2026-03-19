@@ -33,14 +33,69 @@ namespace colorTrails {
     static void emitOrbitalDots(float t) {
         float ocx  = WIDTH  * 0.5f - 0.5f;
         float ocy  = HEIGHT * 0.5f - 0.5f;
-        float orad = orbital.orbitDiam * 0.8f;
-        float base = t * orbital.orbitSpeed;
+        float orad = orbitalDots.orbitDiam * 0.8f;
+        float base = t * orbitalDots.orbitSpeed;
         for (int i = 0; i < 3; i++) {
             float a  = base + i * (2.0f * CT_PI / 3.0f);
             float cx = ocx + fl::cosf(a) * orad;
             float cy = ocy + fl::sinf(a) * orad;
-            CRGB c = rainbow(t, orbital.colorSpeed, i / 3.0f);
-            drawDot(cx, cy, orbital.dotDiam, c.r, c.g, c.b);
+            CRGB c = rainbow(t, orbitalDots.colorSpeed, i / 3.0f);
+            drawDot(cx, cy, orbitalDots.dotDiam, c.r, c.g, c.b);
+        }
+    }
+
+    // Swarming dots — 3 dots that move in a loose shifting group.
+    // Uses calculate_modulators() with 6 timers: each dot gets a dedicated
+    // X modulator (even indices) and Y modulator (odd indices).
+    // swarmSpread controls grouping (0 = clustered, 1 = independent, >1 = wide).
+    static void emitSwarmingDots(float t) {
+        float spd = swarmingDots.swarmSpeed;
+
+        // 6 timers: [0]=dot0.X, [1]=dot0.Y, [2]=dot1.X, [3]=dot1.Y, [4]=dot2.X, [5]=dot2.Y
+        // Similar ratios keep dots moving at comparable speeds;
+        // irrational relationships prevent exact repetition.
+        static const float baseRatios[6] = {
+            0.00173f, 0.00131f,   // dot 0: X, Y
+            0.00197f, 0.00149f,   // dot 1: X, Y
+            0.00211f, 0.00113f    // dot 2: X, Y
+        };
+        // Offsets: each dot's Y is ~quarter-period ahead of its X
+        // to create elliptical paths instead of diagonal lines
+        static const float baseOffsets[6] = {
+               0.0f,  900.0f,    // dot 0
+             600.0f, 1700.0f,    // dot 1
+            1300.0f, 2400.0f     // dot 2
+        };
+
+        for (int i = 0; i < 6; i++) {
+            timings.ratio[i]  = baseRatios[i] * spd;
+            timings.offset[i] = baseOffsets[i];
+        }
+
+        calculate_modulators(timings);
+
+        // Each dot: dedicated X (even index) and Y (odd index)
+        float dotX[3], dotY[3];
+        for (int d = 0; d < 3; d++) {
+            dotX[d] = move.directional[d * 2];
+            dotY[d] = move.directional[d * 2 + 1];
+        }
+
+        // Group center
+        float cenX = (dotX[0] + dotX[1] + dotX[2]) / 3.0f;
+        float cenY = (dotY[0] + dotY[1] + dotY[2]) / 3.0f;
+
+        // Blend each dot between center and its own position via swarmSpread
+        float spread = swarmingDots.swarmSpread;
+        for (int d = 0; d < 3; d++) {
+            float sx = cenX + spread * (dotX[d] - cenX);
+            float sy = cenY + spread * (dotY[d] - cenY);
+
+            float cx = (WIDTH  - 1) * 0.5f * (1.0f + sx);
+            float cy = (HEIGHT - 1) * 0.5f * (1.0f + sy);
+
+            CRGB c = rainbow(t, swarmingDots.colorSpeed, d / 3.0f);
+            drawDot(cx, cy, swarmingDots.dotDiam, c.r, c.g, c.b);
         }
     }
 
@@ -98,7 +153,8 @@ namespace colorTrails {
     // ═══════════════════════════════════════════════════════════════════
 
     const EmitterFn EMITTER_RUN[] = {
-        emitOrbitalDots,      // EMITTER_ORBITAL
+        emitOrbitalDots,      // EMITTER_ORBITALDOTS
+        emitSwarmingDots,     // EMITTER_SWARMINGDOTS
         emitLissajousLine,    // EMITTER_LISSAJOUS
         emitRainbowBorder,    // EMITTER_BORDERRECT
     };
@@ -127,7 +183,7 @@ namespace colorTrails {
                 gR[y][x] = gG[y][x] = gB[y][x] = 0.0f;
 
         t0 = fl::millis();
-        lastFrameMs = t0;
+        lastFrameMs = t0;   
         lastEmitter = 255;
 
         noiseX.init(42);
@@ -137,7 +193,7 @@ namespace colorTrails {
         ampVarX.init(101);
         ampVarY.init(202);
 
-        timings = oscillators();
+        timings = timers();
         move = modulators();
 
     }
@@ -185,11 +241,14 @@ namespace colorTrails {
         cFadeRate       = vizConfig.fadeRate;
         cFlipVertical   = vizConfig.flipVertical;
         cFlipHorizontal = vizConfig.flipHorizontal;
-        // Emitter: orbital
-        cOrbitSpeed     = orbital.orbitSpeed;
-        cColorSpeed     = orbital.colorSpeed;
-        cDotDiam     = orbital.dotDiam;
-        cOrbitDiam      = orbital.orbitDiam;
+        // Emitter: orbitalDots
+        cOrbitSpeed     = orbitalDots.orbitSpeed;
+        cColorSpeed     = orbitalDots.colorSpeed;
+        cDotDiam        = orbitalDots.dotDiam;
+        cOrbitDiam      = orbitalDots.orbitDiam;
+        // Emitter: swarmingDots
+        cSwarmSpeed     = swarmingDots.swarmSpeed;
+        cSwarmSpread    = swarmingDots.swarmSpread;
         // Emitter: lissajous / borderRect
         cEndpointSpeed  = lissajous.endpointSpeed;
         cColorShift     = lissajous.colorShift;
@@ -201,10 +260,14 @@ namespace colorTrails {
         vizConfig.fadeRate       = cFadeRate;
         vizConfig.flipVertical   = cFlipVertical;
         vizConfig.flipHorizontal = cFlipHorizontal;
-        orbital.orbitSpeed       = cOrbitSpeed;
-        orbital.colorSpeed       = cColorSpeed;
-        orbital.dotDiam          = cDotDiam;
-        orbital.orbitDiam        = cOrbitDiam;
+        orbitalDots.orbitSpeed       = cOrbitSpeed;
+        orbitalDots.colorSpeed       = cColorSpeed;
+        orbitalDots.dotDiam          = cDotDiam;
+        orbitalDots.orbitDiam        = cOrbitDiam;
+        swarmingDots.swarmSpeed      = cSwarmSpeed;
+        swarmingDots.swarmSpread     = cSwarmSpread;
+        swarmingDots.colorSpeed      = cColorSpeed;
+        swarmingDots.dotDiam         = cDotDiam;
         lissajous.endpointSpeed  = cEndpointSpeed;
         lissajous.colorShift     = cColorShift;
         lissajous.lineAmplitude  = cLineAmplitude;
