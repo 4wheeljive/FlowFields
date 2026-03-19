@@ -62,7 +62,7 @@ extern uint8_t MODE;
    // Visualizer parameter mappings - PROGMEM arrays for memory efficiency
    // Individual parameter arrays for each visualizer
    const char* const COLORTRAILS_PARAMS[] PROGMEM = {
-       "fadeRate", "orbitSpeed", "colorSpeed", "circleDiam", "orbitDiam",
+       "fadeRate", "orbitSpeed", "colorSpeed", "dotDiam", "orbitDiam",
        "endpointSpeed", "colorShift", "lineAmplitude",
        "xSpeed", "ySpeed", "xAmplitude", "yAmplitude",
        "xFrequency", "yFrequency", "xShift", "yShift",
@@ -202,7 +202,7 @@ float cXShift = 1.8f;
 float cYShift = 1.8f;
 float cOrbitDiam = 10.0f;
 float cColorSpeed = 0.10f;
-float cCircleDiam = 1.5f;
+float cDotDiam = 1.5f;
 float cEndpointSpeed = 0.35f;
 float cColorShift = 0.10f;
 float cLineAmplitude = 13.5f;
@@ -353,7 +353,7 @@ void sendReceiptString(String receivedID, String receivedValue) {
    X(float, YShift, 1.8f) \
    X(float, OrbitDiam, 10.0f) \
    X(float, ColorSpeed, 0.10f) \
-   X(float, CircleDiam, 1.5f) \
+   X(float, DotDiam, 1.5f) \
    X(float, EndpointSpeed, 0.35f) \
    X(float, ColorShift, 0.10f) \
    X(float, LineAmplitude, 13.5f) \

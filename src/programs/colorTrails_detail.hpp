@@ -1,408 +1,46 @@
 #pragma once
 
-// ****************** DANGER: UNDER CONSTRUCTION  ******************
-
 //=====================================================================================
+//
 //  colortrails began with a FastLED Reddit post by u/StefanPetrick:
 //  https://www.reddit.com/r/FastLED/comments/1rny5j3/i_used_codex_for_the_first_time/
 //
-//  I had Claude help me (1) port it to a FastLED/Arduino-friendly/C++ sketch and then
-//  (2) implement that as this new "colorTrails" AuroraPortal prorgam.
-//  As Stefan has shared subsequent ideas, I've been implementing them here.
+//  I had Claude help me port it to a C++ Arduino/FastLED-friendly sketch and then
+//  (2) implement that as a new "colorTrails" program in my AuroraPortal playground:
+//  https://github.com/4wheeljive/AuroraPortal
+//
+//  As Stefan has shared subsequent ideas, I've been implementing them in colorTrails.
+//
+//  It quickly became clear that we were going to want to do things with colorTrails
+//  that would be difficult if it was structured as just one of AuroraPortal's dozen
+//  or so visualizer programs. So I cloned my AuroraPortal repo to this project,
+//  stripped away all of the other programs, and have started redoing the architecture,
+//  from the C++ core out to the web UI, to best keep up with Stefan's fount of ideas.
+//
 //=====================================================================================
 
 #include "bleControl.h"
+#include "colorTrailsTypes.h"
+#include "flow_noise.h"
 
 namespace colorTrails {
-
-    constexpr float CT_PI = 3.14159265358979f;
-
-    // ═══════════════════════════════════════════════════════════════════
-    //  GRID STATE & TIMING
-    // ═══════════════════════════════════════════════════════════════════
-
-    bool colorTrailsInstance = false;
-    uint16_t (*xyFunc)(uint8_t x, uint8_t y);
-
-    // Floating-point RGB grid, row-major [y][x].
-    // Two copies: g* is the live buffer, t* is scratch for advection.
-    static float gR[HEIGHT][WIDTH], gG[HEIGHT][WIDTH], gB[HEIGHT][WIDTH];
-    static float tR[HEIGHT][WIDTH], tG[HEIGHT][WIDTH], tB[HEIGHT][WIDTH];
-
-    static unsigned long t0;
-    static unsigned long lastFrameMs;
-    uint8_t lastEmitter = 255;    // force initial setup on first frame
-    uint8_t lastFlowField = 255;  // force initial setup on first frame
-
-
-    // ═══════════════════════════════════════════════════════════════════
-    //  NOISE GENERATORS
-    // ═══════════════════════════════════════════════════════════════════
-
-    // 1D Perlin noise ---------------------------------------
-    class Perlin1D {
-    public:
-        void init(uint32_t seed) {
-            uint8_t p[256];
-            for (int i = 0; i < 256; i++) p[i] = (uint8_t)i;
-            // Fisher-Yates shuffle with a simple LCG
-            uint32_t s = seed;
-            for (int i = 255; i > 0; i--) {
-                s = s * 1664525u + 1013904223u;
-                int j = (int)((s >> 16) % (uint32_t)(i + 1));
-                uint8_t tmp = p[i]; p[i] = p[j]; p[j] = tmp;
-            }
-            for (int i = 0; i < 256; i++) {
-                perm[i]       = p[i];
-                perm[i + 256] = p[i];
-            }
-        }
-
-        // Classic 1-D Perlin: fade, grad, lerp — returns roughly [-1, 1].
-        float noise(float x) const {
-            int   xi = ((int)fl::floorf(x)) & 255;
-            float xf = x - fl::floorf(x);
-            float u  = xf * xf * xf * (xf * (xf * 6.0f - 15.0f) + 10.0f);
-            float ga = (perm[xi]     & 1) ? -xf         :  xf;
-            float gb = (perm[xi + 1] & 1) ? -(xf - 1.f) : (xf - 1.f);
-            return ga + u * (gb - ga);
-        }
-
-    private:
-        uint8_t perm[512];
-    };
-
-    // 2D Perlin noise ---------------------------------------
-    class Perlin2D {
-    public:
-        void init(uint32_t seed) {
-            uint8_t p[256];
-            for (int i = 0; i < 256; i++) p[i] = (uint8_t)i;
-            uint32_t s = seed;
-            for (int i = 255; i > 0; i--) {
-                s = s * 1664525u + 1013904223u;
-                int j = (int)((s >> 16) % (uint32_t)(i + 1));
-                uint8_t tmp = p[i]; p[i] = p[j]; p[j] = tmp;
-            }
-            for (int i = 0; i < 256; i++) {
-                perm[i]       = p[i];
-                perm[i + 256] = p[i];
-            }
-        }
-
-        float noise(float x, float y) const {
-            int xi = ((int)fl::floorf(x)) & 255;
-            int yi = ((int)fl::floorf(y)) & 255;
-            float xf = x - fl::floorf(x);
-            float yf = y - fl::floorf(y);
-            float u = xf * xf * xf * (xf * (xf * 6.0f - 15.0f) + 10.0f);
-            float v = yf * yf * yf * (yf * (yf * 6.0f - 15.0f) + 10.0f);
-
-            int aa = perm[perm[xi]     + yi];
-            int ab = perm[perm[xi]     + yi + 1];
-            int ba = perm[perm[xi + 1] + yi];
-            int bb = perm[perm[xi + 1] + yi + 1];
-
-            float x1 = lerp(grad(aa, xf, yf),         grad(ba, xf - 1.0f, yf),        u);
-            float x2 = lerp(grad(ab, xf, yf - 1.0f),  grad(bb, xf - 1.0f, yf - 1.0f), u);
-            return lerp(x1, x2, v);
-        }
-
-    private:
-        uint8_t perm[512];
-
-        static float grad(int h, float x, float y) {
-            switch (h & 7) {
-                case 0: return  x + y;
-                case 1: return -x + y;
-                case 2: return  x - y;
-                case 3: return -x - y;
-                case 4: return  x;
-                case 5: return -x;
-                case 6: return  y;
-                default: return -y;
-            }
-        }
-
-        static float lerp(float a, float b, float t) {
-            return a + t * (b - a);
-        }
-    };
-
-    // -------------------------------------------------------------------
-
-    static Perlin1D noiseX, noiseY;
-    static Perlin1D ampVarX, ampVarY;
-    static Perlin2D noise2X, noise2Y;
-
-    static float xProf[WIDTH];    // one noise value per column
-    static float yProf[HEIGHT];   // one noise value per row
-
-
-    // ═══════════════════════════════════════════════════════════════════
-    //  MATH HELPERS
-    // ═══════════════════════════════════════════════════════════════════
-
-    // Non-negative float modulo (matches Python's % for positive m).
-    static inline float fmodPos(float x, float m) {
-        float r = fl::fmodf(x, m);
-        return r < 0.0f ? r + m : r;
-    }
-
-    static inline float clampf(float v, float lo, float hi) {
-        return (v < lo) ? lo : (v > hi) ? hi : v;
-    }
-
-    static inline uint8_t f2u8(float v) {
-        int i = (int)v;
-        if (i < 0)   return 0;
-        if (i > 255) return 255;
-        return (uint8_t)i;
-    }
-
-
-    // ═══════════════════════════════════════════════════════════════════
-    //  DRAWING PRIMITIVES
-    // ═══════════════════════════════════════════════════════════════════
-
-    // Full-saturation, full-brightness rainbow from a continuous hue.
-    static CRGB rainbow(float t, float speed, float phase) {
-        float hue = fmodPos(t * speed + phase, 1.0f);
-        CHSV hsv((uint8_t)(hue * 255.0f), 255, 255);
-        CRGB rgb;
-        hsv2rgb_rainbow(hsv, rgb);
-        return rgb;
-    }
-
-    // Draw an anti-aliased sub-pixel circle into the float grid.
-    static void drawCircle(float cx, float cy, float diam,
-                            uint8_t cr, uint8_t cg, uint8_t cb) {
-        float rad = diam * 0.5f;
-        int x0 = max(0,               (int)fl::floorf(cx - rad - 1.0f));
-        int x1 = min((int)WIDTH  - 1, (int)fl::ceilf (cx + rad + 1.0f));
-        int y0 = max(0,               (int)fl::floorf(cy - rad - 1.0f));
-        int y1 = min((int)HEIGHT - 1, (int)fl::ceilf (cy + rad + 1.0f));
-
-        for (int y = y0; y <= y1; y++) {
-            for (int x = x0; x <= x1; x++) {
-                float dx   = (x + 0.5f) - cx;
-                float dy   = (y + 0.5f) - cy;
-                float dist = fl::sqrtf(dx * dx + dy * dy);
-                float cov  = clampf(rad + 0.5f - dist, 0.0f, 1.0f);
-                if (cov <= 0.0f) continue;
-                float inv = 1.0f - cov;
-                gR[y][x] = gR[y][x] * inv + cr * cov;
-                gG[y][x] = gG[y][x] * inv + cg * cov;
-                gB[y][x] = gB[y][x] * inv + cb * cov;
-            }
-        }
-    }
-
-    // Blend a single pixel with weighted alpha (used by line and disc drawing).
-    static void blendPixelWeighted(int px, int py,
-                                    uint8_t cr, uint8_t cg, uint8_t cb,
-                                    float w) {
-        if (px < 0 || px >= WIDTH || py < 0 || py >= HEIGHT) return;
-        w = clampf(w, 0.0f, 1.0f);
-        if (w <= 0.0f) return;
-        float inv = 1.0f - w;
-        gR[py][px] = gR[py][px] * inv + cr * w;
-        gG[py][px] = gG[py][px] * inv + cg * w;
-        gB[py][px] = gB[py][px] * inv + cb * w;
-    }
-
-    // Anti-aliased disc at a sub-pixel position (for line endpoints).
-    static void drawAAEndpointDisc(float cx, float cy,
-                                    uint8_t cr, uint8_t cg, uint8_t cb,
-                                    float radius = 0.85f) {
-        int x0 = max(0,               (int)fl::floorf(cx - radius - 1.0f));
-        int x1 = min((int)WIDTH  - 1, (int)fl::ceilf (cx + radius + 1.0f));
-        int y0 = max(0,               (int)fl::floorf(cy - radius - 1.0f));
-        int y1 = min((int)HEIGHT - 1, (int)fl::ceilf (cy + radius + 1.0f));
-        for (int py = y0; py <= y1; py++) {
-            for (int px = x0; px <= x1; px++) {
-                float dx   = (px + 0.5f) - cx;
-                float dy   = (py + 0.5f) - cy;
-                float dist = fl::sqrtf(dx * dx + dy * dy);
-                float w    = clampf(radius + 0.5f - dist, 0.0f, 1.0f);
-                blendPixelWeighted(px, py, cr, cg, cb, w);
-            }
-        }
-    }
-
-    // Anti-aliased sub-pixel line with rainbow color varying along its length.
-    static void drawAASubpixelLine(float x0, float y0, float x1, float y1,
-                                    float t, float colorShift) {
-        float dx = x1 - x0;
-        float dy = y1 - y0;
-        float maxd = fl::fabsf(dx) > fl::fabsf(dy) ? fl::fabsf(dx) : fl::fabsf(dy);
-        int steps = max(1, (int)(maxd * 3.0f));
-        for (int i = 0; i <= steps; i++) {
-            float u  = (float)i / (float)steps;
-            float x  = x0 + dx * u;
-            float y  = y0 + dy * u;
-            int   xi = (int)fl::floorf(x);
-            int   yi = (int)fl::floorf(y);
-            float fx = x - xi;
-            float fy = y - yi;
-            CRGB c = rainbow(t, colorShift, u);
-            blendPixelWeighted(xi,     yi,     c.r, c.g, c.b, (1.0f - fx) * (1.0f - fy));
-            blendPixelWeighted(xi + 1, yi,     c.r, c.g, c.b, fx * (1.0f - fy));
-            blendPixelWeighted(xi,     yi + 1, c.r, c.g, c.b, (1.0f - fx) * fy);
-            blendPixelWeighted(xi + 1, yi + 1, c.r, c.g, c.b, fx * fy);
-        }
-    }
-
-
-    // ═══════════════════════════════════════════════════════════════════
-    //  COMPONENT TYPES & ENUMS
-    // ═══════════════════════════════════════════════════════════════════
-
-    enum EmitterType : uint8_t {
-        EMITTER_ORBITAL = 0,
-        EMITTER_LISSAJOUS,
-        EMITTER_BORDERRECT,
-        // future: EMITTER_TRIANGLE, ...
-        EMITTER_COUNT
-    };
-
-    enum FlowFieldType : uint8_t {
-        FLOW_NOISE = 0,
-        FLOW_SPIRAL,
-        // future: FLOW_CENTER, FLOW_OUTWARD, FLOW_POLARWARP, ...
-        FLOW_COUNT
-    };
-
-    // Function pointer types for dispatch
-    using EmitterFn     = void(*)(float t);
-    using FlowPrepFn    = void(*)(float t);
-    using FlowAdvectFn  = void(*)(float dt);
-
-    
-    // ═══════════════════════════════════════════════════════════════════
-    //  COLOR FLOW FIELDS ===============================================
-    // ═══════════════════════════════════════════════════════════════════
-
-    /*  Quoting/paraphrasing Stefan:
-
-    You can think of a ColorFlowField as an invisible wind that moves the previous pixels and blends them together.
-    Each ColorFlowField follows its own different rules and can produce characteristic outputs:
-    - spirals
-    - vortices / flows towards or away from an origin (which could be staionary or dynamic)
-    - polar warp flows
-    - directional / geometric flows?
-    - smoke/vapor?
-
-    A ColorFlowField may use one or more noise functions in its internal pipeline
-
-    The current/initial NoiseFlowField is especially interesting because it creates these emergent, dynamic,
-    turbulence-like shapes that remind one of a fluid simulation.
-    It is the result of wind blowing from two directions with varying intensities.
-
-    */
-
-
-    // ═══════════════════════════════════════════════════════════════════
-    //  MODULATORS ======================================================
-    // ═══════════════════════════════════════════════════════════════════
-
-    // future:
-    //Modulator sin/beatsin8/???;
-    //Modulator AudioModulation;
-
-
-    // ═══════════════════════════════════════════════════════════════════
-    //  EMITTERS ========================================================
-    // ═══════════════════════════════════════════════════════════════════
-
-    /*  Quoting/paraphrasing Stefan:
-        The emitter (aka injector / color source) is anything that is drawn directly.
-        Think of it as a pencil or painbrush or paint spray gun. But it can be anything, for example:
-        - bouncing balls
-        - an audio-reactive pulsating ring
-        - Animartrix output that still contains some black areas
-        The emitter geometry can be static or dynamic (e.g., fixed rectangular border vs. orbiting dots)
-        The emitter may use one or more noise functions in its internal pipeline
-        The emitter output could be displayed and would be a normal animation
-    */
-     
-    // --- Emitter parameter structs ---
-
-    struct OrbitalParams {
-        float orbitSpeed = 0.35f;
-        float colorSpeed = 0.10f;
-        float circleDiam = 1.5f;
-        float orbitDiam  = 10.f;
-    };
-
-    struct LissajousParams {
-        float endpointSpeed = 0.35f;
-        float colorShift    = 0.10f;
-        float lineAmplitude = (MIN_DIMENSION - 4) * 0.75f;
-    };
-
-    struct BorderRectParams {
-        float colorShift = 0.10f;
-    };
-
-    // Live emitter param instances
-    OrbitalParams    orbital;
-    LissajousParams  lissajous;
-    BorderRectParams borderRect;
-
-
-    // ═══════════════════════════════════════════════════════════════════
-    //  VIZUALIZER CONFIG ===============================================
-    // ═══════════════════════════════════════════════════════════════════
-
-    /* this becomes the new basic unit of organization for colorTrails
-       It holds:
-        - current applicable universal objects (e.g., fadeRate, axis toggles, ???)
-        - an Emitter struct object
-            - applicable noise elements?
-            - optional Modulator(s) struct objects
-        - a ColorFlowField struct object
-            - applicable noise elements?
-            - optional Modulator(s) struct objects
-       Each struct object holds its own applicable parameter variables
-    */
-
-    struct CtVizConfig {
-        // Universal params
-        float fadeRate       = 0.99922f;
-        bool  flipVertical   = false;   // placeholder
-        bool  flipHorizontal = false;   // placeholder
-
-        // Active component selections
-        EmitterType   emitter   = EMITTER_ORBITAL;  // tied to / selected by MODE 
-        FlowFieldType flowField = FLOW_NOISE; // only option for now; 
-                                              // will add new UI panel w/ buttons to select   
-
-        // Active modulators
-        bool useAmpMod = true;
-    };
-
-    CtVizConfig vizConfig;
-
-    #include "flow_noise.h"
-
 
     // ═══════════════════════════════════════════════════════════════════
     //  EMITTER IMPLEMENTATIONS
     // ═══════════════════════════════════════════════════════════════════
 
-    // Orbiting circles — reads from `orbital`
+    // Orbiting dots — reads from `orbital`
     static void emitOrbitalDots(float t) {
         float ocx  = WIDTH  * 0.5f - 0.5f;
         float ocy  = HEIGHT * 0.5f - 0.5f;
-        float orad = orbital.orbitDiam * 0.5f;
+        float orad = orbital.orbitDiam * 0.8f;
         float base = t * orbital.orbitSpeed;
         for (int i = 0; i < 3; i++) {
             float a  = base + i * (2.0f * CT_PI / 3.0f);
             float cx = ocx + fl::cosf(a) * orad;
             float cy = ocy + fl::sinf(a) * orad;
             CRGB c = rainbow(t, orbital.colorSpeed, i / 3.0f);
-            drawCircle(cx, cy, orbital.circleDiam, c.r, c.g, c.b);
+            drawDot(cx, cy, orbital.dotDiam, c.r, c.g, c.b);
         }
     }
 
@@ -410,7 +48,7 @@ namespace colorTrails {
     static void emitLissajousLine(float t) {
         const float c = (MIN_DIMENSION - 1) * 0.5f;
         float s = lissajous.endpointSpeed;
-        const float amp = lissajous.lineAmplitude; // (MIN_DIMENSION - 4) * 0.5f;
+        const float amp = lissajous.lineAmplitude;
 
         float lx1 = c + (amp + 1.5f) * fl::sinf(t * s * 1.13f + 0.20f);
         float ly1 = c + (amp + 0.5f) * fl::sinf(t * s * 1.71f + 1.30f);
@@ -498,9 +136,48 @@ namespace colorTrails {
         noise2Y.init(1337);
         ampVarX.init(101);
         ampVarY.init(202);
+
+        timings = oscillators();
+        move = modulators();
+
     }
 
+    // ═══════════════════════════════════════════════════════════════════
+    //  cVAR BRIDGE
+    // ═══════════════════════════════════════════════════════════════════
 
+    // Push flow field struct defaults into cVars (called on flow field change)
+    static void pushFlowDefaultsToCVars() {
+        noiseFlow = NoiseFlowParams{};
+        cXSpeed            = noiseFlow.xSpeed;
+        cYSpeed            = noiseFlow.ySpeed;
+        cXAmplitude        = noiseFlow.xAmplitude;
+        cYAmplitude        = noiseFlow.yAmplitude;
+        cXFrequency        = noiseFlow.xFrequency;
+        cYFrequency        = noiseFlow.yFrequency;
+        cXShift            = noiseFlow.xShift;
+        cYShift            = noiseFlow.yShift;
+        ampMod = AmpModParams{};
+        cVariationIntensity = ampMod.intensity;
+        cVariationSpeed     = ampMod.speed;
+        cModulateAmplitude  = ampMod.active ? 1 : 0;
+    }
+
+    // Copy cVars into flow field + modulator structs (called every frame)
+    static void syncFlowFromCVars() {
+        noiseFlow.xSpeed     = cXSpeed;
+        noiseFlow.ySpeed     = cYSpeed;
+        noiseFlow.xAmplitude = cXAmplitude;
+        noiseFlow.yAmplitude = cYAmplitude;
+        noiseFlow.xFrequency = cXFrequency;
+        noiseFlow.yFrequency = cYFrequency;
+        noiseFlow.xShift     = cXShift;
+        noiseFlow.yShift     = cYShift;
+        ampMod.intensity     = cVariationIntensity;
+        ampMod.speed         = cVariationSpeed;
+        ampMod.active        = (cModulateAmplitude > 0);
+        vizConfig.useAmpMod  = ampMod.active;
+    }
 
     // Push emitter + universal defaults into cVars (called on emitter/mode change)
     static void pushDefaultsToCVars() {
@@ -511,7 +188,7 @@ namespace colorTrails {
         // Emitter: orbital
         cOrbitSpeed     = orbital.orbitSpeed;
         cColorSpeed     = orbital.colorSpeed;
-        cCircleDiam     = orbital.circleDiam;
+        cDotDiam     = orbital.dotDiam;
         cOrbitDiam      = orbital.orbitDiam;
         // Emitter: lissajous / borderRect
         cEndpointSpeed  = lissajous.endpointSpeed;
@@ -526,7 +203,7 @@ namespace colorTrails {
         vizConfig.flipHorizontal = cFlipHorizontal;
         orbital.orbitSpeed       = cOrbitSpeed;
         orbital.colorSpeed       = cColorSpeed;
-        orbital.circleDiam       = cCircleDiam;
+        orbital.dotDiam          = cDotDiam;
         orbital.orbitDiam        = cOrbitDiam;
         lissajous.endpointSpeed  = cEndpointSpeed;
         lissajous.colorShift     = cColorShift;

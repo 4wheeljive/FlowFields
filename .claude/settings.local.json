@@ -17,7 +17,11 @@
       "Bash(where pio:*)",
       "Read(//c/Users/Jeff/.platformio/penv/Scripts/**)",
       "Bash(~/.platformio/penv/Scripts/pio.exe run:*)",
-      "Bash(find /c/Users/Jeff/Documents/Coding/PlatformIO/Projects/ColorTrails/src -type f \\\\\\(-name *.h -o -name *.hpp -o -name *.cpp \\\\\\))"
+      "Bash(find /c/Users/Jeff/Documents/Coding/PlatformIO/Projects/ColorTrails/src -type f \\\\\\(-name *.h -o -name *.hpp -o -name *.cpp \\\\\\))",
+      "Bash(grep -n \"pnoise\" /c/Users/Jeff/Documents/Coding/PlatformIO/Projects/ColorTrails/src/*.h /c/Users/Jeff/Documents/Coding/PlatformIO/Projects/ColorTrails/src/*.cpp)",
+      "Bash(find /c/Users/Jeff/Documents/Coding/PlatformIO/Projects/ColorTrails/.pio/libdeps -name *.h -type f -exec grep -l \"pnoise\\\\|inoise\" {})",
+      "Bash(2)",
+      "Bash(/c/Users/Jeff/.platformio/penv/Scripts/pio.exe run:*)"
     ],
     "deny": [],
     "ask": []

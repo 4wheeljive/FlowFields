@@ -1,14 +1,17 @@
+#pragma once
+
 // ═══════════════════════════════════════════════════════════════════
 //  NOISE FLOW FIELD — flow_noise.h
 // ═══════════════════════════════════════════════════════════════════
 //
-//  This file is textually included inside `namespace colorTrails {}`
-//  in colorTrails_detail.hpp. It depends on symbols declared before
-//  the include point: grid buffers (gR/gG/gB, tR/tG/tB), noise
-//  generators (Perlin1D/2D instances), profile arrays (xProf, yProf),
-//  math helpers (clampf, fmodPos), and vizConfig.
-//  cVars from bleControl.h are at file scope and also visible.
+//  Self-contained noise flow field implementation.
+//  Includes colorTrailsTypes.h for shared types and instances.
+//  cVar bridge helpers (pushFlowDefaultsToCVars / syncFlowFromCVars)
+//  live in colorTrails_detail.hpp since they depend on bleControl.h.
 
+#include "colorTrailsTypes.h"
+
+namespace colorTrails {
 
     // --- Parameter struct ---
 
@@ -167,38 +170,4 @@
         }
     }
 
-
-    // --- cVar bridge helpers ---
-
-    // Push flow field struct defaults into cVars (called on flow field change)
-    static void pushFlowDefaultsToCVars() {
-        noiseFlow = NoiseFlowParams{};
-        cXSpeed            = noiseFlow.xSpeed;
-        cYSpeed            = noiseFlow.ySpeed;
-        cXAmplitude        = noiseFlow.xAmplitude;
-        cYAmplitude        = noiseFlow.yAmplitude;
-        cXFrequency        = noiseFlow.xFrequency;
-        cYFrequency        = noiseFlow.yFrequency;
-        cXShift            = noiseFlow.xShift;
-        cYShift            = noiseFlow.yShift;
-        ampMod = AmpModParams{};
-        cVariationIntensity = ampMod.intensity;
-        cVariationSpeed     = ampMod.speed;
-        cModulateAmplitude  = ampMod.active ? 1 : 0;
-    }
-
-    // Copy cVars into flow field + modulator structs (called every frame)
-    static void syncFlowFromCVars() {
-        noiseFlow.xSpeed     = cXSpeed;
-        noiseFlow.ySpeed     = cYSpeed;
-        noiseFlow.xAmplitude = cXAmplitude;
-        noiseFlow.yAmplitude = cYAmplitude;
-        noiseFlow.xFrequency = cXFrequency;
-        noiseFlow.yFrequency = cYFrequency;
-        noiseFlow.xShift     = cXShift;
-        noiseFlow.yShift     = cYShift;
-        ampMod.intensity     = cVariationIntensity;
-        ampMod.speed         = cVariationSpeed;
-        ampMod.active        = (cModulateAmplitude > 0);
-        vizConfig.useAmpMod  = ampMod.active;
-    }
+} // namespace colorTrails
