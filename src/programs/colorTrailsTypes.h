@@ -371,15 +371,17 @@ namespace colorTrails {
     // --- Emitter parameter structs ---
 
     struct OrbitalDotsParams {
+        uint8_t numDots = 3;
         float orbitSpeed = 3.0f;
         float dotDiam = 1.5f;
         float orbitDiam  = 10.f;
     };
 
     struct SwarmingDotsParams {
+        uint8_t numDots = 3;        // number of dots (1–5, limited by num_timers=10)
         float swarmSpeed = 0.5f;    // overall speed of swarming motion
-        float swarmSpread = 1.0f;    // 0 = tight cluster, 1 = normal, >1 = wide spread
-        float dotDiam = 1.5f;    // dot size
+        float swarmSpread = 1.0f;   // 0 = tight cluster, 1 = normal, >1 = wide spread
+        float dotDiam = 1.5f;       // dot size
     };
 
     struct LissajousParams {

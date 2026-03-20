@@ -58,10 +58,10 @@ const uint8_t EMITTER_COUNTS[] = {4};
 
 // Emitter params
 const char* const ORBITALDOTS_PARAMS[] PROGMEM = {
-   "dotDiam", "orbitSpeed",  "orbitDiam"
+   "numDots", "dotDiam", "orbitSpeed",  "orbitDiam"
 };
 const char* const SWARMINGDOTS_PARAMS[] PROGMEM = {
-   "dotDiam", "swarmSpeed", "swarmSpread"
+   "numDots", "dotDiam", "swarmSpeed", "swarmSpread"
 };
 const char* const LISSAJOUS_PARAMS[] PROGMEM = {
    "lineSpeed", "lineAmp"
@@ -76,8 +76,8 @@ struct EmitterParamEntry {
 };
 
 const EmitterParamEntry EMITTER_PARAM_LOOKUP[] PROGMEM = {
-   {"orbitaldots", ORBITALDOTS_PARAMS, 3},
-   {"swarmingdots", SWARMINGDOTS_PARAMS, 3},
+   {"orbitaldots", ORBITALDOTS_PARAMS, 4},
+   {"swarmingdots", SWARMINGDOTS_PARAMS, 4},
    {"lissajous", LISSAJOUS_PARAMS, 2},
    {"borderrect", BORDERRECT_PARAMS, 0}
 };
@@ -203,6 +203,7 @@ float cXShift = 1.8f;
 float cYShift = 1.8f;
 float cOrbitDiam = 10.0f;
 float cColorSpeed = 0.10f;
+uint8_t cNumDots = 3;
 float cDotDiam = 1.5f;
 float cSwarmSpeed = 0.5f;
 float cSwarmSpread = 1.0f;
@@ -355,6 +356,7 @@ void sendReceiptString(String receivedID, String receivedValue) {
    X(float, YShift, 1.8f) \
    X(float, OrbitDiam, 10.0f) \
    X(float, ColorSpeed, 0.10f) \
+   X(uint8_t, NumDots, 3) \
    X(float, DotDiam, 1.5f) \
    X(float, SwarmSpeed, 0.5f) \
    X(float, SwarmSpread, 1.0f) \

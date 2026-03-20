@@ -31,45 +31,53 @@ namespace colorTrails {
     //  EMITTERS
     // ═══════════════════════════════════════════════════════════════════
 
-    // Orbiting dots — reads from `orbital`
+    // Orbiting dots
     static void emitOrbitalDots(float t) {
+        float fNumDots = static_cast<float>(orbitalDots.numDots);
         float ocx  = WIDTH  * 0.5f - 0.5f;
         float ocy  = HEIGHT * 0.5f - 0.5f;
         float orad = orbitalDots.orbitDiam * 0.8f;
         float base = t * orbitalDots.orbitSpeed;
-        for (int i = 0; i < 3; i++) {
-            float a  = base + i * (2.0f * CT_PI / 3.0f);
+        for (int i = 0; i < orbitalDots.numDots; i++) {
+            float a  = base + i * (2.0f * CT_PI / fNumDots);
             float cx = ocx + fl::cosf(a) * orad;
             float cy = ocy + fl::sinf(a) * orad;
-            CRGB c = rainbow(t, vizConfig.colorShift, i / 3.0f);
+            CRGB c = rainbow(t, vizConfig.colorShift, i / fNumDots);
             drawDot(cx, cy, orbitalDots.dotDiam, c.r, c.g, c.b);
         }
     }
 
-    // Swarming dots — 3 dots that move in a loose shifting group.
-    // Uses calculate_modulators() with 6 timers: each dot gets a dedicated
-    // X modulator (even indices) and Y modulator (odd indices).
+    // Swarming dots — variable number of dots moving in a loose shifting group.
+    // Uses calculate_modulators() with 2 timers per dot (X and Y).
     // swarmSpread controls grouping (0 = clustered, 1 = independent, >1 = wide).
+    // Max 5 dots (num_timers=10, 2 timers per dot).
     static void emitSwarmingDots(float t) {
+        uint8_t n = swarmingDots.numDots;
+        float fNumDots = static_cast<float>(n);
         float spd = swarmingDots.swarmSpeed;
 
-        // 6 timers: [0]=dot0.X, [1]=dot0.Y, [2]=dot1.X, [3]=dot1.Y, [4]=dot2.X, [5]=dot2.Y
+        // 2 timers per dot: [d*2]=X, [d*2+1]=Y (up to 10 timers for 5 dots)
         // Similar ratios keep dots moving at comparable speeds;
         // irrational relationships prevent exact repetition.
-        static const float baseRatios[6] = {
+        static const float baseRatios[10] = {
             0.00173f, 0.00131f,   // dot 0: X, Y
             0.00197f, 0.00149f,   // dot 1: X, Y
-            0.00211f, 0.00113f    // dot 2: X, Y
+            0.00211f, 0.00113f,   // dot 2: X, Y
+            0.00157f, 0.00189f,   // dot 3: X, Y
+            0.00223f, 0.00167f    // dot 4: X, Y
         };
         // Offsets: each dot's Y is ~quarter-period ahead of its X
         // to create elliptical paths instead of diagonal lines
-        static const float baseOffsets[6] = {
+        static const float baseOffsets[10] = {
                0.0f,  900.0f,    // dot 0
              600.0f, 1700.0f,    // dot 1
-            1300.0f, 2400.0f     // dot 2
+            1300.0f, 2400.0f,    // dot 2
+            1900.0f, 3100.0f,    // dot 3
+            2600.0f, 3800.0f     // dot 4
         };
 
-        for (int i = 0; i < 6; i++) {
+        int numTimers = n * 2;
+        for (int i = 0; i < numTimers; i++) {
             timings.ratio[i]  = baseRatios[i] * spd;
             timings.offset[i] = baseOffsets[i];
         }
@@ -77,26 +85,29 @@ namespace colorTrails {
         calculate_modulators(timings);
 
         // Each dot: dedicated X (even index) and Y (odd index)
-        float dotX[3], dotY[3];
-        for (int d = 0; d < 3; d++) {
+        float dotX[5], dotY[5];
+        float cenX = 0.0f, cenY = 0.0f;
+        for (int d = 0; d < n; d++) {
             dotX[d] = move.directional[d * 2];
             dotY[d] = move.directional[d * 2 + 1];
+            cenX += dotX[d];
+            cenY += dotY[d];
         }
 
         // Group center
-        float cenX = (dotX[0] + dotX[1] + dotX[2]) / 3.0f;
-        float cenY = (dotY[0] + dotY[1] + dotY[2]) / 3.0f;
+        cenX /= fNumDots;
+        cenY /= fNumDots;
 
         // Blend each dot between center and its own position via swarmSpread
         float spread = swarmingDots.swarmSpread;
-        for (int d = 0; d < 3; d++) {
+        for (int d = 0; d < n; d++) {
             float sx = cenX + spread * (dotX[d] - cenX);
             float sy = cenY + spread * (dotY[d] - cenY);
 
             float cx = (WIDTH  - 1) * 0.5f * (1.0f + sx);
             float cy = (HEIGHT - 1) * 0.5f * (1.0f + sy);
 
-            CRGB c = rainbow(t, vizConfig.colorShift, d / 3.0f);
+            CRGB c = rainbow(t, vizConfig.colorShift, d / fNumDots);
             drawDot(cx, cy, swarmingDots.dotDiam, c.r, c.g, c.b);
         }
     }
@@ -281,6 +292,7 @@ namespace colorTrails {
         cFlipY = vizConfig.flipY;
         cFlipX = vizConfig.flipX;
         // Emitter: orbitalDots
+        cNumDots = orbitalDots.numDots;
         cOrbitSpeed = orbitalDots.orbitSpeed;
         cDotDiam = orbitalDots.dotDiam;
         cOrbitDiam = orbitalDots.orbitDiam;
@@ -298,9 +310,11 @@ namespace colorTrails {
         vizConfig.colorShift = cColorShift;
         vizConfig.flipY = cFlipY;
         vizConfig.flipX = cFlipX;
+        orbitalDots.numDots = cNumDots;
         orbitalDots.orbitSpeed = cOrbitSpeed;
         orbitalDots.dotDiam  = cDotDiam;
         orbitalDots.orbitDiam = cOrbitDiam;
+        swarmingDots.numDots = cNumDots;
         swarmingDots.swarmSpeed = cSwarmSpeed;
         swarmingDots.swarmSpread = cSwarmSpread;
         swarmingDots.dotDiam = cDotDiam;
