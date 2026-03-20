@@ -31,18 +31,13 @@ BusParamSetterFn setBusParam = nullptr;
 typedef float (*BusParamGetterFn)(uint8_t busId, const String& paramName);
 BusParamGetterFn getBusParam = nullptr;
 
-//depricating
-//extern uint8_t PROGRAM;
-//extern uint8_t MODE;
-
-//add
 extern uint8_t EMITTER;
 extern uint8_t FLOW;
 
 // GLOBAL PARAMETERS *******************************
 
 const char* const GLOBAL_PARAMS[] PROGMEM = {
-   "fadeRate", "colorShift", "flipY", "flipX"
+   "persistence", "colorShift", "flipY", "flipX"
 };
 
 const uint8_t GLOBAL_PARAM_COUNT = 4;
@@ -198,7 +193,7 @@ float cPeakBase = 1.0f;
 float cExpDecayFactor = 0.9f;
 
 //ColorTrails
-float cFadeRate = 0.99922f;
+float cPersistence = 14.8f;
 float cXFreq = 0.33f;
 float cYFreq = 0.33f;
 float cOrbitSpeed = 0.35f;
@@ -348,7 +343,7 @@ void sendReceiptString(String receivedID, String receivedValue) {
    X(float, PeakBase, 1.0f) \
    X(float, ExpDecayFactor, 1.0f) \
    X(float, OrbitSpeed, 0.35f) \
-   X(float, FadeRate, 0.99922f) \
+   X(float, Persistence, 14.8f) \
    X(float, XShift, 1.8f) \
    X(float, YShift, 1.8f) \
    X(float, OrbitDiam, 10.0f) \

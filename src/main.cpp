@@ -24,8 +24,8 @@ bool audioLatencyDiagnostics = false;
 FrameProfiler profiler;
 #endif*/
 
-#define BIG_BOARD
-//#undef BIG_BOARD
+//#define BIG_BOARD
+#undef BIG_BOARD
 
 #define PIN0 2
 
@@ -63,11 +63,9 @@ uint16_t ledNum = 0;
 //bleControl variables ***********************************************************************
 //elements that must be set before #include "bleControl.h" 
 
-uint8_t PROGRAM;
-uint8_t MODE;
-uint8_t EMITTER;
-uint8_t FLOW;
-uint8_t BRIGHTNESS;
+uint8_t EMITTER = 0;
+uint8_t FLOW = 0;
+uint8_t BRIGHTNESS = 35;
 
 uint8_t defaultMapping = 0;
 bool mappingOverride = false;
@@ -116,12 +114,6 @@ void setup() {
 	Serial.setTxTimeoutMs(1);  // 1ms timeout — avoids unsigned underflow
 	delay(1000);
 
-	PROGRAM = 0;
-	MODE = 0;
-	EMITTER = 0;
-	FLOW = 0; 
-	BRIGHTNESS = 35;
-	
 	FastLED.setExclusiveDriver("RMT");
 
 	FastLED.addLeds<WS2812B, PIN0, GRB>(leds, 0, NUM_LEDS_PER_STRIP)

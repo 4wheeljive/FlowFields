@@ -14,14 +14,15 @@
 namespace colorTrails {
 
     struct NoiseFlowParams {
-        float xSpeed     = -1.00f;   // Noise scroll speed  (column axis)
-        float ySpeed     = -1.00f;   // Noise scroll speed  (row axis)
-        float xAmp       =  1.00f;   // Noise amplitude     (column axis)
-        float yAmp       =  1.00f;   // Noise amplitude     (row axis)
-        float xFreq      =  0.33f;   // Noise spatial scale (column axis) (aka "xScale")
-        float yFreq      =  0.32f;   // Noise spatial scale (row axis) (aka "yScale")
-        float xShift     =  1.8f;    // Max horizontal shift per row  (pixels)
-        float yShift     =  1.8f;    // Max vertical shift per column (pixels)
+        float xSpeed = -0.50f;   // Noise scroll speed  (column axis)
+        float ySpeed = -0.50f;   // Noise scroll speed  (row axis)
+        float xAmp =  1.00f;   // Noise amplitude     (column axis)
+        float yAmp =  1.00f;   // Noise amplitude     (row axis)
+        float xFreq =  0.33f;   // Noise spatial scale (column axis) (aka "xScale")
+        float yFreq =  0.32f;   // Noise spatial scale (row axis) (aka "yScale")
+        float xShift =  1.8f;    // Max horizontal shift per row  (pixels)
+        float yShift =  1.8f;    // Max vertical shift per column (pixels)
+        float noiseFreq = 0.23f;  // TODO: build out and enable BLE/UI control 
         //bool  use2DNoise =  true;    // false = 1D Perlin, true = 2D Perlin
     };
    
@@ -29,7 +30,7 @@ namespace colorTrails {
 
     // --- Profile builders ---
 
-    static void sampleProfile1D(const Perlin1D &n, float t, float speed,
+    /*static void sampleProfile1D(const Perlin1D &n, float t, float speed,
                                 float amp, float scale, int count, float *out) {
         const float freq  = 0.23f;
         const float phase = t * speed;
@@ -37,25 +38,26 @@ namespace colorTrails {
             float v = n.noise(i * freq * scale + phase);
             out[i]  = clampf(v * amp, -1.0f, 1.0f);
         }
-    }
+    }*/
 
     static void sampleProfile2D(const Perlin2D &n, float t, float speed,
                                 float amp, float scale, int count, float *out) {
         const float freq   = 0.23f;
         const float scrollY = t * speed;
         for (int i = 0; i < count; i++) {
-            float v = n.noise(i * freq * scale, scrollY);
+            float v = n.noise(i * noiseFlow.noiseFreq * scale, scrollY);
             out[i]  = clampf(v * amp, -1.0f, 1.0f);
         }
     }
 
-    // --- Prepare: build noise profiles, apply modulator, apply flips ---
+    // --- Prepare: build noise profiles, apply modulator(s) ---
 
     static void noiseFlowPrepare(float t) {
         // Working copies of amplitude (modulator may alter these)
         float workXAmp = noiseFlow.xAmp;
         float workYAmp = noiseFlow.yAmp;
 
+        // TODO: Replace initial AmpMod with multiple modulation options  
         if (vizConfig.useAmpMod) {
             applyAmpModulation(t, workXAmp, workYAmp);
         }
@@ -73,30 +75,13 @@ namespace colorTrails {
                             noiseFlow.yFreq, HEIGHT, yProf);
         }*/
 
-        // Apply axis flip toggles
-        if (vizConfig.flipY) {
-            for (int i = 0; i < WIDTH / 2; i++) {
-                float tmp = xProf[i];
-                xProf[i] = xProf[WIDTH - 1 - i];
-                xProf[WIDTH - 1 - i] = tmp;
-            }
-        }
-        if (vizConfig.flipX) {
-            for (int i = 0; i < HEIGHT / 2; i++) {
-                float tmp = yProf[i];
-                yProf[i] = yProf[HEIGHT - 1 - i];
-                yProf[HEIGHT - 1 - i] = tmp;
-            }
-        }
     }
 
     // --- Advect: two-pass fractional advection (bilinear interpolation) + fade ---
 
     static void noiseFlowAdvect(float dt) {
-        // The original Python applied fadeRate once per frame at 60 FPS.
-        // Scale the exponent by actual dt so decay rate is frame-rate-independent.
-        float fadePerSec = fl::powf(vizConfig.fadeRate, 60.0f);
-        float fade = fl::powf(fadePerSec, dt);
+        // Frame-rate-independent fade: half-life = persistence seconds
+        float fade = fl::powf(0.5f, dt / vizConfig.persistence);
 
         // Pass 1 — horizontal row shift  (Y-noise drives X movement)
         for (int y = 0; y < HEIGHT; y++) {

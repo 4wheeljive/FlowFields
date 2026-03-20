@@ -33,9 +33,8 @@ namespace colorTrails {
         float cx = (WIDTH  - 1) * 0.5f;
         float cy = (HEIGHT - 1) * 0.5f;
 
-        // Frame-rate-independent fade (same formula as noise flow)
-        float fadePerSec = fl::powf(vizConfig.fadeRate, 60.0f);
-        float fade = fl::powf(fadePerSec, dt);
+        // Frame-rate-independent fade: half-life = persistence seconds
+        float fade = fl::powf(0.5f, dt / vizConfig.persistence);
 
         float step = fromCenter.radialStep;
         float frac = fromCenter.blendFactor;

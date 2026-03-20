@@ -28,7 +28,7 @@ namespace colorTrails {
 
     static unsigned long t0;
     static unsigned long lastFrameMs;
-    uint8_t lastEmitter = 255;    // force initial setup on first frame
+    uint8_t lastEmitter = 255;  // force initial setup on first frame
     uint8_t lastFlow = 255;  // force initial setup on first frame
 
 
@@ -337,6 +337,22 @@ namespace colorTrails {
         }
     }
 
+    void flipAxisX(){   
+        for (int i = 0; i < HEIGHT / 2; i++) {
+            float tmp = yProf[i];
+            yProf[i] = yProf[HEIGHT - 1 - i];
+            yProf[HEIGHT - 1 - i] = tmp;
+        }
+    }
+
+    void flipAxisY() {
+        for (int i = 0; i < WIDTH / 2; i++) {
+            float tmp = xProf[i];
+            xProf[i] = xProf[WIDTH - 1 - i];
+            xProf[WIDTH - 1 - i] = tmp;
+        }
+    }
+
     // ═══════════════════════════════════════════════════════════════════
     //  COMPONENT TYPES & ENUMS
     // ═══════════════════════════════════════════════════════════════════
@@ -361,23 +377,18 @@ namespace colorTrails {
     };
 
     struct SwarmingDotsParams {
-        float swarmSpeed  = 0.5f;    // overall speed of swarming motion
+        float swarmSpeed = 0.5f;    // overall speed of swarming motion
         float swarmSpread = 1.0f;    // 0 = tight cluster, 1 = normal, >1 = wide spread
-        float dotDiam     = 1.5f;    // dot size
+        float dotDiam = 1.5f;    // dot size
     };
 
     struct LissajousParams {
-        float lineSpeed     = 0.35f;
-        float lineAmp       = (MIN_DIMENSION - 4) * 0.75f;
+        float lineSpeed = 0.35f;
+        float lineAmp = (MIN_DIMENSION - 4) * 0.75f;
     };
 
     struct BorderRectParams {
     };
-
-    
-    // ═══════════════════════════════════════════════════════════════════
-    //  LIVE PARAMETER INSTANCES
-    // ═══════════════════════════════════════════════════════════════════
 
     // Live emitter param instances
     OrbitalDotsParams   orbitalDots;
@@ -385,12 +396,9 @@ namespace colorTrails {
     LissajousParams     lissajous;
     BorderRectParams    borderRect;
 
-    // Live flow field param instances
 
 
-
-    // RELOCATE/REFACTOR MODULATOR FUNCTIONALITY BELOW THAT WAS JUST PULLED OUT OF flow_noise.h  
-
+    // RELOCATE/REFACTOR MODULATOR FUNCTIONALITY BELOW   
     // --- Amplitude modulator ---
 
     struct AmpModParams {
@@ -424,15 +432,14 @@ namespace colorTrails {
 
     struct CtVizConfig {
         // Universal params
-        float fadeRate       = 0.99922f;
-        float colorShift        = 0.10f;
-        bool  flipY          = false;
-        bool  flipX          = false;
+        float persistence = 14.8f;  // trail half-life in seconds
+        float colorShift = 0.10f;
+        bool flipY = false;
+        bool flipX = false;
 
         // Active component selections
-        Emitter   emitter   = EMITTER_ORBITALDOTS;  // tied to / selected by MODE
-        Flow flow = FLOW_FROMCENTER; // FLOW_NOISE
-                                    // will add new UI panel w/ buttons to select
+        Emitter emitter = EMITTER_ORBITALDOTS;
+        Flow flow = FLOW_NOISE;
 
         // Active modulators
         bool useAmpMod = true;

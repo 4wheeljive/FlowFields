@@ -253,7 +253,7 @@ namespace colorTrails {
     // Push emitter + universal defaults into cVars (called on emitter/mode change)
     static void pushDefaultsToCVars() {
         // Universal
-        cFadeRate = vizConfig.fadeRate;
+        cPersistence = vizConfig.persistence;
         cColorShift = vizConfig.colorShift;
         cFlipY = vizConfig.flipY;
         cFlipX = vizConfig.flipX;
@@ -271,7 +271,7 @@ namespace colorTrails {
 
     // Read cVars into component structs (called every frame)
     static void syncFromCVars() {
-        vizConfig.fadeRate = cFadeRate;
+        vizConfig.persistence = cPersistence;
         vizConfig.colorShift = cColorShift;
         vizConfig.flipY = cFlipY;
         vizConfig.flipX = cFlipX;
@@ -306,19 +306,23 @@ namespace colorTrails {
             vizConfig.flow = (Flow)FLOW;
             lastFlow = FLOW;
             pushFlowDefaultsToCVars();
-            //sendFlowState();
+            sendFlowState();
         }
 
         // Sync UI-controlled values into component structs
         syncFromCVars();
 
-        // 1. Flow field: prepare (build profiles, apply modulators, apply flips)
+        // 1. Flow field: prepare (build X and Y profiles)
         FLOW_PREPARE[vizConfig.flow](t);
 
-        // 2. Emitter: inject color onto grid
+        // 2. Apply axis flips
+        if (vizConfig.flipX) flipAxisX();
+        if (vizConfig.flipY) flipAxisY();
+        
+        // 3. Emitter: inject color onto grid
         EMITTER_RUN[vizConfig.emitter](t);
 
-        // 3. Flow field: advect + fade
+        // 4. Flow field: advect + fade
         FLOW_ADVECT[vizConfig.flow](dt);
 
         // 4. Copy float grid to LED array

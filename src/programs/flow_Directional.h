@@ -14,13 +14,12 @@
 namespace colorTrails {
 
     struct DirectionalParams {
-        bool rotate = true;
-        bool wave = true;
-        bool noise = false;
-        float dirSpeed = 1.0f;
-        float radialSpeed = 1.0f;
+        //bool rotate = true;
+        //bool wave = true;
+        float rotateSpeed = 1.0f;
         float waveAmp = 0.2f;
         float waveFreq = 0.2f;
+        //bool noise = false;
     };
 
     DirectionalParams   directional;
