@@ -220,6 +220,7 @@ float cVariationSpeed = 1.0f;
 uint8_t cModulateAmp = 1;
 bool cFlipY = false;
 bool cFlipX = false;
+bool cUseRainbow = false;
 float cRadialStep = 0.18f;
 float cBlendFactor = 0.45f;
 float cWindStep = 0.95f;
@@ -845,6 +846,7 @@ void processCheckbox(String receivedID, bool receivedValue ) {
 
    if (receivedID == "cx30") {cFlipY = receivedValue;};
    if (receivedID == "cx31") {cFlipX = receivedValue;};
+   if (receivedID == "cx32") {cUseRainbow = receivedValue;};
 
 }
 

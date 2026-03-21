@@ -159,6 +159,7 @@ namespace colorTrails {
         cColorShift = vizConfig.colorShift;
         cFlipY = vizConfig.flipY;
         cFlipX = vizConfig.flipX;
+        cUseRainbow = useRainbow;
         // Emitter: orbitalDots
         cNumDots = orbitalDots.numDots;
         cOrbitSpeed = orbitalDots.orbitSpeed;
@@ -179,6 +180,7 @@ namespace colorTrails {
         vizConfig.colorShift = cColorShift;
         vizConfig.flipY = cFlipY;
         vizConfig.flipX = cFlipX;
+        useRainbow = cUseRainbow;
         orbitalDots.numDots = cNumDots;
         orbitalDots.orbitSpeed = cOrbitSpeed;
         orbitalDots.dotDiam  = cDotDiam;

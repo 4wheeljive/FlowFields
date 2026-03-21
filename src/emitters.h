@@ -30,7 +30,7 @@ namespace colorTrails {
             float a  = base + i * (2.0f * CT_PI / fNumDots);
             float cx = ocx + fl::cosf(a) * orad;
             float cy = ocy + fl::sinf(a) * orad;
-            CRGB c = rainbow(t, vizConfig.colorShift, i / fNumDots);
+            ColorF c = rainbow(t, vizConfig.colorShift, i / fNumDots);
             drawDot(cx, cy, orbitalDots.dotDiam, c.r, c.g, c.b);
         }
     }
@@ -95,25 +95,26 @@ namespace colorTrails {
             float cx = (WIDTH  - 1) * 0.5f * (1.0f + sx);
             float cy = (HEIGHT - 1) * 0.5f * (1.0f + sy);
 
-            CRGB c = rainbow(t, vizConfig.colorShift, d / fNumDots);
+            ColorF c = rainbow(t, vizConfig.colorShift, d / fNumDots);
             drawDot(cx, cy, swarmingDots.dotDiam, c.r, c.g, c.b);
         }
     }
 
     // Lissajous line
     static void emitLissajousLine(float t) {
-        const float c = (MIN_DIMENSION - 1) * 0.5f;
+        const float cx = (WIDTH  - 1) * 0.5f;
+        const float cy = (HEIGHT - 1) * 0.5f;
         float s = lissajous.lineSpeed;
         const float amp = lissajous.lineAmp;
 
-        float lx1 = c + (amp + 1.5f) * fl::sinf(t * s * 1.13f + 0.20f);
-        float ly1 = c + (amp + 0.5f) * fl::sinf(t * s * 1.71f + 1.30f);
-        float lx2 = c + (amp + 2.0f) * fl::sinf(t * s * 1.89f + 2.20f);
-        float ly2 = c + (amp + 1.0f) * fl::sinf(t * s * 1.37f + 0.70f);
+        float lx1 = cx + (amp + 1.5f) * fl::sinf(t * s * 1.13f + 0.20f);
+        float ly1 = cy + (amp + 0.5f) * fl::sinf(t * s * 1.71f + 1.30f);
+        float lx2 = cx + (amp + 2.0f) * fl::sinf(t * s * 1.89f + 2.20f);
+        float ly2 = cy + (amp + 1.0f) * fl::sinf(t * s * 1.37f + 0.70f);
 
         drawAASubpixelLine(lx1, ly1, lx2, ly2, t, vizConfig.colorShift);
-        CRGB ca = rainbow(t, vizConfig.colorShift, 0.0f);
-        CRGB cb = rainbow(t, vizConfig.colorShift, 1.0f);
+        ColorF ca = rainbow(t, vizConfig.colorShift, 0.0f);
+        ColorF cb = rainbow(t, vizConfig.colorShift, 1.0f);
         drawAAEndpointDisc(lx1, ly1, ca.r, ca.g, ca.b, 0.85f);
         drawAAEndpointDisc(lx2, ly2, cb.r, cb.g, cb.b, 0.85f);
     }
@@ -124,25 +125,25 @@ namespace colorTrails {
         int idx = 0;
         // Top edge: left to right
         for (int x = 0; x < WIDTH; x++) {
-            CRGB c = rainbow(t, vizConfig.colorShift, (float)idx / total);
+            ColorF c = rainbow(t, vizConfig.colorShift, (float)idx / total);
             gR[0][x] = c.r; gG[0][x] = c.g; gB[0][x] = c.b;
             idx++;
         }
         // Right edge: top+1 to bottom
         for (int y = 1; y < HEIGHT; y++) {
-            CRGB c = rainbow(t, vizConfig.colorShift, (float)idx / total);
+            ColorF c = rainbow(t, vizConfig.colorShift, (float)idx / total);
             gR[y][WIDTH-1] = c.r; gG[y][WIDTH-1] = c.g; gB[y][WIDTH-1] = c.b;
             idx++;
         }
         // Bottom edge: right-1 to left
         for (int x = WIDTH - 2; x >= 0; x--) {
-            CRGB c = rainbow(t, vizConfig.colorShift, (float)idx / total);
+            ColorF c = rainbow(t, vizConfig.colorShift, (float)idx / total);
             gR[HEIGHT-1][x] = c.r; gG[HEIGHT-1][x] = c.g; gB[HEIGHT-1][x] = c.b;
             idx++;
         }
         // Left edge: bottom-1 to top+1
         for (int y = HEIGHT - 2; y > 0; y--) {
-            CRGB c = rainbow(t, vizConfig.colorShift, (float)idx / total);
+            ColorF c = rainbow(t, vizConfig.colorShift, (float)idx / total);
             gR[y][0] = c.r; gG[y][0] = c.g; gB[y][0] = c.b;
             idx++;
         }

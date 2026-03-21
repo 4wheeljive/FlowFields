@@ -30,6 +30,7 @@ namespace colorTrails {
     static unsigned long lastFrameMs;
     uint8_t lastEmitter = 255;  // force initial setup on first frame
     uint8_t lastFlow = 255;  // force initial setup on first frame
+    bool useRainbow = false;  // false = spectrum (even HSV), true = FastLED rainbow character
 
 
     // ═══════════════════════════════════════════════════════════════════
@@ -45,6 +46,8 @@ namespace colorTrails {
     static inline float clampf(float v, float lo, float hi) {
         return (v < lo) ? lo : (v > hi) ? hi : v;
     }
+
+    struct ColorF { float r, g, b; };
 
     static inline uint8_t f2u8(float v) {
         int i = (int)v;
@@ -252,18 +255,59 @@ namespace colorTrails {
     //  DRAWING PRIMITIVES
     // ═══════════════════════════════════════════════════════════════════
 
+    // Spectrum: standard HSV with even 60° sectors.
+    static ColorF hsvSpectrum(float hue) {
+        float h6 = hue * 6.0f;
+        int sector = (int)h6;
+        float frac = h6 - sector;
+        float r, g, b;
+        switch (sector % 6) {
+            case 0: r = 1.0f;        g = frac;        b = 0.0f;        break;
+            case 1: r = 1.0f - frac; g = 1.0f;        b = 0.0f;        break;
+            case 2: r = 0.0f;        g = 1.0f;        b = frac;        break;
+            case 3: r = 0.0f;        g = 1.0f - frac; b = 1.0f;        break;
+            case 4: r = frac;        g = 0.0f;        b = 1.0f;        break;
+            case 5: r = 1.0f;        g = 0.0f;        b = 1.0f - frac; break;
+            default: r = g = b = 0.0f; break;
+        }
+        return ColorF{r * 255.0f, g * 255.0f, b * 255.0f};
+    }
+
+    // FastLED rainbow character in float precision (no uint8 banding).
+    // 8-section piecewise curve: compressed yellow, expanded red/blue/purple.
+    // Derived from FastLED's hsv2rgb_rainbow (Y1 mode).
+    static ColorF hsvRainbow(float hue) {
+        float h8 = hue * 8.0f;
+        int section = (int)h8;
+        float frac = h8 - section;
+        float third = frac * 85.0f;
+        float twothirds = frac * 170.0f;
+        float r, g, b;
+        switch (section % 8) {
+            case 0: r = 255.0f - third; g = third;            b = 0.0f;              break; // R → O
+            case 1: r = 171.0f;         g = 85.0f + third;    b = 0.0f;              break; // O → Y
+            case 2: r = 171.0f - twothirds; g = 170.0f + third; b = 0.0f;            break; // Y → G
+            case 3: r = 0.0f;           g = 255.0f - third;   b = third;             break; // G → A
+            case 4: r = 0.0f;           g = 171.0f - twothirds; b = 85.0f + twothirds; break; // A → B
+            case 5: r = third;          g = 0.0f;             b = 255.0f - third;    break; // B → P
+            case 6: r = 85.0f + third;  g = 0.0f;             b = 171.0f - third;    break; // P → K
+            case 7: r = 170.0f + third; g = 0.0f;             b = 85.0f - third;     break; // K → R
+            default: r = g = b = 0.0f; break;
+        }
+        return ColorF{r, g, b};
+    }
+
     // Full-saturation, full-brightness rainbow from a continuous hue.
-    static CRGB rainbow(float t, float speed, float phase) {
+    // Float-precision HSV→RGB eliminates banding from uint8 hue quantization.
+    // useRainbow toggles between even spectrum and FastLED rainbow character.
+    static ColorF rainbow(float t, float speed, float phase) {
         float hue = fmodPos(t * speed + phase, 1.0f);
-        CHSV hsv((uint8_t)(hue * 255.0f), 255, 255);
-        CRGB rgb;
-        hsv2rgb_rainbow(hsv, rgb);
-        return rgb;
+        return useRainbow ? hsvRainbow(hue) : hsvSpectrum(hue);
     }
 
     // Draw an anti-aliased sub-pixel dot into the float grid.
     static void drawDot(float cx, float cy, float diam,
-                            uint8_t cr, uint8_t cg, uint8_t cb) {
+                            float cr, float cg, float cb) {
         float rad = diam * 0.5f;
         int x0 = max(0,               (int)fl::floorf(cx - rad - 1.0f));
         int x1 = min((int)WIDTH  - 1, (int)fl::ceilf (cx + rad + 1.0f));
@@ -287,7 +331,7 @@ namespace colorTrails {
 
     // Blend a single pixel with weighted alpha (used by line and disc drawing).
     static void blendPixelWeighted(int px, int py,
-                                    uint8_t cr, uint8_t cg, uint8_t cb,
+                                    float cr, float cg, float cb,
                                     float w) {
         if (px < 0 || px >= WIDTH || py < 0 || py >= HEIGHT) return;
         w = clampf(w, 0.0f, 1.0f);
@@ -300,7 +344,7 @@ namespace colorTrails {
 
     // Anti-aliased disc at a sub-pixel position (for line endpoints).
     static void drawAAEndpointDisc(float cx, float cy,
-                                    uint8_t cr, uint8_t cg, uint8_t cb,
+                                    float cr, float cg, float cb,
                                     float radius = 0.85f) {
         int x0 = max(0,               (int)fl::floorf(cx - radius - 1.0f));
         int x1 = min((int)WIDTH  - 1, (int)fl::ceilf (cx + radius + 1.0f));
@@ -332,7 +376,7 @@ namespace colorTrails {
             int   yi = (int)fl::floorf(y);
             float fx = x - xi;
             float fy = y - yi;
-            CRGB c = rainbow(t, colorShift, u);
+            ColorF c = rainbow(t, colorShift, u);
             blendPixelWeighted(xi,     yi,     c.r, c.g, c.b, (1.0f - fx) * (1.0f - fy));
             blendPixelWeighted(xi + 1, yi,     c.r, c.g, c.b, fx * (1.0f - fy));
             blendPixelWeighted(xi,     yi + 1, c.r, c.g, c.b, (1.0f - fx) * fy);
