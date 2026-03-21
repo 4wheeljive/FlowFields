@@ -13,19 +13,19 @@ namespace colorTrails {
 
         timings.ratio[0] = 0.0005f;   // modOrbitDiam — slow diameter breathing
         //timings.ratio[1] = 0.0006f;
-        timings.ratio[2] = 0.0001f;   // modOrbitSpeed — slow speed variation
+        timings.ratio[2] = 0.00005f;   // modOrbitSpeed — slow speed variation
         //timings.ratio[3] = 0.00003f;
 
         calculate_modulators(timings);
 
         float modOrbitDiam = 1.3f * move.noise_angle[0]*0.16f; // 0.16 = approximate multiplicative inverse of 2 PI produces ~(0,1))
-        float modOrbitSpeed = 1.5f * move.noise_directional[2]; 
-        
+        float modFactor = 1.0f + orbitalDots.modOrbitSpeed * move.noise_directional[2];
+
         float fNumDots = static_cast<float>(orbitalDots.numDots);
         float ocx  = WIDTH  * 0.5f - 0.5f;
         float ocy  = HEIGHT * 0.5f - 0.5f;
-        float orad = orbitalDots.orbitDiam * 0.8f * modOrbitDiam;               
-        float base = t * orbitalDots.orbitSpeed * modOrbitSpeed;        
+        float orad = orbitalDots.orbitDiam * 0.8f * modOrbitDiam;
+        float base = t * orbitalDots.orbitSpeed * modFactor;        
         for (int i = 0; i < orbitalDots.numDots; i++) {
             float a  = base + i * (2.0f * CT_PI / fNumDots);
             float cx = ocx + fl::cosf(a) * orad;

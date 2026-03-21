@@ -891,6 +891,7 @@
             colorSpeed:  {min: -2, max: 2, default: 0.10, step: 0.01},
             dotDiam:     {min: 0.1, max: 5, default: 1.5, step: 0.1},
             orbitDiam:   {min: 1, max: 20, default: 10, step: 0.5},
+            modOrbitSpeed: {min: 0, max: 2, default: 0.3, step: 0.01},
             swarmSpeed:  {min: -5, max: 5, default: 0.5, step: 0.1},
             swarmSpread: {min: 0, max: 3, default: 1.0, step: 0.1},
             lineSpeed:   {min: 0.01, max: 2, default: 0.35, step: 0.01},
@@ -925,7 +926,7 @@
         const GLOBAL_PARAMS  = ["persistence", "colorShift"];
 
         const EMITTER_PARAMS = {
-            "orbitaldots":  ["numDots", "dotDiam", "orbitSpeed", "orbitDiam"],
+            "orbitaldots":  ["numDots", "dotDiam", "orbitSpeed", "orbitDiam", "modOrbitSpeed"],
             "swarmingdots": ["numDots", "dotDiam", "swarmSpeed", "swarmSpread"],
             "lissajous":    ["lineSpeed", "lineAmp"],
             "borderrect":   []

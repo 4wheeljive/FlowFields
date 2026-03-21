@@ -378,6 +378,7 @@ namespace colorTrails {
         float orbitSpeed = 3.0f;
         float dotDiam = 1.5f;
         float orbitDiam  = 10.f;
+        float modOrbitSpeed = 0.3f;   // noise variation depth (0=constant, 1=can stop, >1=reverses)
     };
 
     struct SwarmingDotsParams {

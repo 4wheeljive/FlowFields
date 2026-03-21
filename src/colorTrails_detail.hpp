@@ -164,6 +164,7 @@ namespace colorTrails {
         cOrbitSpeed = orbitalDots.orbitSpeed;
         cDotDiam = orbitalDots.dotDiam;
         cOrbitDiam = orbitalDots.orbitDiam;
+        cModOrbitSpeed = orbitalDots.modOrbitSpeed;
         // Emitter: swarmingDots
         cSwarmSpeed = swarmingDots.swarmSpeed;
         cSwarmSpread = swarmingDots.swarmSpread;
@@ -182,6 +183,7 @@ namespace colorTrails {
         orbitalDots.orbitSpeed = cOrbitSpeed;
         orbitalDots.dotDiam  = cDotDiam;
         orbitalDots.orbitDiam = cOrbitDiam;
+        orbitalDots.modOrbitSpeed = cModOrbitSpeed;
         swarmingDots.numDots = cNumDots;
         swarmingDots.swarmSpeed = cSwarmSpeed;
         swarmingDots.swarmSpread = cSwarmSpread;
