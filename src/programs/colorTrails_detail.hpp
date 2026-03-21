@@ -33,11 +33,22 @@ namespace colorTrails {
 
     // Orbiting dots
     static void emitOrbitalDots(float t) {
+
+        timings.ratio[0] = 0.0005f;   // modOrbitDiam — slow diameter breathing
+        //timings.ratio[1] = 0.0006f;
+        timings.ratio[2] = 0.0001f;   // modOrbitSpeed — slow speed variation
+        //timings.ratio[3] = 0.00003f;
+
+        calculate_modulators(timings);
+
+        float modOrbitDiam = 1.3f * move.noise_angle[0]*0.16f; // 0.16 = approximate multiplicative inverse of 2 PI produces ~(0,1))
+        float modOrbitSpeed = 1.5f * move.noise_directional[2]; 
+        
         float fNumDots = static_cast<float>(orbitalDots.numDots);
         float ocx  = WIDTH  * 0.5f - 0.5f;
         float ocy  = HEIGHT * 0.5f - 0.5f;
-        float orad = orbitalDots.orbitDiam * 0.8f;
-        float base = t * orbitalDots.orbitSpeed;
+        float orad = orbitalDots.orbitDiam * 0.8f * modOrbitDiam;               
+        float base = t * orbitalDots.orbitSpeed * modOrbitSpeed;        
         for (int i = 0; i < orbitalDots.numDots; i++) {
             float a  = base + i * (2.0f * CT_PI / fNumDots);
             float cx = ocx + fl::cosf(a) * orad;
@@ -54,7 +65,7 @@ namespace colorTrails {
     static void emitSwarmingDots(float t) {
         uint8_t n = swarmingDots.numDots;
         float fNumDots = static_cast<float>(n);
-        float spd = swarmingDots.swarmSpeed;
+        //float spd = swarmingDots.swarmSpeed;
 
         // 2 timers per dot: [d*2]=X, [d*2+1]=Y (up to 10 timers for 5 dots)
         // Similar ratios keep dots moving at comparable speeds;
@@ -76,9 +87,9 @@ namespace colorTrails {
             2600.0f, 3800.0f     // dot 4
         };
 
-        int numTimers = n * 2;
-        for (int i = 0; i < numTimers; i++) {
-            timings.ratio[i]  = baseRatios[i] * spd;
+        uint8_t numTimers = n * 2;
+        for (uint8_t i = 0; i < numTimers; i++) {
+            timings.ratio[i]  = baseRatios[i] * swarmingDots.swarmSpeed;
             timings.offset[i] = baseOffsets[i];
         }
 
@@ -112,7 +123,7 @@ namespace colorTrails {
         }
     }
 
-    // Lissajous line — reads from `lissajous`
+    // Lissajous line
     static void emitLissajousLine(float t) {
         const float c = (MIN_DIMENSION - 1) * 0.5f;
         float s = lissajous.lineSpeed;

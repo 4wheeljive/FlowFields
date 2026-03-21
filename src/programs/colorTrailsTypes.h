@@ -208,10 +208,11 @@ namespace colorTrails {
     };
 
     struct modulators {
-        float linear[num_timers];      // returns 0 to FLT_MAX
-        float radial[num_timers];      // returns 0 to 2*PI
-        float directional[num_timers]; // returns -1 to 1
-        float noise_angle[num_timers]; // returns 0 to 2*PI
+        float linear[num_timers];               // returns 0 to FLT_MAX
+        float radial[num_timers];               // returns 0 to 2*PI
+        float directional[num_timers];          // returns -1 to 1
+        float noise_directional[num_timers];    // returns -1 to 1
+        float noise_angle[num_timers];          // returns 0 to 2*PI
     };
 
     timers timings;     // timer inputs; all time/speed settings in one place
@@ -234,13 +235,15 @@ namespace colorTrails {
 
                 // directional offsets or factors, returns -1 to 1
                 move.directional[i] = 
-                    fl::sinf(move.radial[i]); 
+                    fl::sinf(move.radial[i]);
+                    
+                // noise-based directional, offsets or factors, returns -1 to 1  
+                move.noise_directional[i] = 
+                    noiseX.noise(move.linear[i]);
 
-                /*
                 // noise based angle offset, returns 0 to 2 * PI
                 move.noise_angle[i] =
-                    PI * (1.f + Perlin1D::noise(move.linear[i]));
-                */
+                    PI * (1.f + move.noise_directional[i]); // noiseX.noise(move.linear[i])
             
             }
         }
