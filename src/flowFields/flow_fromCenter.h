@@ -13,10 +13,6 @@
 
 namespace colorTrails {
 
-    ParameterPack radialStep;
-    ParameterPack blendFactor; // question: is it a problem having duplicate names?? 
-
-
     struct FromCenterParams {
         float radialStep        = 0.18f;   // how far inward to sample (controls outward speed)
         float blendFactor       = 0.45f;   // blend factor (0 = keep current, 1 = fully transport)

@@ -13,17 +13,6 @@
 
 namespace colorTrails {
 
-    ParameterPack xSpeed;
-    ParameterPack ySpeed;
-    ParameterPack xAmp;
-    ParameterPack yAmp;
-    ParameterPack xFreq;
-    ParameterPack yFreq;
-    ParameterPack xShift;
-    ParameterPack yShift;
-    ParameterPack noiseFreq;
-  
-
     struct NoiseFlowParams {
         float xSpeed = -0.50f;   // Noise scroll speed  (column axis)
         float ySpeed = -0.50f;   // Noise scroll speed  (row axis)
@@ -64,14 +53,9 @@ namespace colorTrails {
     // --- Prepare: build noise profiles, apply modulator(s) ---
 
     static void noiseFlowPrepare(float t) {
-        // Working copies of amplitude (modulator may alter these)
+        // Working copies of amplitude
         float workXAmp = noiseFlow.xAmp;
         float workYAmp = noiseFlow.yAmp;
-
-        // TODO: Replace initial AmpMod with multiple modulation options  
-        if (vizConfig.useAmpMod) {
-            applyAmpModulation(t, workXAmp, workYAmp);
-        }
 
         // Build noise profiles
        // if (noiseFlow.use2DNoise) {

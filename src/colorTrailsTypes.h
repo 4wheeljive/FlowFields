@@ -365,12 +365,49 @@ namespace colorTrails {
 
     // --- Emitter parameter structs ---
 
+    // ═══════════════════════════════════════════════════════════════════
+    //  MODULATION TYPES
+    // ═══════════════════════════════════════════════════════════════════
+
+    // Waveform source — maps 1:1 to modulators struct fields, native ranges preserved
+    enum ModType : uint8_t {
+        MOD_NONE              = 0,
+        MOD_LINEAR            = 1,   // move.linear[timer],            0 to FLT_MAX
+        MOD_RADIAL            = 2,   // move.radial[timer],            0 to 2*PI
+        MOD_DIRECTIONAL_SINE  = 3,   // move.directional_sine[timer],  -1 to 1
+        MOD_DIRECTIONAL_NOISE = 4,   // move.directional_noise[timer], -1 to 1
+        MOD_RADIAL_NOISE      = 5,   // move.radial_noise[timer],      0 to 2*PI
+    };
+
+    // Mathematical operation applied to base value
+    enum ModOp : uint8_t {
+        OP_SCALE = 0,   // base * (1 + level * wave)  — percentage perturbation around base
+        OP_ADD   = 1,   // base + level * wave         — fixed-magnitude offset from base
+    };
+
+    struct ModConfig {
+        // Hardcoded by developer — architectural choices
+        ModType type  = MOD_NONE;   // which move.* output to read
+        ModOp   op    = OP_SCALE;   // how the wave modifies the base value
+        uint8_t timer = 0;          // timer index (0–9)
+
+        // UI-tunable via cVars — struct values are defaults, overwritten by syncFromCVars()
+        float   rate  = 0.0f;       // → timings.ratio[timer], controls modulation speed
+        float   level = 0.0f;       // modulation depth (0 = mod off)
+        float   offset = 0.0f;      // → timings.offset[timer], phase shift
+    };
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  EMITTERS
+    // ═══════════════════════════════════════════════════════════════════
+
     struct OrbitalDotsParams {
         uint8_t numDots = 3;
         float orbitSpeed = 3.0f;
+        ModConfig modOrbitSpeed = {MOD_DIRECTIONAL_NOISE, OP_SCALE, 2, 0.00005f, 0.3f};
         float dotDiam = 1.5f;
-        float orbitDiam  = 10.f;
-        float modOrbitSpeed = 0.3f;   // noise variation depth (0=constant, 1=can stop, >1=reverses)
+        float orbitDiam = 10.f;
+        ModConfig modOrbitDiam = {MOD_RADIAL_NOISE, OP_SCALE, 0, 0.0005f, 0.5f};
     };
 
     struct SwarmingDotsParams {
@@ -395,38 +432,6 @@ namespace colorTrails {
     BorderRectParams    borderRect;
 
 
-    struct ParamPack {
-        float base;
-        uint8_t modType;
-        float modRate;
-        float modLevel;
-    };
-
-
-    // the following will deprecated with implementation of the Modulator class 
-    /*struct AmpModParams {
-        float intensity = 4.0f;    // Depth of amplitude modulation (0 = off)
-        float speed     = 1.0f;    // Temporal speed of the variation noise
-        bool  active    = false;   // on/off
-    };
-
-    AmpModParams ampMod;
-
-    //  Slow 1D Perlin noise modulates the flow field's xAmplitude/yAmplitude.
-    //  Operates on working copies (does not mutate base noiseFlow params).
-
-    static void applyAmpModulation(float t, float& xAmp, float& yAmp) {
-        if (!ampMod.active) return;
-
-        float nVarX = ampVarX.noise(t * 0.16f * ampMod.speed);
-        float nVarY = ampVarY.noise(t * 0.13f * ampMod.speed + 17.0f);
-
-        float selfMod = 0.5f + 0.5f * ((nVarX + nVarY) * 0.5f);
-        float effVariation = ampMod.intensity * selfMod;
-
-        xAmp = clampf(xAmp + nVarX * 0.45f * effVariation, 0.10f, 1.0f);
-        yAmp = clampf(yAmp + nVarY * 0.45f * effVariation, 0.10f, 1.0f);
-    }*/
 
 
     // ═══════════════════════════════════════════════════════════════════

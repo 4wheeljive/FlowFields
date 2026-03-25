@@ -21,9 +21,9 @@
 
 #include "bleControl.h"
 #include "colorTrailsTypes.h"
-#include "flow_noise.h"
-#include "flow_fromCenter.h"
-#include "flow_directional.h"
+#include "flowFields/flow_noise.h"
+#include "flowFields/flow_fromCenter.h"
+#include "flowFields/flow_Directional.h"
 #include "emitters.h"
 #include "modulators.h"
 
@@ -166,7 +166,10 @@ namespace colorTrails {
         cOrbitSpeed = orbitalDots.orbitSpeed;
         cDotDiam = orbitalDots.dotDiam;
         cOrbitDiam = orbitalDots.orbitDiam;
-        cModOrbitSpeed = orbitalDots.modOrbitSpeed;
+        cModOrbitSpeedRate = orbitalDots.modOrbitSpeed.rate;
+        cModOrbitSpeedLevel = orbitalDots.modOrbitSpeed.level;
+        cModOrbitDiamRate = orbitalDots.modOrbitDiam.rate;
+        cModOrbitDiamLevel = orbitalDots.modOrbitDiam.level;
         // Emitter: swarmingDots
         cSwarmSpeed = swarmingDots.swarmSpeed;
         cSwarmSpread = swarmingDots.swarmSpread;
@@ -186,7 +189,10 @@ namespace colorTrails {
         orbitalDots.orbitSpeed = cOrbitSpeed;
         orbitalDots.dotDiam  = cDotDiam;
         orbitalDots.orbitDiam = cOrbitDiam;
-        orbitalDots.modOrbitSpeed = cModOrbitSpeed;
+        orbitalDots.modOrbitSpeed.rate = cModOrbitSpeedRate;
+        orbitalDots.modOrbitSpeed.level = cModOrbitSpeedLevel;
+        orbitalDots.modOrbitDiam.rate = cModOrbitDiamRate;
+        orbitalDots.modOrbitDiam.level = cModOrbitDiamLevel;
         swarmingDots.numDots = cNumDots;
         swarmingDots.swarmSpeed = cSwarmSpeed;
         swarmingDots.swarmSpread = cSwarmSpread;

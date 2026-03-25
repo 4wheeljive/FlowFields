@@ -96,6 +96,51 @@ Each emitter's `NoiseFlowParams` member holds defaults appropriate to that emitt
 
 ---
 
+## Timer/Modulator System
+
+The `timers`/`modulators` framework (in `modulators.h`) provides coordinated, millisecond-synchronized time-based modulation across all components.
+
+### Architecture
+
+- `timers timings` — input struct: `ratio[i]` sets each timer's time-sensitivity, `offset[i]` sets phase offset
+- `modulators move` — output struct: 5 derived output arrays, all computed from the same `runtime = fl::millis()` snapshot
+- `calculate_modulators(timings)` — single call per frame computes all 10 timers × 5 output types
+
+### Core loop (per timer)
+
+```cpp
+move.linear[i]            = (runtime + timings.offset[i]) * timings.ratio[i];   // 0 to FLT_MAX
+move.radial[i]            = fmod(move.linear[i], 2π);                            // 0 to 2π
+move.directional_sine[i]  = sin(move.radial[i]);                                 // -1 to 1
+move.directional_noise[i] = noiseX.noise(move.linear[i]);                        // -1 to 1
+move.radial_noise[i]      = π * (1 + move.directional_noise[i]);                 // 0 to 2π
+```
+
+### Why this design
+
+1. **One coordinated calculation per frame** — all modulator outputs share the same `fl::millis()` snapshot, so relationships between timers are precise to the millisecond
+2. **Timing relationships are visible** — a developer can see all `ratio` and `offset` assignments together in each emitter/flow function, making it easy to tune relative speeds and phase relationships
+3. **Multiple output shapes from one timer** — setting `timings.ratio[2] = 0.00005f` produces `move.linear[2]`, `move.radial[2]`, `move.directional_sine[2]`, `move.directional_noise[2]`, and `move.radial_noise[2]` simultaneously, each at its natural range
+
+### ModConfig — bridging timers to parameters
+
+Each modulatable parameter has a companion `ModConfig` struct:
+
+**Hardcoded** (developer architectural choices, not UI-exposed):
+- `type` — which `move.*` output to read (e.g. `MOD_DIRECTIONAL_NOISE`)
+- `op` — how the wave modifies the base value (`OP_SCALE` or `OP_ADD`)
+- `timer` — which timer index (0–9) to use
+
+**UI-tunable** (wired through the 5-file cVar pattern):
+- `rate` — written to `timings.ratio[timer]` before `calculate_modulators()`, controls modulation speed
+- `level` — modulation depth (0 = mod off)
+
+Convention: timers 0–5 for emitters, 6–9 for flow fields.
+
+Usage pattern: `configureTimer()` → `calculate_modulators()` → `Modulators::apply(base, modConfig)`
+
+---
+
 ## The Float Grid
 
 ColorTrails maintains two WxH float grids (`gR/gG/gB` and `tR/tG/tB`). The live buffer receives emitter drawing; the scratch buffer is used during two-pass advection. All drawing uses float precision for smooth anti-aliased sub-pixel rendering. The grid is quantized to uint8 only at the final LED copy step.
