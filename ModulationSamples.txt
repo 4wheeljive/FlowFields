@@ -1,0 +1,131 @@
+void Polar_Waves() {
+
+	timings.master_speed = 0.5 * cSpeed;
+
+	timings.ratio[0] = 0.0025 + cRatBase/100; 
+	timings.ratio[1] = 0.0027 + cRatBase/100 * cRatDiff;
+	timings.ratio[2] = 0.0031 + cRatBase/100 * 2 * cRatDiff;
+
+	calculate_oscillators(timings);
+
+	for (int x = 0; x < num_x; x++) {
+		for (int y = 0; y < num_y; y++) {
+
+			animation.dist = distance[x][y] * cZoom;
+			animation.angle =
+				polar_theta[x][y] * cAngle
+				- animation.dist * 0.1
+				+ move.radial[0];
+				// can add noise_angle for non-periodic rotation
+				// add multiple noise_angle for additional variation
+			animation.z = ((animation.dist * 1.5) - 10 * move.linear[0]) * cZ;
+			animation.scale_x = 0.15 * cScale;
+			animation.scale_y = 0.15 * cScale;
+			animation.offset_x = move.linear[0];
+			show1 = { Layer1 ? render_value(animation) : 0};
+			
+			animation.angle =
+				polar_theta[x][y] * cAngle
+				- animation.dist * 0.1 * cTwist
+				+ move.radial[1];
+			animation.z = ((animation.dist * 1.5) - 10 * move.linear[1]) * cZ;
+			animation.offset_x = move.linear[1];
+			show2 = { Layer2 ? render_value(animation) : 0 };
+
+			animation.angle =
+				polar_theta[x][y] * cAngle
+				- animation.dist * 0.1 * cTwist
+				+ move.radial[2];
+			animation.z = ((animation.dist * 1.5) - 10 * move.linear[2]) * cZ;
+			animation.offset_x = move.linear[2];
+			show3 = { Layer3 ? render_value(animation) : 0 };
+			
+			//float radial = (radius - distance[x][y]) / distance[x][y];
+			//float radialFilter = (radius - distance[x][y]) / distance[x][y];
+			
+			float radius = radial_filter_radius * cRadius; // * cRms;
+			radialFilterFalloff = cEdge;
+			radialDimmer = radialFilterFactor(radius, distance[x][y], radialFilterFalloff);
+		
+			pixel.red = show1 * cRed * radialDimmer; 
+			pixel.green = show2 * cGreen * radialDimmer; 
+			pixel.blue = show3 * cBlue * radialDimmer;
+
+			pixel = rgb_sanity_check(pixel);
+			setPixelColorInternal(x, y, pixel);
+
+		}
+	}
+}
+		
+void Spiralus() {
+
+	timings.master_speed = 0.0011 * cSpeed ; // * bpmFactor
+	
+	timings.ratio[0] = 1.5 + cRatBase * 2 * cRatDiff;       
+	timings.ratio[1] = 2.3 + cRatBase * 2 * cRatDiff;
+	timings.ratio[2] = 3 + cRatBase * 2 * cRatDiff;
+	timings.ratio[3] = 0.05 + cRatBase/10 ;
+	timings.ratio[4] = 0.2 + cRatBase/10 ;
+	timings.ratio[5] = 0.03 + cRatBase/10 ;
+	timings.ratio[6] = 0.025 + cRatBase/10 ;
+	timings.ratio[7] = 0.021 + cRatBase/10 ;
+	timings.ratio[8] = 0.027 + cRatBase/10 ;
+	
+	timings.offset[0] = 0 ;
+	timings.offset[1] = 100 * cOffBase;
+	timings.offset[2] = 200 * cOffBase * cOffDiff;
+	timings.offset[3] = 300 * cOffBase * 1.25 * cOffDiff;
+	timings.offset[4] = 400 * cOffBase * 1.5 * cOffDiff;
+	timings.offset[5] = 500 * cOffBase * 1.75 * cOffDiff;
+	timings.offset[6] = 600 * cOffBase * 2 * cOffDiff;
+
+	calculate_oscillators(timings); 
+
+	for (int x = 0; x < num_x; x++) {
+		for (int y = 0; y < num_y; y++) {
+
+			animation.dist = distance[x][y] * cZoom;
+			animation.angle = 
+				2 * polar_theta[x][y] * cAngle  
+				+ move.noise_angle[5] 
+				+ move.directional[3] * move.noise_angle[6] * animation.dist / 10 * cTwist;
+			animation.scale_x = 0.08 * cScale;
+			animation.scale_y = 0.08 * cScale;
+			animation.scale_z = 0.02; 
+			animation.offset_y = -move.linear[0];
+			animation.offset_x = 0;
+			animation.offset_z = 0;
+			animation.z = move.linear[1] * cZ;
+			show1 = { Layer1 ? render_value(animation) : 0};
+
+			animation.angle = 
+				2 * polar_theta[x][y] * cAngle
+				+ move.noise_angle[7]
+				+ move.directional[5] * move.noise_angle[8] * animation.dist / 10 * cTwist;
+			animation.offset_y = -move.linear[1];
+			animation.z = move.linear[2] * cZ;
+			show2 = { Layer2 ? render_value(animation) : 0};
+
+			animation.angle = 
+				2 * polar_theta[x][y] * cAngle
+				+ move.noise_angle[6] 
+				+ move.directional[6] * move.noise_angle[7] * animation.dist / 10 * cTwist;
+			animation.offset_y = move.linear[2];
+			animation.z = move.linear[0] * cZ;
+			show3 = { Layer3 ? render_value(animation) : 0};
+
+			float radius = radial_filter_radius * cRadius;
+			radialFilterFalloff = cEdge;
+			//radialDimmer = radialFilterFactor(radius, distance[x][y], radialFilterFalloff);
+			radialDimmer = 1;   
+
+			pixel.red =     (show1 + show2) * cRed * radialDimmer;
+			pixel.green =   (show1 - show2) * cGreen * radialDimmer;
+			pixel.blue =    (show3 - show1) * cBlue * radialDimmer;
+
+			pixel = rgb_sanity_check(pixel);
+			setPixelColorInternal(x, y, pixel);
+		}
+	}
+}

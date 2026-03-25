@@ -8,6 +8,17 @@
 
 namespace colorTrails {
 
+    ParamPack orbitSpeed;
+    ParamPack orbitDiam;
+    ParamPack orbitSpeed;
+    ParamPack dotDiam;
+    ParamPack swarmSpeed;
+    ParamPack swarmSpread;
+    ParamPack dotDiam;
+    ParamPack lineSpeed;
+    ParamPack lineAmp;
+
+    
     // Orbiting dots
     static void emitOrbitalDots(float t) {
 
@@ -18,14 +29,24 @@ namespace colorTrails {
 
         calculate_modulators(timings);
 
+        
+        // CLAUDE: THIS WAS THE OLD SYSTEM
         float modOrbitDiam = 1.3f * move.noise_angle[0]*0.16f; // 0.16 = approximate multiplicative inverse of 2 PI produces ~(0,1))
-        float modFactor = 1.0f + orbitalDots.modOrbitSpeed * move.noise_directional[2];
+        float modFactor_orbitDiam = modOrbitDiam; 
+        float modFactor_orbitSpeed = 1.0f + orbitalDots.modOrbitSpeed * move.noise_directional[2];
+
+
+        // CLAUDE: This is what i was working on putting in place
+        //applyMod(float base, uint8_t op, uint8_t type, float rate, float level, uint8_t index);
+        orbitalDots.orbitSpeed = applyMod(3.0f, 0, 2, 5.5f, 1.0f, 0 );
+
+
 
         float fNumDots = static_cast<float>(orbitalDots.numDots);
         float ocx  = WIDTH  * 0.5f - 0.5f;
         float ocy  = HEIGHT * 0.5f - 0.5f;
-        float orad = orbitalDots.orbitDiam * 0.8f * modOrbitDiam;
-        float base = t * orbitalDots.orbitSpeed * modFactor;        
+        float orad = orbitalDots.orbitDiam * 0.8f * modFactor_orbitDiam;
+        float base = t * orbitalDots.orbitSpeed * modFactor_orbitSpeed;        
         for (int i = 0; i < orbitalDots.numDots; i++) {
             float a  = base + i * (2.0f * CT_PI / fNumDots);
             float cx = ocx + fl::cosf(a) * orad;

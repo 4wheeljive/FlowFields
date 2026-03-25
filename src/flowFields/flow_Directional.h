@@ -15,6 +15,13 @@
 
 namespace colorTrails {
 
+    ParameterPack windStep;
+    ParameterPack blendFactor;
+    ParameterPack rotateSpeed;
+    ParameterPack waveAmp;
+    ParameterPack waveFreq;
+    ParameterPack waveSpeed;
+    
     struct DirectionalParams {
         float windStep    = 0.95f;   // backward sample distance (pixels)
         float blendFactor = 0.86f;   // transport blend (0 = keep current, 1 = full transport)

@@ -13,6 +13,17 @@
 
 namespace colorTrails {
 
+    ParameterPack xSpeed;
+    ParameterPack ySpeed;
+    ParameterPack xAmp;
+    ParameterPack yAmp;
+    ParameterPack xFreq;
+    ParameterPack yFreq;
+    ParameterPack xShift;
+    ParameterPack yShift;
+    ParameterPack noiseFreq;
+  
+
     struct NoiseFlowParams {
         float xSpeed = -0.50f;   // Noise scroll speed  (column axis)
         float ySpeed = -0.50f;   // Noise scroll speed  (row axis)

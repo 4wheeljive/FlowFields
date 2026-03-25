@@ -200,58 +200,6 @@ namespace colorTrails {
 
 
     // ═══════════════════════════════════════════════════════════════════
-    //  MODULATORS
-    // ═══════════════════════════════════════════════════════════════════
-
-    #define num_timers 10
-
-    struct timers {
-        float offset[num_timers];  // timers can be separated by a time offset
-        float ratio[num_timers];   // ratio determines time-sensitivity
-    };
-
-    struct modulators {
-        float linear[num_timers];               // returns 0 to FLT_MAX
-        float radial[num_timers];               // returns 0 to 2*PI
-        float directional[num_timers];          // returns -1 to 1
-        float noise_directional[num_timers];    // returns -1 to 1
-        float noise_angle[num_timers];          // returns 0 to 2*PI
-    };
-
-    timers timings;     // timer inputs; all time/speed settings in one place
-    modulators move;    // timer outputs; all time-based modulators in one place
-
-    
-    void calculate_modulators(timers &timings) {
-
-            float runtime = fl::millis(); 
-
-            for (uint8_t i = 0; i < num_timers; i++) {
-
-                // continously rising offsets, returns 0 to max_float
-                move.linear[i] = 
-                    (runtime + timings.offset[i]) * timings.ratio[i];
-
-                // angle offsets for continous rotation, returns 0 to 2 * PI
-                move.radial[i] = 
-                    fl::fmodf(move.linear[i], 2 * PI); 
-
-                // directional offsets or factors, returns -1 to 1
-                move.directional[i] = 
-                    fl::sinf(move.radial[i]);
-                    
-                // noise-based directional, offsets or factors, returns -1 to 1  
-                move.noise_directional[i] = 
-                    noiseX.noise(move.linear[i]);
-
-                // noise based angle offset, returns 0 to 2 * PI
-                move.noise_angle[i] =
-                    PI * (1.f + move.noise_directional[i]); // noiseX.noise(move.linear[i])
-            
-            }
-        }
-
-    // ═══════════════════════════════════════════════════════════════════
     //  DRAWING PRIMITIVES
     // ═══════════════════════════════════════════════════════════════════
 
@@ -447,11 +395,16 @@ namespace colorTrails {
     BorderRectParams    borderRect;
 
 
+    struct ParamPack {
+        float base;
+        uint8_t modType;
+        float modRate;
+        float modLevel;
+    };
 
-    // RELOCATE/REFACTOR MODULATOR FUNCTIONALITY BELOW   
-    // --- Amplitude modulator ---
 
-    struct AmpModParams {
+    // the following will deprecated with implementation of the Modulator class 
+    /*struct AmpModParams {
         float intensity = 4.0f;    // Depth of amplitude modulation (0 = off)
         float speed     = 1.0f;    // Temporal speed of the variation noise
         bool  active    = false;   // on/off
@@ -473,7 +426,7 @@ namespace colorTrails {
 
         xAmp = clampf(xAmp + nVarX * 0.45f * effVariation, 0.10f, 1.0f);
         yAmp = clampf(yAmp + nVarY * 0.45f * effVariation, 0.10f, 1.0f);
-    }
+    }*/
 
 
     // ═══════════════════════════════════════════════════════════════════

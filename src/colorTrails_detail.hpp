@@ -25,6 +25,7 @@
 #include "flow_fromCenter.h"
 #include "flow_directional.h"
 #include "emitters.h"
+#include "modulators.h"
 
 namespace colorTrails {
 
@@ -99,10 +100,10 @@ namespace colorTrails {
                 cYFreq = noiseFlow.yFreq;
                 cXShift = noiseFlow.xShift;
                 cYShift = noiseFlow.yShift;
-                ampMod = AmpModParams{};
-                cVariationIntensity = ampMod.intensity;
-                cVariationSpeed = ampMod.speed;
-                cModulateAmp = ampMod.active ? 1 : 0;
+                //ampMod = AmpModParams{};
+                //cVariationIntensity = ampMod.intensity;
+                //cVariationSpeed = ampMod.speed;
+                //cModulateAmp = ampMod.active ? 1 : 0;
                 break;
             }
             case FLOW_FROMCENTER: {
@@ -136,10 +137,10 @@ namespace colorTrails {
         noiseFlow.yFreq = cYFreq;
         noiseFlow.xShift = cXShift;
         noiseFlow.yShift = cYShift;
-        ampMod.intensity = cVariationIntensity;
-        ampMod.speed = cVariationSpeed;
-        ampMod.active = (cModulateAmp > 0);
-        vizConfig.useAmpMod = ampMod.active;
+        //ampMod.intensity = cVariationIntensity;
+        //ampMod.speed = cVariationSpeed;
+        //ampMod.active = (cModulateAmp > 0);
+        //vizConfig.useAmpMod = ampMod.active;
         // From-center flow
         fromCenter.radialStep = cRadialStep;
         fromCenter.blendFactor = cBlendFactor;
