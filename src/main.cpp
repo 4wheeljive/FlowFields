@@ -16,7 +16,7 @@ CREDITS:
 #define FORMAT_LITTLEFS_IF_FAILED true 
 
 bool debug = false;
-bool audioEnabled = false;
+bool audioEnabled = true;
 bool audioLatencyDiagnostics = false;
 
 /*#include "profiler.h"

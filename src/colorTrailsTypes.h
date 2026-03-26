@@ -427,7 +427,9 @@ namespace colorTrails {
     struct BorderRectParams {
     };
 
-
+    struct AudioDotsParams {
+        float dotDiam;
+    };
 
 
     // ═══════════════════════════════════════════════════════════════════

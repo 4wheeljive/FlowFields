@@ -127,6 +127,38 @@ namespace colorTrails {
     }
 
     // ═══════════════════════════════════════════════════════════════════
+    //  AUDIO DOTS
+    // ═══════════════════════════════════════════════════════════════════
+
+    const myAudio::AudioFrame* cFrame = nullptr;
+
+    inline void getAudio(myAudio::binConfig& b) {
+        b.busBased = true;
+        cFrame = &myAudio::updateAudioFrame(b);
+    }
+
+    AudioDotsParams audioDots = {
+        .dotDiam = 3.0f,
+    };
+
+    static void emitAudioDots(float t) {
+
+        if (audioEnabled){
+            myAudio::binConfig& b = maxBins ? myAudio::bin32 : myAudio::bin16;
+            getAudio(b);
+        }
+
+        // On each new beat, spawn a dot at a random grid position
+        if (myAudio::busC.newBeat) {
+            float cx = random8(0, WIDTH  - 1) + random8() / 255.0f;
+            float cy = random8(0, HEIGHT - 1) + random8() / 255.0f;
+            // Color from rainbow based on current time
+            ColorF c = rainbow(t, vizConfig.colorShift, random8() / 255.0f);
+            drawDot(cx, cy, audioDots.dotDiam, c.r, c.g, c.b);
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
     //  LISSAJOUS LINE
     // ═══════════════════════════════════════════════════════════════════
 

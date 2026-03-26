@@ -40,6 +40,7 @@ namespace colorTrails {
         emitSwarmingDots,
         emitLissajousLine,
         emitRainbowBorder,
+        emitAudioDots,
     };
 
     const FlowPrepFn FLOW_PREPARE[] = {

@@ -49,12 +49,13 @@ const char orbitaldots_str[] PROGMEM = "orbitaldots";
 const char swarmingdots_str[] PROGMEM = "swarmingdots";
 const char lissajous_str[] PROGMEM = "lissajous";
 const char borderrect_str[] PROGMEM = "borderrect";
+const char audiodots_str[] PROGMEM = "audiodots";
 
 const char* const EMITTERS[] PROGMEM = {
-      orbitaldots_str, swarmingdots_str, lissajous_str, borderrect_str
+      orbitaldots_str, swarmingdots_str, lissajous_str, borderrect_str, audiodots_str
    };
 
-const uint8_t EMITTER_COUNTS[] = {4};
+const uint8_t EMITTER_COUNTS[] = {5};
 
 // Emitter params
 const char* const ORBITALDOTS_PARAMS[] PROGMEM = {
@@ -68,6 +69,7 @@ const char* const LISSAJOUS_PARAMS[] PROGMEM = {
    "lineSpeed", "lineAmp"
 };
 const char* const BORDERRECT_PARAMS[] PROGMEM = {};
+const char* const AUDIODOTS_PARAMS[] PROGMEM = {};
 
 // Struct to hold emitter name and parameter array reference
 struct EmitterParamEntry {
@@ -80,7 +82,8 @@ const EmitterParamEntry EMITTER_PARAM_LOOKUP[] PROGMEM = {
    {"orbitaldots", ORBITALDOTS_PARAMS, 8},
    {"swarmingdots", SWARMINGDOTS_PARAMS, 4},
    {"lissajous", LISSAJOUS_PARAMS, 2},
-   {"borderrect", BORDERRECT_PARAMS, 0}
+   {"borderrect", BORDERRECT_PARAMS, 0},
+   {"audiodots", AUDIODOTS_PARAMS, 0}
 };
 
 static const EmitterParamEntry* getEmitterParams(uint8_t emitterIdx) {

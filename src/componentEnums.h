@@ -6,6 +6,7 @@ enum Emitter : uint8_t {
     EMITTER_SWARMINGDOTS,
     EMITTER_LISSAJOUS,
     EMITTER_BORDERRECT,
+    EMITTER_AUDIODOTS,
     // future: EMITTER_TRIANGLE, ...
     EMITTER_COUNT
 };
