@@ -14,8 +14,8 @@
 namespace colorTrails {
 
     struct NoiseFlowParams {
-        float xSpeed = -0.50f;   // Noise scroll speed  (column axis)
-        float ySpeed = -0.50f;   // Noise scroll speed  (row axis)
+        float xSpeed = -0.25f;   // Noise scroll speed  (column axis)
+        float ySpeed = -0.25f;   // Noise scroll speed  (row axis)
         float xAmp =  1.00f;   // Noise amplitude     (column axis)
         float yAmp =  1.00f;   // Noise amplitude     (row axis)
         float xFreq =  0.33f;   // Noise spatial scale (column axis) (aka "xScale")
@@ -23,7 +23,6 @@ namespace colorTrails {
         float xShift =  1.8f;    // Max horizontal shift per row  (pixels)
         float yShift =  1.8f;    // Max vertical shift per column (pixels)
         float noiseFreq = 0.23f;  // TODO: build out and enable BLE/UI control 
-        //bool  use2DNoise =  true;    // false = 1D Perlin, true = 2D Perlin
     };
    
     NoiseFlowParams     noiseFlow;

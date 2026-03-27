@@ -165,6 +165,8 @@ namespace colorTrails {
         // Emitter: swarmingDots
         cSwarmSpeed = swarmingDots.swarmSpeed;
         cSwarmSpread = swarmingDots.swarmSpread;
+        cModSwarmSpreadRate = swarmingDots.modSwarmSpread.modRate;
+        cModSwarmSpreadLevel = swarmingDots.modSwarmSpread.modLevel;
         // Emitter: lissajous / borderRect
         cLineSpeed = lissajous.lineSpeed;
         cLineAmp = lissajous.lineAmp;
@@ -185,6 +187,8 @@ namespace colorTrails {
         swarmingDots.numDots = cNumDots;
         swarmingDots.swarmSpeed = cSwarmSpeed;
         swarmingDots.swarmSpread = cSwarmSpread;
+        swarmingDots.modSwarmSpread.modRate = cModSwarmSpreadRate;
+        swarmingDots.modSwarmSpread.modLevel = cModSwarmSpreadLevel;
         swarmingDots.dotDiam = cDotDiam;
         lissajous.lineSpeed = cLineSpeed;
         lissajous.lineAmp = cLineAmp;

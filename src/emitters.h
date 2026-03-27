@@ -62,7 +62,8 @@ namespace colorTrails {
     SwarmingDotsParams swarmingDots = {
         .numDots     = 3,
         .swarmSpeed  = 0.5f,
-        .swarmSpread = 1.0f,
+        .swarmSpread = 0.5f,
+        .modSwarmSpread = {10, 1.0f, 1.0f},       // modTimer, modRate, modLevel 
         .dotDiam     = 1.5f,
     };
 
@@ -74,6 +75,10 @@ namespace colorTrails {
 
         uint8_t n = swarmingDots.numDots;
         float fNumDots = static_cast<float>(n);
+
+        timings.ratio[10] = 0.00055f * swarmingDots.modSwarmSpread.modRate;
+        //timings.ratio[11] = 0.00045f * swarmingDots.modSwarmSpeed.modRate;
+        //timings.offset[11] = 500.f;
 
         // 2 timers per dot: [d*2]=X, [d*2+1]=Y (up to 10 timers for 5 dots)
         // Similar ratios keep dots moving at comparable speeds;
@@ -118,7 +123,9 @@ namespace colorTrails {
         cenY /= fNumDots;
 
         // Blend each dot between center and its own position via swarmSpread
-        float spread = swarmingDots.swarmSpread;
+        float modSpread = fl::map_range_clamped<float, float>(noiseX.noise(move.linear[10]), -0.5f, 0.5f, 0.0f, 1.0f);
+        float spread = swarmingDots.swarmSpread + (modSpread * swarmingDots.modSwarmSpread.modLevel);
+
         for (int d = 0; d < n; d++) {
             float sx = cenX + spread * (dotX[d] - cenX);
             float sy = cenY + spread * (dotY[d] - cenY);

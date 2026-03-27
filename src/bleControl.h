@@ -64,7 +64,8 @@ const char* const ORBITALDOTS_PARAMS[] PROGMEM = {
    "modOrbitSpeedRate", "modOrbitSpeedLevel", "modOrbitDiamRate", "modOrbitDiamLevel"
 };
 const char* const SWARMINGDOTS_PARAMS[] PROGMEM = {
-   "numDots", "dotDiam", "swarmSpeed", "swarmSpread"
+   "numDots", "dotDiam", "swarmSpeed", "swarmSpread",
+   "modSwarmSpreadRate", "modSwarmSpreadLevel"
 };
 const char* const AUDIODOTS_PARAMS[] PROGMEM = {};
 const char* const LISSAJOUS_PARAMS[] PROGMEM = {
@@ -82,7 +83,7 @@ struct EmitterParamEntry {
 
 const EmitterParamEntry EMITTER_PARAM_LOOKUP[] PROGMEM = {
    {"orbitaldots", ORBITALDOTS_PARAMS, 8},
-   {"swarmingdots", SWARMINGDOTS_PARAMS, 4},
+   {"swarmingdots", SWARMINGDOTS_PARAMS, 6},
    {"audiodots", AUDIODOTS_PARAMS, 0},
    {"lissajous", LISSAJOUS_PARAMS, 2},
    {"borderrect", BORDERRECT_PARAMS, 0},
@@ -213,6 +214,8 @@ uint8_t cNumDots = 3;
 float cDotDiam = 1.5f;
 float cSwarmSpeed = 0.5f;
 float cSwarmSpread = 1.0f;
+float cModSwarmSpreadRate = 1.0f;
+float cModSwarmSpreadLevel = 1.0f;
 float cLineSpeed = 0.35f;
 float cColorShift = 0.10f;
 float cLineAmp = 13.5f;
@@ -364,7 +367,9 @@ void sendReceiptString(String receivedID, String receivedValue) {
    X(uint8_t, NumDots, 3) \
    X(float, DotDiam, 1.5f) \
    X(float, SwarmSpeed, 0.5f) \
-   X(float, SwarmSpread, 1.0f) \
+   X(float, SwarmSpread, 0.5f) \
+   X(float, ModSwarmSpreadRate, 1.0f) \
+   X(float, ModSwarmSpreadLevel, 1.0f) \
    X(float, LineSpeed, 0.35f) \
    X(float, ColorShift, 0.10f) \
    X(float, LineAmp, 13.5f) \

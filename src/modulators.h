@@ -12,7 +12,7 @@ namespace colorTrails {
     //  TIMER / MODULATOR ENGINE
     // ═══════════════════════════════════════════════════════════════════
 
-    #define num_timers 10
+    #define num_timers 12
 
     struct timers {
         float offset[num_timers];  // timers can be separated by a time offset
