@@ -35,6 +35,11 @@ namespace colorTrails {
    
     NoiseFlowParams noiseFlow;
 
+    // Runtime working values prepared each frame by noiseFlowPrepare()
+    // and consumed by noiseFlowAdvect().
+    static float workXShiftCurrent = 0.0f;
+    static float workYShiftCurrent = 0.0f;
+
     static void sampleProfile2D(const Perlin2D &n, float t, float speed,
                             float amp, float scale, int count, float *out) {
         const float scrollY = t * speed;
@@ -119,6 +124,10 @@ namespace colorTrails {
         float workYShift = noiseFlow.yShift * (1.0f + shiftMod.modLevel * shiftDepth * yShiftSignal);
         workXShift = fmaxf(0.0f, workXShift);
         workYShift = fmaxf(0.0f, workYShift);
+        
+        // Publish working shift values for the advection pass
+        workXShiftCurrent = workXShift;
+        workYShiftCurrent = workYShift;
 
         sampleProfile2D(noise2X, t, workXSpeed, workXAmp,
                         noiseFlow.xFreq, WIDTH, xProf);
@@ -126,11 +135,6 @@ namespace colorTrails {
         sampleProfile2D(noise2Y, t, workYSpeed, workYAmp,
                         noiseFlow.yFreq, HEIGHT, yProf);
 
-        // If noiseFlowAdvect() consumes noiseFlow.xShift / yShift directly,
-        // you will want to route workXShift / workYShift there as well.
-        // For now these are prepared here so the modulation pattern is defined.
-        (void)workXShift;
-        (void)workYShift;
     }
 
     // --- Advect: two-pass fractional advection (bilinear interpolation) + fade ---
@@ -141,7 +145,7 @@ namespace colorTrails {
 
         // Pass 1 — horizontal row shift  (Y-noise drives X movement)
         for (int y = 0; y < HEIGHT; y++) {
-            float sh = yProf[y] * noiseFlow.xShift;
+            float sh = yProf[y] * workXShiftCurrent;
             for (int x = 0; x < WIDTH; x++) {
                 float sx  = fmodPos((float)x - sh, (float)WIDTH);
                 int   ix0 = (int)fl::floorf(sx) % WIDTH;
@@ -156,7 +160,7 @@ namespace colorTrails {
 
         // Pass 2 — vertical column shift  (X-noise drives Y movement) + dim
         for (int x = 0; x < WIDTH; x++) {
-            float sh = xProf[x] * noiseFlow.yShift;
+            float sh = xProf[x] * workYShiftCurrent;
             for (int y = 0; y < HEIGHT; y++) {
                 float sy  = fmodPos((float)y - sh, (float)HEIGHT);
                 int   iy0 = (int)fl::floorf(sy) % HEIGHT;
