@@ -100,23 +100,30 @@ static const EmitterParamEntry* getEmitterParams(uint8_t emitterIdx) {
 const char noise_str[] PROGMEM = "noise";
 const char fromcenter_str[] PROGMEM = "fromcenter";
 const char directional_str[] PROGMEM = "directional";
+const char rings_str[] PROGMEM = "rings";
 
-const uint8_t FLOW_COUNTS[] = {3};
+const uint8_t FLOW_COUNTS[] = {4};
 
 const char* const FLOWS[] PROGMEM = {
-      noise_str, fromcenter_str, directional_str
+      noise_str, fromcenter_str, directional_str, rings_str
    };
    
 // Flow field params
 const char* const NOISE_PARAMS[] PROGMEM = {
    "xSpeed", "ySpeed", "xAmp", "yAmp","xFreq", "yFreq", "xShift", "yShift",
-   "modAmpRate", "modAmpLevel"
+   "modAmpRate", "modAmpLevel",
+   "modSpeedRate", "modSpeedLevel",
+   "modShiftRate", "modShiftLevel"
 };
 const char* const FROM_CENTER_PARAMS[] PROGMEM = {
    "radialStep", "blendFactor"
 };
 const char* const DIRECTIONAL_PARAMS[] PROGMEM = {
    "windStep", "blendFactor", "rotateSpeed", "waveAmp", "waveFreq", "waveSpeed"
+};
+const char* const RINGS_PARAMS[] PROGMEM = {
+   "innerSwirl", "outerSwirl", "midDrift",
+   "modBreatheRate", "modBreatheLevel"
 };
 
 // Struct to hold flow field name and parameter array reference
@@ -127,9 +134,10 @@ struct FlowParamEntry {
 };
 
 const FlowParamEntry FLOW_PARAM_LOOKUP[] PROGMEM = {
-   {"noise", NOISE_PARAMS, 10},
+   {"noise", NOISE_PARAMS, 14},
    {"fromcenter", FROM_CENTER_PARAMS, 2},
-   {"directional", DIRECTIONAL_PARAMS, 6}
+   {"directional", DIRECTIONAL_PARAMS, 6},
+   {"rings", RINGS_PARAMS, 5}
 };
 
 static const FlowParamEntry* getFlowParams(uint8_t flowIdx) {
@@ -226,6 +234,10 @@ float cXSpeed = -0.25f;
 float cYSpeed = -0.25f;
 float cModAmpRate = 1.0f;
 float cModAmpLevel = 1.0f;
+float cModSpeedRate = 1.0f;
+float cModSpeedLevel = 0.0f;
+float cModShiftRate = 1.0f;
+float cModShiftLevel = 0.0f;
 float cRadialStep = 0.18f;
 float cBlendFactor = 0.45f;
 float cWindStep = 0.95f;
@@ -233,6 +245,11 @@ float cRotateSpeed = 0.25f;
 float cWaveAmp = 0.0f;
 float cWaveFreq = 0.20f;
 float cWaveSpeed = 1.20f;
+float cInnerSwirl = -0.26f;
+float cOuterSwirl = 0.24f;
+float cMidDrift = 0.42f;
+float cModBreatheRate = 1.0f;
+float cModBreatheLevel = 1.0f;
 
 ArduinoJson::JsonDocument sendDoc;
 ArduinoJson::JsonDocument receivedJSON;
@@ -384,13 +401,22 @@ void sendReceiptString(String receivedID, String receivedValue) {
    X(float, YAmp, 1.0f) \
    X(float, ModAmpRate, 1.0f) \
    X(float, ModAmpLevel, 1.0f) \
+   X(float, ModSpeedRate, 1.0f) \
+   X(float, ModSpeedLevel, 0.0f) \
+   X(float, ModShiftRate, 1.0f) \
+   X(float, ModShiftLevel, 0.0f) \
    X(float, RadialStep, 0.18f) \
    X(float, BlendFactor, 0.45f) \
    X(float, WindStep, 0.95f) \
    X(float, RotateSpeed, 0.25f) \
    X(float, WaveAmp, 0.0f) \
    X(float, WaveFreq, 0.20f) \
-   X(float, WaveSpeed, 1.20f)
+   X(float, WaveSpeed, 1.20f) \
+   X(float, InnerSwirl, -0.26f) \
+   X(float, OuterSwirl, 0.24f) \
+   X(float, MidDrift, 0.42f) \
+   X(float, ModBreatheRate, 1.0f) \
+   X(float, ModBreatheLevel, 1.0f)
 
 
 // Auto-generated helper functions using X-macros

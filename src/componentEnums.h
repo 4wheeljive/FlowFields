@@ -15,6 +15,7 @@ enum Flow : uint8_t {
     FLOW_NOISE = 0,
     FLOW_FROMCENTER,
     FLOW_DIRECTIONAL,
+    FLOW_RINGS,
     // future: FLOW_TOCENTER, FLOW_SPIRAL, FLOW_POLARWARP, ...
     FLOW_COUNT
 };

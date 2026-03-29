@@ -72,7 +72,6 @@ namespace colorTrails {
         return fl::cos32(angle_cos32) * SIN32_TO_FLOAT;
     }
 
-    /*
     // Combined sin+cos from a single LUT pass — one radians->uint32 conversion,
     // shared table lookups. Used in render_value where both are needed for the
     // same angle.
@@ -83,7 +82,6 @@ namespace colorTrails {
         fl::SinCos32 sc = fl::sincos32(angle);
         return { sc.sin_val * SIN32_TO_FLOAT, sc.cos_val * SIN32_TO_FLOAT };
     }
-    */
 
     #define FL_SIN_F(x) sin_fast(x)
     #define FL_COS_F(x) cos_fast(x)
@@ -366,47 +364,9 @@ namespace colorTrails {
     // ═══════════════════════════════════════════════════════════════════
     //  EMITTER PARAM STRUCTS
     // ═══════════════════════════════════════════════════════════════════
-    //  Struct definitions only — instances live in emitters.h  alongside their functions 
-    //  so the developer can see and tune all values in one place.
+    //  moved entirely to emitters.h
 
-    /*struct OrbitalDotsParams {
-        uint8_t numDots;
-        float orbitSpeed;
-        ModConfig modOrbitSpeed;
-        float dotDiam;
-        float orbitDiam;
-        ModConfig modOrbitDiam;
-        uint8_t numActiveTimers;
-    };*/
     
-    /*struct AudioDotsParams {
-        float dotDiam;
-        uint8_t numActiveTimers;
-    };*/
-
-    /*struct SwarmingDotsParams {
-        uint8_t numDots;
-        float swarmSpeed;
-        ModConfig modSwarmSpeed;
-        float swarmSpread;
-        ModConfig modSwarmSpread;
-        float dotDiam;
-        uint8_t numActiveTimers;
-    };*/
-
-    /*struct LissajousParams {
-        float lineSpeed;
-        ModConfig modLineSpeed;
-        float lineAmp;
-        ModConfig modLineAmp;
-        uint8_t numActiveTimers;
-    };*/
-
-    /*struct BorderRectParams {
-        uint8_t numActiveTimers;
-    };*/
-
-
     // ═══════════════════════════════════════════════════════════════════
     //  VIZUALIZER CONFIG
     // ═══════════════════════════════════════════════════════════════════

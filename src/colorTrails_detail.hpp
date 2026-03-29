@@ -25,7 +25,8 @@
 #include "colorTrailsTypes.h"
 #include "flowFields/flow_noise.h"
 #include "flowFields/flow_fromCenter.h"
-#include "flowFields/flow_Directional.h"
+#include "flowFields/flow_directional.h"
+#include "flowFields/flow_rings.h"
 #include "emitters.h"
 #include "modulators.h"
 
@@ -46,13 +47,15 @@ namespace colorTrails {
     const FlowPrepFn FLOW_PREPARE[] = {
         noiseFlowPrepare,
         fromCenterPrepare,
-        directionalPrepare,  
+        directionalPrepare,
+        ringFlowPrepare,
     };
 
     const FlowAdvectFn FLOW_ADVECT[] = {
-        noiseFlowAdvect,  
+        noiseFlowAdvect,
         fromCenterAdvect,
         directionalAdvect,
+        ringFlowAdvect,
     };
 
     constexpr uint8_t FLOW_DISPATCH_COUNT = sizeof(FLOW_PREPARE) / sizeof(FLOW_PREPARE[0]);
@@ -105,6 +108,10 @@ namespace colorTrails {
                 cYShift = noiseFlow.yShift;
                 cModAmpRate = noiseFlow.modAmp.modRate;
                 cModAmpLevel = noiseFlow.modAmp.modLevel;
+                cModSpeedRate = noiseFlow.modSpeed.modRate;
+                cModSpeedLevel = noiseFlow.modSpeed.modLevel;
+                cModShiftRate = noiseFlow.modShift.modRate;
+                cModShiftLevel = noiseFlow.modShift.modLevel;
                 break;
             }
             case FLOW_FROMCENTER: {
@@ -121,6 +128,15 @@ namespace colorTrails {
                 cWaveAmp = directional.waveAmp;
                 cWaveFreq = directional.waveFreq;
                 cWaveSpeed = directional.waveSpeed;
+                break;
+            }
+            case FLOW_RINGS: {
+                ringFlow = RingFlowParams{};
+                cInnerSwirl = ringFlow.innerSwirl;
+                cOuterSwirl = ringFlow.outerSwirl;
+                cMidDrift = ringFlow.midDrift;
+                cModBreatheRate = ringFlow.modBreathe.modRate;
+                cModBreatheLevel = ringFlow.modBreathe.modLevel;
                 break;
             }
             default: break;
@@ -140,6 +156,10 @@ namespace colorTrails {
         noiseFlow.yShift = cYShift;
         noiseFlow.modAmp.modRate = cModAmpRate;
         noiseFlow.modAmp.modLevel = cModAmpLevel;
+        noiseFlow.modSpeed.modRate = cModSpeedRate;
+        noiseFlow.modSpeed.modLevel = cModSpeedLevel;
+        noiseFlow.modShift.modRate = cModShiftRate;
+        noiseFlow.modShift.modLevel = cModShiftLevel;
         // From-center flow
         fromCenter.radialStep = cRadialStep;
         fromCenter.blendFactor = cBlendFactor;
@@ -150,6 +170,12 @@ namespace colorTrails {
         directional.waveAmp = cWaveAmp;
         directional.waveFreq = cWaveFreq;
         directional.waveSpeed = cWaveSpeed;
+        // Ring flow
+        ringFlow.innerSwirl = cInnerSwirl;
+        ringFlow.outerSwirl = cOuterSwirl;
+        ringFlow.midDrift = cMidDrift;
+        ringFlow.modBreathe.modRate = cModBreatheRate;
+        ringFlow.modBreathe.modLevel = cModBreatheLevel;
     }
 
     // Push emitter + universal defaults into cVars (called on emitter/mode change)

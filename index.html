@@ -869,7 +869,7 @@
         // EMITTER / FLOW NAMES (parallel to ESP32 enums) *******************************************************
 
         const EMITTER_NAMES = ["ORBITALDOTS", "SWARMINGDOTS", "AUDIODOTS", "LISSAJOUS", "BORDERRECT"];
-        const FLOW_NAMES    = ["NOISE", "FROMCENTER", "DIRECTIONAL"];
+        const FLOW_NAMES    = ["NOISE", "FROMCENTER", "DIRECTIONAL", "RINGS"];
 
         // ******************************************************************************************************
         // PARAMETER REGISTRY *******************************************************************************
@@ -909,6 +909,10 @@
             yShift: {min: 0.1, max: 5, default: 1.8, step: 0.1},
             modAmpRate:  {min: 0.1, max: 3.0, default: 1.0, step: 0.1},
             modAmpLevel: {min: 0, max: 2.0, default: 1.0, step: 0.1},
+            modSpeedRate:  {min: 0.1, max: 3.0, default: 1.0, step: 0.1},
+            modSpeedLevel: {min: 0, max: 2.0, default: 0.0, step: 0.1},
+            modShiftRate:  {min: 0.1, max: 3.0, default: 1.0, step: 0.1},
+            modShiftLevel: {min: 0, max: 2.0, default: 0.0, step: 0.1},
             
             // FLOW: fromcenter
             radialStep:  {min: 0.01, max: 2, default: 0.18, step: 0.01},
@@ -920,6 +924,13 @@
             waveAmp:     {min: 0, max: 3, default: 0, step: 0.05},
             waveFreq:    {min: 0.01, max: 2, default: 0.20, step: 0.01},
             waveSpeed:   {min: 0, max: 5, default: 1.20, step: 0.1},
+
+            // FLOW: rings
+            innerSwirl:      {min: -1, max: 1, default: -0.26, step: 0.01},
+            outerSwirl:      {min: -1, max: 1, default: 0.24, step: 0.01},
+            midDrift:        {min: 0, max: 2, default: 0.42, step: 0.01},
+            modBreatheRate:  {min: 0.1, max: 3.0, default: 1.0, step: 0.1},
+            modBreatheLevel: {min: 0, max: 2.0, default: 1.0, step: 0.1},
         };
 
         // Parameter lists per component
@@ -936,9 +947,10 @@
         };
 
         const FLOW_PARAMS = {
-            "noise":       ["xSpeed", "ySpeed", "xAmp", "yAmp", "xFreq", "yFreq", "xShift", "yShift", "modAmpRate", "modAmpLevel"],
+            "noise":       ["xSpeed", "ySpeed", "xAmp", "yAmp", "xFreq", "yFreq", "xShift", "yShift", "modAmpRate", "modAmpLevel", "modSpeedRate", "modSpeedLevel", "modShiftRate", "modShiftLevel"],
             "fromcenter":  ["radialStep", "blendFactor"],
-            "directional": ["windStep", "blendFactor", "rotateSpeed", "waveAmp", "waveFreq", "waveSpeed"]
+            "directional": ["windStep", "blendFactor", "rotateSpeed", "waveAmp", "waveFreq", "waveSpeed"],
+            "rings":       ["innerSwirl", "outerSwirl", "midDrift", "modBreatheRate", "modBreatheLevel"]
         };
 
 
