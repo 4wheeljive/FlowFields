@@ -67,17 +67,18 @@ namespace colorTrails {
 
         orbitAngle += currentSpeed * dt;
 
-        // Diameter modulation:
-        const float modDiam = move.directional_noise_norm[diamMod.modTimer];
+        // Diameter modulation: centered multiplicative breathing around base orbit radius
+        float radiusScale = 1.0f + diamMod.modLevel * 0.85f * diamSignal;
 
-        const float swing = diamMod.modLevel * 6.0f * (modDiam - 0.5f);
+        // Prevent collapse into center
+        radiusScale = fmaxf(radiusScale, 0.35f);
 
         const float fNumDots = static_cast<float>(orbitalDots.numDots);
         const float ocx = WIDTH * 0.5f - 0.5f;
         const float ocy = HEIGHT * 0.5f - 0.5f;
 
-        const float orad =
-            fmaxf(orbitalDots.orbitDiam * (1.0f + swing), orbitalDots.dotDiam);
+        const float minOrbit = orbitalDots.dotDiam * 1.5f;
+        const float orad = fmaxf(orbitalDots.orbitDiam * radiusScale, minOrbit);
 
         // -----------------------------------------------------------------
         // 4) Rendering

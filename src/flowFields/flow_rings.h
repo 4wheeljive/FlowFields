@@ -63,6 +63,138 @@ namespace colorTrails {
     }
 
     // --- Advect: per-pixel polar backward-sampling with zone-weighted transport ---
+    
+    static void ringFlowAdvect(float dt) {
+        float fade = fl::powf(0.5f, dt / vizConfig.persistence);
+
+        const float cx = (WIDTH - 1) * 0.5f;
+        const float cy = (HEIGHT - 1) * 0.5f;
+        const float max_r = fl::sqrtf(cx * cx + cy * cy);
+        const float inv_max_r = (max_r > 1e-6f) ? 1.0f / max_r : 0.0f;
+        const float maxClamp = max_r + 1.5f;
+
+        // -----------------------------------------------------------------
+        // Soft-boundary ring geometry
+        //
+        // Instead of 3 Gaussian "peaks", define 2 soft radial boundaries:
+        //   b1 = inner <-> middle
+        //   b2 = middle <-> outer
+        //
+        // Keep the overall ring layout stable, and let breathing mostly affect
+        // boundary position a little plus transition softness.
+        // -----------------------------------------------------------------
+        const float b1Base = 0.38f;
+        const float b2Base = 0.72f;
+
+        // Small center breathing around the boundaries
+        const float b1 = b1Base + 0.045f * (ringBreatheInner - 1.0f);
+        const float b2 = b2Base + 0.045f * (ringBreatheOuter - 1.0f);
+
+        // Softness breathes more than position
+        const float soft1 = fmaxf(0.035f, 0.070f * ringBreatheMid);
+        const float soft2 = fmaxf(0.035f, 0.080f * ringBreatheMid);
+
+        // Small angular carry-through in the middle band
+        const float midAngular =
+            0.18f * (ringFlow.innerSwirl + ringFlow.outerSwirl);
+
+        // Snapshot live grid to scratch buffer
+        for (int y = 0; y < HEIGHT; y++) {
+            for (int x = 0; x < WIDTH; x++) {
+                tR[y][x] = gR[y][x];
+                tG[y][x] = gG[y][x];
+                tB[y][x] = gB[y][x];
+            }
+        }
+
+        for (int y = 0; y < HEIGHT; y++) {
+            for (int x = 0; x < WIDTH; x++) {
+                const float dx = (float)x - cx;
+                const float dy = (float)y - cy;
+                const float r = fl::sqrtf(dx * dx + dy * dy);
+                const float rn = r * inv_max_r;
+
+                // -------------------------------------------------------------
+                // Boundary blends
+                //
+                // t1 = how far we've transitioned from inner to mid
+                // t2 = how far we've transitioned from mid to outer
+                // -------------------------------------------------------------
+                const float t1 = clampf(0.5f + 0.5f * ((rn - b1) / soft1), 0.0f, 1.0f);
+                const float t2 = clampf(0.5f + 0.5f * ((rn - b2) / soft2), 0.0f, 1.0f);
+
+                // Smoothstep for softer perceptual transitions
+                const float s1 = t1 * t1 * (3.0f - 2.0f * t1);
+                const float s2 = t2 * t2 * (3.0f - 2.0f * t2);
+
+                // Region weights derived from 2 soft boundaries
+                const float w_inner = 1.0f - s1;
+                const float w_mid   = s1 * (1.0f - s2);
+                const float w_outer = s2;
+
+                // -------------------------------------------------------------
+                // Transport field
+                //
+                // Inner: CW swirl
+                // Mid: outward drift + a little angular continuity
+                // Outer: CCW swirl
+                // -------------------------------------------------------------
+                const float ang =
+                    ringFlow.innerSwirl * w_inner +
+                    midAngular          * w_mid +
+                    ringFlow.outerSwirl * w_outer;
+
+                const float drift = ringFlow.midDrift * w_mid;
+
+                // Backward sampling for stable advection
+                const float sample_r = clampf(r - drift, 0.0f, maxClamp);
+
+                float sx, sy;
+                if (r > 1e-6f) {
+                    SinCosResult sc = sincos_fast(ang);
+                    const float scale = sample_r / r;
+
+                    sx = cx + (dx * sc.cos_val + dy * sc.sin_val) * scale;
+                    sy = cy + (dy * sc.cos_val - dx * sc.sin_val) * scale;
+                } else {
+                    sx = cx;
+                    sy = cy;
+                }
+
+                // Clamp to grid bounds
+                sx = clampf(sx, 0.0f, (float)(WIDTH - 1) - 1e-6f);
+                sy = clampf(sy, 0.0f, (float)(HEIGHT - 1) - 1e-6f);
+
+                // Bilinear interpolation from scratch buffer
+                const int ix0 = (int)fl::floorf(sx);
+                const int iy0 = (int)fl::floorf(sy);
+                const int ix1 = min(WIDTH - 1, ix0 + 1);
+                const int iy1 = min(HEIGHT - 1, iy0 + 1);
+
+                const float fx = sx - ix0;
+                const float fy = sy - iy0;
+
+                const float rTop = tR[iy0][ix0] * (1.0f - fx) + tR[iy0][ix1] * fx;
+                const float rBot = tR[iy1][ix0] * (1.0f - fx) + tR[iy1][ix1] * fx;
+                const float sr   = rTop * (1.0f - fy) + rBot * fy;
+
+                const float gTop = tG[iy0][ix0] * (1.0f - fx) + tG[iy0][ix1] * fx;
+                const float gBot = tG[iy1][ix0] * (1.0f - fx) + tG[iy1][ix1] * fx;
+                const float sg   = gTop * (1.0f - fy) + gBot * fy;
+
+                const float bTop = tB[iy0][ix0] * (1.0f - fx) + tB[iy0][ix1] * fx;
+                const float bBot = tB[iy1][ix0] * (1.0f - fx) + tB[iy1][ix1] * fx;
+                const float sb   = bTop * (1.0f - fy) + bBot * fy;
+
+                gR[y][x] = fl::floorf(sr * fade);
+                gG[y][x] = fl::floorf(sg * fade);
+                gB[y][x] = fl::floorf(sb * fade);
+            }
+        }
+    }
+        
+    
+    /*
     static void ringFlowAdvect(float dt) {
         float fade = fl::powf(0.5f, dt / vizConfig.persistence);
 
@@ -163,6 +295,6 @@ namespace colorTrails {
                 gB[y][x] = fl::floorf(sb * fade);
             }
         }
-    }
+    }*/
 
 } // namespace colorTrails

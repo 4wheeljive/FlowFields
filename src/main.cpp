@@ -64,7 +64,7 @@ uint16_t ledNum = 0;
 //elements that must be set before #include "bleControl.h" 
 
 uint8_t EMITTER = 0;
-uint8_t FLOW = 0;
+uint8_t FLOW = 0;  // FLOW_NOISE; declared before enum is in scope
 uint8_t BRIGHTNESS = 35;
 
 uint8_t defaultMapping = 0;
