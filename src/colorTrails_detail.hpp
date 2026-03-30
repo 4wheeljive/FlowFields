@@ -83,8 +83,8 @@ namespace colorTrails {
         noise2X.init(42);
         noise2Y.init(1337);
         kaleidoNoise.init(7331);
-        ampVarX.init(101);
-        ampVarY.init(202);
+        //ampVarX.init(101);
+        //ampVarY.init(202);
 
         timings = timers();
         move = modulators();

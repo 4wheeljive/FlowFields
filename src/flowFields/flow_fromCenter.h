@@ -12,6 +12,8 @@
 #include "colorTrailsTypes.h"
 
 namespace colorTrails {
+    FL_FAST_MATH_BEGIN
+    FL_OPTIMIZATION_LEVEL_O3_BEGIN
 
     struct FromCenterParams {
         float radialStep        = 0.18f;   // how far inward to sample (controls outward speed)
@@ -102,5 +104,8 @@ namespace colorTrails {
             }
         }
     }
+
+    FL_OPTIMIZATION_LEVEL_O3_END
+    FL_FAST_MATH_END
 
 } // namespace colorTrails

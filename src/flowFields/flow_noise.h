@@ -13,6 +13,8 @@
 #include "modulators.h"
 
 namespace colorTrails {
+    FL_FAST_MATH_BEGIN
+    FL_OPTIMIZATION_LEVEL_O3_BEGIN
 
     struct NoiseFlowParams {
         float xSpeed = 0.15f;   // Noise scroll speed  (column axis)
@@ -174,5 +176,8 @@ namespace colorTrails {
             }
         }
     }
+
+    FL_OPTIMIZATION_LEVEL_O3_END
+    FL_FAST_MATH_END
 
 } // namespace colorTrails

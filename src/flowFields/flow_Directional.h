@@ -14,6 +14,8 @@
 #include "colorTrailsTypes.h"
 
 namespace colorTrails {
+    FL_FAST_MATH_BEGIN
+    FL_OPTIMIZATION_LEVEL_O3_BEGIN
 
     struct DirectionalParams {
         float windStep    = 0.95f;   // backward sample distance (pixels)
@@ -113,5 +115,8 @@ namespace colorTrails {
             }
         }
     }
+
+    FL_OPTIMIZATION_LEVEL_O3_END
+    FL_FAST_MATH_END
 
 } // namespace colorTrails

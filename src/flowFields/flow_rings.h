@@ -14,6 +14,8 @@
 #include "modulators.h"
 
 namespace colorTrails {
+    FL_FAST_MATH_BEGIN
+    FL_OPTIMIZATION_LEVEL_O3_BEGIN
 
     struct RingFlowParams {
         float innerSwirl = -0.26f;   // angular step for inner zone (negative = CW)
@@ -297,5 +299,8 @@ namespace colorTrails {
             }
         }
     }*/
+
+    FL_OPTIMIZATION_LEVEL_O3_END
+    FL_FAST_MATH_END
 
 } // namespace colorTrails

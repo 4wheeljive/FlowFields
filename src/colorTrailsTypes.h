@@ -97,6 +97,8 @@ namespace colorTrails {
     // ═══════════════════════════════════════════════════════════════════
     //  NOISE GENERATORS
     // ═══════════════════════════════════════════════════════════════════
+    FL_FAST_MATH_BEGIN
+    FL_OPTIMIZATION_LEVEL_O3_BEGIN
 
     // 1D Perlin noise ---------------------------------------
     class Perlin1D {
@@ -424,5 +426,8 @@ namespace colorTrails {
     };
 
     CtVizConfig vizConfig;
+
+    FL_OPTIMIZATION_LEVEL_O3_END
+    FL_FAST_MATH_END
 
 } // namespace colorTrails
