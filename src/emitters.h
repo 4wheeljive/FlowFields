@@ -211,7 +211,7 @@ namespace flowFields {
     //  AUDIO DOTS
     // ═══════════════════════════════════════════════════════════════════
 
-    const myAudio::AudioFrame* cFrame = nullptr;
+    /*const myAudio::AudioFrame* cFrame = nullptr;
 
     inline void getAudio(myAudio::binConfig& b) {
         b.busBased = true;
@@ -240,7 +240,7 @@ namespace flowFields {
             ColorF c = rainbow(t, vizConfig.colorShift, random8() / 255.0f);
             drawDot(cx, cy, audioDots.dotDiam, c.r, c.g, c.b);
         }
-    }
+    }*/
 
     
     // ═══════════════════════════════════════════════════════════════════

@@ -39,7 +39,7 @@ namespace flowFields {
     const EmitterFn EMITTER_RUN[] = {
         emitOrbitalDots,
         emitSwarmingDots,
-        emitAudioDots,
+        //emitAudioDots,
         emitLissajousLine,
         emitRainbowBorder,
         emitNoiseKaleido,

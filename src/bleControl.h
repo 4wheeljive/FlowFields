@@ -165,7 +165,7 @@ uint8_t cBright = 35;
 uint8_t cMapping = 0;
 uint8_t cOverrideMapping = 0;
 
-fl::EaseType getEaseType(uint8_t value) {
+/*fl::EaseType getEaseType(uint8_t value) {
     switch (value) {
         case 0: return fl::EASE_NONE;
         case 1: return fl::EASE_IN_QUAD;
@@ -180,7 +180,7 @@ fl::EaseType getEaseType(uint8_t value) {
     }
     FL_ASSERT(false, "Invalid ease type");
     return fl::EASE_NONE;
-}
+}*/
 
 uint8_t cEaseSat = 0;
 uint8_t cEaseLum = 0;

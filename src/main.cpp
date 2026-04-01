@@ -8,6 +8,14 @@ CREDITS:
 
 #include <Arduino.h>
 
+/*// ESP32-P4 has no on-chip BT controller (SOC_BT_SUPPORTED is undefined),
+// so the Arduino core doesn't compile btStarted(). esp-nimble-cpp calls it
+// when CONFIG_ENABLE_ARDUINO_DEPENDS is set (forced on by Arduino Kconfig).
+// Provide a stub — on P4, BT is hosted on the C6 via esp-hosted VHCI.
+#if defined(CONFIG_IDF_TARGET_ESP32P4) && !defined(SOC_BT_SUPPORTED)
+extern "C" bool btStarted() { return false; }
+#endif*/
+
 //#define FASTLED_OVERCLOCK 1.2
 #include <FastLED.h>
 
@@ -35,6 +43,7 @@ bool audioLatencyDiagnostics = false;
 
 #ifdef BIG_BOARD 
 		
+	/*
 	#include "reference/matrixMap_32x48_3pin.h" 
 	#define PIN1 3
     #define PIN2 4
@@ -42,9 +51,9 @@ bool audioLatencyDiagnostics = false;
     #define WIDTH 48
     #define NUM_STRIPS 3
     #define NUM_LEDS_PER_STRIP 512
-	
+	*/
 
-	/*
+	///*
 	#include "reference/matrixMap_48x64_6pin.h" 
 	#define PIN1 3
     #define PIN2 4
@@ -55,7 +64,7 @@ bool audioLatencyDiagnostics = false;
     #define WIDTH 64
     #define NUM_STRIPS 6
     #define NUM_LEDS_PER_STRIP 512
-	*/
+	//*/
 			
 #else 
 	
@@ -86,8 +95,8 @@ uint8_t BRIGHTNESS = 35;
 uint8_t defaultMapping = 0;
 bool mappingOverride = false;
 
-#include "audio/audioInput.h"
-#include "audio/audioProcessing.h"
+//#include "audio/audioInput.h"
+//#include "audio/audioProcessing.h"
 #include "bleControl.h"
 #include "flowFields.hpp"
 
@@ -130,7 +139,7 @@ void setup() {
 	Serial.setTxTimeoutMs(1);  // 1ms timeout — avoids unsigned underflow
 	delay(1000);
 
-	FastLED.setExclusiveDriver("RMT");
+	FastLED.setExclusiveDriver("PARLIO");
 
 	FastLED.addLeds<WS2812B, PIN0, GRB>(leds, 0, NUM_LEDS_PER_STRIP)
 		.setCorrection(TypicalLEDStrip);
@@ -179,10 +188,10 @@ void setup() {
 	Serial.println("LittleFS mounted successfully.");
 	*/
 
-	if (audioEnabled){
+	/*if (audioEnabled){
 		myAudio::initAudioInput();
 		myAudio::initAudioProcessing();
-	}
+	}*/
 
 }
 
@@ -198,13 +207,13 @@ void loop() {
 	// newest. When captureAudioFrame() calls it again later (inside
 	// the pattern), readAll() returns 0 and the already-captured data
 	// is preserved and reused for FFT/bus processing.
-	if (audioEnabled) {
+	/*if (audioEnabled) {
 		if (myAudio::audioInputInitialized) {
 			//PROFILE_START("audio_capture");
 			myAudio::sampleAudio();
 			//PROFILE_END();
 		}
-	}
+	}*/
 	
 	EVERY_N_SECONDS(3) {
 		uint8_t fps = FastLED.getFPS();
