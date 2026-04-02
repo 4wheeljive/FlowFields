@@ -285,7 +285,36 @@
 
         <!-- Pattern Control Parameters -->
         <div class="section patternControl">
+            
+             <div class = "control-group">
+
+                <control-checkbox 
+                    label="AngleFreezeX" 
+                    data-my-number="21"
+                    data-emitters="cube"
+                    unchecked>
+                </control-checkbox>
+                <control-checkbox 
+                    label="AngleFreezeY" 
+                    data-my-number="22"
+                    data-emitters="cube"
+                    unchecked>
+                </control-checkbox>
+                <control-checkbox
+                    label="AngleFreezeZ"
+                    data-my-number="23"
+                    data-emitters="cube"
+                    unchecked>
+                </control-checkbox>
+                <control-checkbox
+                    label="Spiral Outward"
+                    data-my-number="31"
+                    data-flows="spiral"
+                    unchecked>
+                </control-checkbox>
                 
+            </div>
+
             <parameter-settings></parameter-settings> 
 
             <!--<span style="display: flex; justify-content: flex-end;">
@@ -349,24 +378,7 @@
                     checked>
                 </control-checkbox> -->
 
-                <control-checkbox 
-                    label="AngleFreezeX" 
-                    data-my-number="21"
-                    data-emitters="cube"
-                    unchecked>
-                </control-checkbox>
-                <control-checkbox 
-                    label="AngleFreezeY" 
-                    data-my-number="22"
-                    data-emitters="cube"
-                    unchecked>
-                </control-checkbox>
-                <control-checkbox 
-                    label="AngleFreezeZ" 
-                    data-my-number="23"
-                    data-emitters="cube"
-                    unchecked>
-                </control-checkbox>
+               
                 
                 <!--<div class = "control-group">
                     <control-checkbox 
@@ -870,7 +882,7 @@
         // EMITTER / FLOW NAMES (parallel to ESP32 enums) *******************************************************
 
         const EMITTER_NAMES = ["ORBITALDOTS", "SWARMINGDOTS", "AUDIODOTS", "LISSAJOUS", "BORDERRECT", "NOISEKALEIDO", "CUBE"];
-        const FLOW_NAMES    = ["NOISE", "FROMCENTER", "DIRECTIONAL", "RINGS"];
+        const FLOW_NAMES    = ["NOISE", "FROMCENTER", "DIRECTIONAL", "RINGS", "SPIRAL"];
 
         // ******************************************************************************************************
         // PARAMETER REGISTRY *******************************************************************************
@@ -945,6 +957,9 @@
             midDrift:        {min: 0, max: 2, default: 0.3, step: 0.01},
             modBreatheRate:  {min: 0.1, max: 3.0, default: 1.0, step: 0.1},
             modBreatheLevel: {min: 0, max: 2.0, default: 1.0, step: 0.1},
+
+            // FLOW: spiral
+            angularStep: {min: 0.01, max: 1.0, default: 0.28, step: 0.01},
         };
 
         // Parameter lists per component
@@ -966,7 +981,8 @@
             "noise":       ["xSpeed", "ySpeed", "xAmp", "yAmp", "xFreq", "yFreq", "xShift", "yShift", "modAmpRate", "modAmpLevel", "modSpeedRate", "modSpeedLevel", "modShiftRate", "modShiftLevel"],
             "fromcenter":  ["radialStep", "blendFactor"],
             "directional": ["windStep", "blendFactor", "rotateSpeed", "waveAmp", "waveFreq", "waveSpeed"],
-            "rings":       ["innerSwirl", "outerSwirl", "midDrift", "modBreatheRate", "modBreatheLevel"]
+            "rings":       ["innerSwirl", "outerSwirl", "midDrift", "modBreatheRate", "modBreatheLevel"],
+            "spiral":      ["angularStep", "radialStep", "blendFactor"]
         };
 
 

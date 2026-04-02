@@ -33,6 +33,7 @@
 #include "emitters/emitter_lissajousLine.h"
 #include "emitters/emitter_noiseKaleido.h"
 #include "emitters/emitter_cube.h"
+#include "flows/flow_spiral.h"
 #include "modulators.h"
 
 namespace flowFields {
@@ -56,6 +57,7 @@ namespace flowFields {
         fromCenterPrepare,
         directionalPrepare,
         ringFlowPrepare,
+        spiralPrepare,
     };
 
     const FlowAdvectFn FLOW_ADVECT[] = {
@@ -63,6 +65,7 @@ namespace flowFields {
         fromCenterAdvect,
         directionalAdvect,
         ringFlowAdvect,
+        spiralAdvect,
     };
 
     constexpr uint8_t FLOW_DISPATCH_COUNT = sizeof(FLOW_PREPARE) / sizeof(FLOW_PREPARE[0]);
@@ -145,6 +148,14 @@ namespace flowFields {
                 cModBreatheLevel = ringFlow.modBreathe.modLevel;
                 break;
             }
+            case FLOW_SPIRAL: {
+                spiral = SpiralParams{};
+                cAngularStep = spiral.angularStep;
+                cRadialStep = spiral.radialStep;
+                cBlendFactor = spiral.blendFactor;
+                cSpiralOutward = spiral.outward;
+                break;
+            }
             default: break;
         }
     }
@@ -182,6 +193,11 @@ namespace flowFields {
         ringFlow.midDrift = cMidDrift;
         ringFlow.modBreathe.modRate = cModBreatheRate;
         ringFlow.modBreathe.modLevel = cModBreatheLevel;
+        // Spiral flow
+        spiral.angularStep = cAngularStep;
+        spiral.radialStep = cRadialStep;
+        spiral.blendFactor = cBlendFactor;
+        spiral.outward = cSpiralOutward;
     }
 
     // Push emitter + universal defaults into cVars (called on emitter/mode change)

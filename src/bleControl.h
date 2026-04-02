@@ -111,11 +111,12 @@ const char noise_str[] PROGMEM = "noise";
 const char fromcenter_str[] PROGMEM = "fromcenter";
 const char directional_str[] PROGMEM = "directional";
 const char rings_str[] PROGMEM = "rings";
+const char spiral_str[] PROGMEM = "spiral";
 
-const uint8_t FLOW_COUNTS[] = {4};
+const uint8_t FLOW_COUNTS[] = {5};
 
 const char* const FLOWS[] PROGMEM = {
-      noise_str, fromcenter_str, directional_str, rings_str
+      noise_str, fromcenter_str, directional_str, rings_str, spiral_str
    };
    
 // Flow field params
@@ -135,6 +136,10 @@ const char* const RINGS_PARAMS[] PROGMEM = {
    "innerSwirl", "outerSwirl", "midDrift",
    "modBreatheRate", "modBreatheLevel"
 };
+const char* const SPIRAL_PARAMS[] PROGMEM = {
+   "angularStep", "radialStep", "blendFactor"
+};
+// Note: spiral reuses shared cVars radialStep and blendFactor
 
 // Struct to hold flow field name and parameter array reference
 struct FlowParamEntry {
@@ -147,7 +152,8 @@ const FlowParamEntry FLOW_PARAM_LOOKUP[] PROGMEM = {
    {"noise", NOISE_PARAMS, 14},
    {"fromcenter", FROM_CENTER_PARAMS, 2},
    {"directional", DIRECTIONAL_PARAMS, 6},
-   {"rings", RINGS_PARAMS, 5}
+   {"rings", RINGS_PARAMS, 5},
+   {"spiral", SPIRAL_PARAMS, 3}
 };
 
 static const FlowParamEntry* getFlowParams(uint8_t flowIdx) {
@@ -290,6 +296,9 @@ float cOuterSwirl = 0.2f;
 float cMidDrift = 0.3f;
 float cModBreatheRate = 1.0f;
 float cModBreatheLevel = 1.0f;
+// spiral
+float cAngularStep = 0.28f;
+bool cSpiralOutward = false;
 
 
 ArduinoJson::JsonDocument sendDoc;
@@ -468,7 +477,9 @@ void sendReceiptString(String receivedID, String receivedValue) {
    X(float, AngleRateZ, 0.01f) \
    X(bool, AngleFreezeX, false) \
    X(bool, AngleFreezeY, false) \
-   X(bool, AngleFreezeZ, false)
+   X(bool, AngleFreezeZ, false) \
+   X(float, AngularStep, 0.28f) \
+   X(bool, SpiralOutward, false)
 
 
 // Auto-generated helper functions using X-macros
@@ -935,6 +946,7 @@ void processCheckbox(String receivedID, bool receivedValue ) {
    if (receivedID == "cx22") {cAngleFreezeY = receivedValue;};
    if (receivedID == "cx23") {cAngleFreezeZ = receivedValue;};
 
+   if (receivedID == "cx31") {cSpiralOutward = receivedValue;};
    if (receivedID == "cx32") {cUseRainbow = receivedValue;};
 
 }

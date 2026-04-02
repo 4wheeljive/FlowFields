@@ -26,8 +26,8 @@ bool audioLatencyDiagnostics = false;
 #endif
 */
 
-#define BIG_BOARD
-//#undef BIG_BOARD
+//#define BIG_BOARD
+#undef BIG_BOARD
 
 #define PIN0 2
 

@@ -18,6 +18,7 @@ enum Flow : uint8_t {
     FLOW_FROMCENTER,
     FLOW_DIRECTIONAL,
     FLOW_RINGS,
-    // future: FLOW_TOCENTER, FLOW_SPIRAL, FLOW_POLARWARP, ...
+    FLOW_SPIRAL,
+    // future: FLOW_TOCENTER, FLOW_POLARWARP, ...
     FLOW_COUNT
 };

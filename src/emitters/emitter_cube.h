@@ -50,7 +50,7 @@ namespace flowFields {
         float dx = x1 - x0;
         float dy = y1 - y0;
         float maxd = fl::fabsf(dx) > fl::fabsf(dy) ? fl::fabsf(dx) : fl::fabsf(dy);
-        int steps = max(1, (int)(maxd)); // * 3.0f
+        int steps = max(1, (int)(maxd)); // * 3.0f    multiply maxd to make edges thicker 
         for (int i = 0; i <= steps; i++) {
             float u  = (float)i / (float)steps;
             float x  = x0 + dx * u;
