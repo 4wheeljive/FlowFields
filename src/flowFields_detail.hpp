@@ -201,6 +201,8 @@ namespace flowFields {
         // Emitter: swarmingDots
         cSwarmSpeed = swarmingDots.swarmSpeed;
         cSwarmSpread = swarmingDots.swarmSpread;
+        cModSwarmSpeedRate = swarmingDots.modSwarmSpeed.modRate;
+        cModSwarmSpeedLevel = swarmingDots.modSwarmSpeed.modLevel;
         cModSwarmSpreadRate = swarmingDots.modSwarmSpread.modRate;
         cModSwarmSpreadLevel = swarmingDots.modSwarmSpread.modLevel;
         // Emitter: lissajous / borderRect
@@ -238,6 +240,8 @@ namespace flowFields {
         swarmingDots.numDots = cNumDots;
         swarmingDots.swarmSpeed = cSwarmSpeed;
         swarmingDots.swarmSpread = cSwarmSpread;
+        swarmingDots.modSwarmSpeed.modRate = cModSwarmSpeedRate;
+        swarmingDots.modSwarmSpeed.modLevel = cModSwarmSpeedLevel;
         swarmingDots.modSwarmSpread.modRate = cModSwarmSpreadRate;
         swarmingDots.modSwarmSpread.modLevel = cModSwarmSpreadLevel;
         swarmingDots.dotDiam = cDotDiam;

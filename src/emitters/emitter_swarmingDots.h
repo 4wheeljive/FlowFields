@@ -17,14 +17,16 @@ namespace flowFields {
         float swarmSpeed = 0.5f;
         float swarmSpread = 0.5f;
         ModConfig modSwarmSpread = {10, 1.0f, 1.0f};       // modTimer, modRate, modLevel 
+        ModConfig modSwarmSpeed  = {11, 1.0f, 0.0f};       // modTimer, modRate, modLevel
         float dotDiam = 1.5f;
-        uint8_t numActiveTimers = 11;
+        uint8_t numActiveTimers = 12;
     };
 
     SwarmingDotsParams swarmingDots;
 
     // Variable number of dots moving in a loose shifting group.
-    // Uses calculate_modulators() with 2 timers per dot (X and Y).
+    // Uses an integrated time base for dot motion to preserve continuity
+    // when speed modulation changes.
     // swarmSpread controls grouping (0 = clustered, 1 = independent, >1 = wide).
     // Max 5 dots (num_timers=10, 2 timers per dot).
     static void emitSwarmingDots(float t) {
@@ -32,6 +34,7 @@ namespace flowFields {
         const float fNumDots = static_cast<float>(n);
 
         const ModConfig& spreadMod = swarmingDots.modSwarmSpread;
+        const ModConfig& speedMod  = swarmingDots.modSwarmSpeed;
 
         // -----------------------------------------------------------------
         // 1) Plumbing: configure timer channels
@@ -39,6 +42,8 @@ namespace flowFields {
 
         // Parameter-owned modulation timer
         timings.ratio[spreadMod.modTimer] = 0.00055f * spreadMod.modRate;
+        timings.ratio[speedMod.modTimer]  = 0.00033f * speedMod.modRate;
+        timings.offset[speedMod.modTimer] = 0.0f;
 
         // Structural per-dot motion timers:
         // 2 timers per dot: [d*2] = X, [d*2+1] = Y
@@ -62,17 +67,45 @@ namespace flowFields {
             2600.0f, 3800.0f     // dot 4
         };
 
-        const uint8_t numMotionTimers = n * 2;
-        for (uint8_t i = 0; i < numMotionTimers; i++) {
-            timings.ratio[i]  = baseRatios[i] * swarmingDots.swarmSpeed;
-            timings.offset[i] = baseOffsets[i];
-        }
-
-        calculate_modulators(timings, swarmingDots.numActiveTimers);
+        calculate_modulators(timings, speedMod.modTimer + 1);
 
         // -----------------------------------------------------------------
         // 2) Signal acquisition: sample structural motion signals
         // -----------------------------------------------------------------
+        
+        // Speed modulation signal (centered around 1.0f, no reversals)
+        const float speedSignal = move.directional_noise_norm[speedMod.modTimer]; // 0..1
+       
+        float modSpread = move.directional_noise_norm[spreadMod.modTimer];
+       
+        // -----------------------------------------------------------------
+        // 3) Artistic application: speed and spread modulation; position dots
+        // -----------------------------------------------------------------
+
+        // Speed modulation
+        // Saturating depth so extreme modLevel doesn't flip direction.
+        float depth = speedMod.modLevel / (1.0f + speedMod.modLevel); // 0..1 asymptote
+        depth *= 0.9f;  // max ±90% around base speed
+        float speedScale = (1.0f - depth) + (2.0f * depth * speedSignal); // [1-depth, 1+depth]
+        const float currentSpeed = swarmingDots.swarmSpeed * speedScale;
+
+        // Integrated time base to preserve phase continuity under speed changes
+        static float swarmTimeMs = 0.0f;
+        static unsigned long lastMs = 0;
+        const unsigned long now = fl::millis();
+        if (lastMs == 0) {
+            lastMs = now;
+        }
+        const float dtMs = (now - lastMs);
+        lastMs = now;
+        swarmTimeMs += dtMs * currentSpeed;
+  
+        // Spread modulation adds above the base value
+        const float spread =
+            swarmingDots.swarmSpread +
+            (modSpread * spreadMod.modLevel);
+
+        // Calculate dot position
         float dotX[5], dotY[5];
         float cenX = 0.0f;
         float cenY = 0.0f;
@@ -81,8 +114,10 @@ namespace flowFields {
             const uint8_t xTimer = d * 2;
             const uint8_t yTimer = d * 2 + 1;
 
-            dotX[d] = move.directional_sine[xTimer];
-            dotY[d] = move.directional_sine[yTimer];
+            const float phaseX = (swarmTimeMs + baseOffsets[xTimer]) * baseRatios[xTimer];
+            const float phaseY = (swarmTimeMs + baseOffsets[yTimer]) * baseRatios[yTimer];
+            dotX[d] = fl::sinf(phaseX);
+            dotY[d] = fl::sinf(phaseY);
 
             cenX += dotX[d];
             cenY += dotY[d];
@@ -93,19 +128,9 @@ namespace flowFields {
         cenY /= fNumDots;
 
         // -----------------------------------------------------------------
-        // 3) Artistic application: spread modulation
-        // -----------------------------------------------------------------
-
-        float modSpread = move.directional_noise_norm[spreadMod.modTimer];
-
-        // Current behavior: spread modulation adds above the base value
-        const float spread =
-            swarmingDots.swarmSpread +
-            (modSpread * spreadMod.modLevel);
-
-        // -----------------------------------------------------------------
         // 4) Rendering
         // -----------------------------------------------------------------
+
         for (uint8_t d = 0; d < n; d++) {
             const float sx = cenX + spread * (dotX[d] - cenX);
             const float sy = cenY + spread * (dotY[d] - cenY);

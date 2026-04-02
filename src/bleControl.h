@@ -65,6 +65,7 @@ const char* const ORBITALDOTS_PARAMS[] PROGMEM = {
 };
 const char* const SWARMINGDOTS_PARAMS[] PROGMEM = {
    "numDots", "dotDiam", "swarmSpeed", "swarmSpread",
+   "modSwarmSpeedRate", "modSwarmSpeedLevel",
    "modSwarmSpreadRate", "modSwarmSpreadLevel"
 };
 const char* const AUDIODOTS_PARAMS[] PROGMEM = {};
@@ -88,7 +89,7 @@ struct EmitterParamEntry {
 
 const EmitterParamEntry EMITTER_PARAM_LOOKUP[] PROGMEM = {
    {"orbitaldots", ORBITALDOTS_PARAMS, 8},
-   {"swarmingdots", SWARMINGDOTS_PARAMS, 6},
+   {"swarmingdots", SWARMINGDOTS_PARAMS, 8},
    {"audiodots", AUDIODOTS_PARAMS, 0},
    {"lissajous", LISSAJOUS_PARAMS, 4},
    {"borderrect", BORDERRECT_PARAMS, 0},
@@ -234,6 +235,8 @@ float cModOrbitDiamLevel = 1.0f;
 // swarmingDots
 float cSwarmSpeed = 0.5f;
 float cSwarmSpread = 0.5f;
+float cModSwarmSpeedRate = 1.0f;
+float cModSwarmSpeedLevel = 0.0f;
 float cModSwarmSpreadRate = 1.0f;
 float cModSwarmSpreadLevel = 1.0f;
 // lissajous line
@@ -422,6 +425,8 @@ void sendReceiptString(String receivedID, String receivedValue) {
    X(float, DotDiam, 1.5f) \
    X(float, SwarmSpeed, 0.5f) \
    X(float, SwarmSpread, 0.5f) \
+   X(float, ModSwarmSpeedRate, 1.0f) \
+   X(float, ModSwarmSpeedLevel, 0.0f) \
    X(float, ModSwarmSpreadRate, 1.0f) \
    X(float, ModSwarmSpreadLevel, 1.0f) \
    X(float, LineSpeed, 0.35f) \
