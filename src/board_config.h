@@ -40,7 +40,7 @@
 
 #else
 
-    // --- 22x22 dev board ---
+    // --- 22x22 matrix ---
     #include "reference/matrixMap_22x22.h"
     #define PIN0 2
     #define HEIGHT 22

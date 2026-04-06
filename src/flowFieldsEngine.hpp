@@ -25,7 +25,7 @@ namespace flowFields {
     const EmitterFn EMITTER_RUN[] = {
         emitOrbitalDots,
         emitSwarmingDots,
-        //emitAudioDots,
+        emitAudioDots,      // no-op when AUDIO_ENABLED is not defined
         emitLissajousLine,
         emitRainbowBorder,
         emitNoiseKaleido,
