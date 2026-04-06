@@ -95,7 +95,9 @@ uint16_t myXY(uint8_t x, uint8_t y) {
 void setup() {
 
 	Serial.begin(115200);
-	Serial.setTxTimeoutMs(1);  // 1ms timeout — avoids unsigned underflow
+#if defined(CONFIG_IDF_TARGET_ESP32S3)
+	Serial.setTxTimeoutMs(1);  // S3-only: avoids unsigned underflow on USB CDC
+#endif
 	delay(1000);
 
 	FastLED.setExclusiveDriver(LED_DRIVER);
