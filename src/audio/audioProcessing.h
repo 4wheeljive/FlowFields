@@ -8,7 +8,7 @@
 
 #include "audioCapture.h"   // transitively includes audioTypes.h, audioInput.h
 #include "avHelpers.h"
-#include "bleControl.h"
+#include "parameterSchema.h"
 
 namespace myAudio {
 

@@ -2,7 +2,7 @@
 
 #include "audioTypes.h"
 #include "leadEnergy.h"
-#include "bleControl.h"
+#include "parameterSchema.h"
 #include "fl/time_alpha.h"
 
 namespace myAudio {

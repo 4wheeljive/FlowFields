@@ -1,309 +1,17 @@
 #pragma once
 
-#include "FastLED.h"
-#include <ArduinoJson.h>
 #include <NimBLEDevice.h>
-
-#include <string>
+#include "parameterSchema.h"
 
 #if __has_include("hosted_ble_bridge.h")
     #include "hosted_ble_bridge.h"
 #else
     static inline bool hostedBlePrepare() { return true; }
 #endif
-#include "componentEnums.h"
 
 //#include <FS.h>
 //#include "LittleFS.h"
-//#define FORMAT_LITTLEFS_IF_FAILED true 
-
-bool displayOn = true;
-
-typedef void (*BusParamSetterFn)(uint8_t busId, const String& paramId, float value);
-BusParamSetterFn setBusParam = nullptr;
-
-// Callback to read a bus parameter value by busId and param name
-typedef float (*BusParamGetterFn)(uint8_t busId, const String& paramName);
-BusParamGetterFn getBusParam = nullptr;
-
-extern uint8_t EMITTER;
-extern uint8_t FLOW;
-
-// ═══════════════════════════════════════════════════════════════════
-// GLOBAL PARAMETERS
-// ═══════════════════════════════════════════════════════════════════
-
-const char* const GLOBAL_PARAMS[] PROGMEM = {
-   "persistence", "colorShift"
-};
-
-const uint8_t GLOBAL_PARAM_COUNT = 2;
-
-// ═══════════════════════════════════════════════════════════════════
-//  EMITTERS
-// ═══════════════════════════════════════════════════════════════════
-
-// Emitter names in PROGMEM
-const char orbitaldots_str[] PROGMEM = "orbitaldots";
-const char swarmingdots_str[] PROGMEM = "swarmingdots";
-const char audiodots_str[] PROGMEM = "audiodots";
-const char lissajous_str[] PROGMEM = "lissajous";
-const char borderrect_str[] PROGMEM = "borderrect";
-const char noisekaleido_str[] PROGMEM = "noisekaleido";
-const char cube_str[] PROGMEM = "cube";
-
-const char* const EMITTERS[] PROGMEM = {
-      orbitaldots_str, swarmingdots_str, audiodots_str, lissajous_str, borderrect_str, noisekaleido_str, cube_str
-   };
-
-const uint8_t EMITTER_COUNTS[] = {7};
-
-// Emitter params
-const char* const ORBITALDOTS_PARAMS[] PROGMEM = {
-   "numDots", "dotDiam", "orbitSpeed", "orbitDiam",
-   "modOrbitSpeedRate", "modOrbitSpeedLevel", "modOrbitDiamRate", "modOrbitDiamLevel"
-};
-const char* const SWARMINGDOTS_PARAMS[] PROGMEM = {
-   "numDots", "dotDiam", "swarmSpeed", "swarmSpread",
-   "modSwarmSpeedRate", "modSwarmSpeedLevel",
-   "modSwarmSpreadRate", "modSwarmSpreadLevel"
-};
-const char* const AUDIODOTS_PARAMS[] PROGMEM = {};
-const char* const LISSAJOUS_PARAMS[] PROGMEM = {
-   "lineSpeed", "lineAmp", "modLineSpeedRate", "modLineSpeedLevel"
-};
-const char* const BORDERRECT_PARAMS[] PROGMEM = {};
-const char* const NOISEKALEIDO_PARAMS[] PROGMEM = {
-   "driftSpeed", "noiseScale", "noiseBand", "kaleidoGamma"
-};
-const char* const CUBE_PARAMS[] PROGMEM = {
-   "scale", "angleRateX", "angleRateY", "angleRateZ"
-};
-
-// Struct to hold emitter name and parameter array reference
-struct EmitterParamEntry {
-   const char* EmitterName;
-   const char* const* params;
-   uint8_t count;
-};
-
-const EmitterParamEntry EMITTER_PARAM_LOOKUP[] PROGMEM = {
-   {"orbitaldots", ORBITALDOTS_PARAMS, 8},
-   {"swarmingdots", SWARMINGDOTS_PARAMS, 8},
-   {"audiodots", AUDIODOTS_PARAMS, 0},
-   {"lissajous", LISSAJOUS_PARAMS, 4},
-   {"borderrect", BORDERRECT_PARAMS, 0},
-   {"noisekaleido", NOISEKALEIDO_PARAMS, 4},
-   {"cube", CUBE_PARAMS, 4},
-};
-
-static const EmitterParamEntry* getEmitterParams(uint8_t emitterIdx) {
-      if (emitterIdx >= EMITTER_COUNT) return nullptr;
-      return &EMITTER_PARAM_LOOKUP[emitterIdx];
-}
-
-// ═══════════════════════════════════════════════════════════════════
-//  FLOWS
-// ═══════════════════════════════════════════════════════════════════
-
-// Flow names in PROGMEM
-const char noise_str[] PROGMEM = "noise";
-const char radial_str[] PROGMEM = "radial";
-const char directional_str[] PROGMEM = "directional";
-const char rings_str[] PROGMEM = "rings";
-const char spiral_str[] PROGMEM = "spiral";
-
-const uint8_t FLOW_COUNTS[] = {5};
-
-const char* const FLOWS[] PROGMEM = {
-      noise_str, radial_str, directional_str, rings_str, spiral_str
-   };
-   
-// Flow field params
-const char* const NOISE_PARAMS[] PROGMEM = {
-   "xSpeed", "ySpeed", "xAmp", "yAmp","xFreq", "yFreq", "xShift", "yShift",
-   "modAmpRate", "modAmpLevel",
-   "modSpeedRate", "modSpeedLevel",
-   "modShiftRate", "modShiftLevel"
-};
-const char* const RADIAL_PARAMS[] PROGMEM = {
-   "radialStep", "blendFactor"
-};
-const char* const DIRECTIONAL_PARAMS[] PROGMEM = {
-   "windStep", "blendFactor", "rotateSpeed", "waveAmp", "waveFreq", "waveSpeed"
-};
-const char* const RINGS_PARAMS[] PROGMEM = {
-   "innerSwirl", "outerSwirl", "midDrift",
-   "modBreatheRate", "modBreatheLevel"
-};
-const char* const SPIRAL_PARAMS[] PROGMEM = {
-   "angularStep", "radialStep", "blendFactor"
-};
-// Note: spiral reuses shared cVars radialStep and blendFactor
-
-// Struct to hold flow field name and parameter array reference
-struct FlowParamEntry {
-   const char* FlowName;
-   const char* const* params;
-   uint8_t count;
-};
-
-const FlowParamEntry FLOW_PARAM_LOOKUP[] PROGMEM = {
-   {"noise", NOISE_PARAMS, 14},
-   {"radial", RADIAL_PARAMS, 2},
-   {"directional", DIRECTIONAL_PARAMS, 6},
-   {"rings", RINGS_PARAMS, 5},
-   {"spiral", SPIRAL_PARAMS, 3}
-};
-
-static const FlowParamEntry* getFlowParams(uint8_t flowIdx) {
-      if (flowIdx >= FLOW_COUNT) return nullptr;
-      return &FLOW_PARAM_LOOKUP[flowIdx];
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// AUDIO SETTINGS
-// ═══════════════════════════════════════════════════════════════════
- 
-const char* const AUDIO_PARAMS[] PROGMEM = {
-"maxBins", "audioFloor", "audioGain",
-"avLevelerTarget", "autoFloorAlpha", "autoFloorMin", "autoFloorMax",
-"noiseGateOpen", "noiseGateClose",
-"threshold", "minBeatInterval",
-"rampAttack", "rampDecay", "peakBase", "expDecayFactor"
-};
-
-const uint8_t AUDIO_PARAM_COUNT = 15;
-
-// ═══════════════════════════════════════════════════════════════════
-//  MISCELLANEOUS CONTROLS
-// ═══════════════════════════════════════════════════════════════════
-
-uint8_t cBright = 35;
-uint8_t cMapping = 0;
-uint8_t cOverrideMapping = 0;
-
-/*fl::EaseType getEaseType(uint8_t value) {
-    switch (value) {
-        case 0: return fl::EASE_NONE;
-        case 1: return fl::EASE_IN_QUAD;
-        case 2: return fl::EASE_OUT_QUAD;
-        case 3: return fl::EASE_IN_OUT_QUAD;
-        case 4: return fl::EASE_IN_CUBIC;
-        case 5: return fl::EASE_OUT_CUBIC;
-        case 6: return fl::EASE_IN_OUT_CUBIC;
-        case 7: return fl::EASE_IN_SINE;
-        case 8: return fl::EASE_OUT_SINE;
-        case 9: return fl::EASE_IN_OUT_SINE;
-    }
-    FL_ASSERT(false, "Invalid ease type");
-    return fl::EASE_NONE;
-}*/
-
-uint8_t cEaseSat = 0;
-uint8_t cEaseLum = 0;
-
-// ═══════════════════════════════════════════════════════════════════
-//  PARAMETER DECLARATIONS
-// ═══════════════════════════════════════════════════════════════════
-
-// GLOBAL -------------------------
-float cPersistence = 0.05f;
-float cColorShift = 0.10f;
-bool cUseRainbow = false;
-
-// EMITTERS -----------------------
-
-// Dot family shared ------
-uint8_t cNumDots = 3;
-float cDotDiam = 1.5f;
-// orbitalDots 
-float cOrbitSpeed = 0.15f;
-float cOrbitDiam = 10.0f;
-float cModOrbitSpeedRate = 0.00005f;
-float cModOrbitSpeedLevel = 1.0f;
-float cModOrbitDiamRate = 0.0005f;
-float cModOrbitDiamLevel = 1.0f;
-// swarmingDots
-float cSwarmSpeed = 0.5f;
-float cSwarmSpread = 0.5f;
-float cModSwarmSpeedRate = 1.0f;
-float cModSwarmSpeedLevel = 0.0f;
-float cModSwarmSpreadRate = 1.0f;
-float cModSwarmSpreadLevel = 1.0f;
-// lissajous line
-float cLineSpeed = 0.35f;
-float cLineAmp = 13.5f;
-float cModLineSpeedRate = 1.0f;
-float cModLineSpeedLevel = 0.0f;
-//noiseKaleido
-float cDriftSpeed = 0.35f;
-float cNoiseScale = 0.0375f;
-float cNoiseBand = 0.1f;
-float cKaleidoGamma = 0.65f;
-// cube
-float cScale = 1.f;
-float cAngleRateX = 0.02f;
-float cAngleRateY = 0.03f;
-float cAngleRateZ = 0.01f;
-bool cAngleFreezeX = false;
-bool cAngleFreezeY = false;
-bool cAngleFreezeZ = false;
-
-// FLOWS -----------------------
-// shared
-float cBlendFactor = 0.45f;
-// noiseFlow 
-float cXFreq = 0.33f;
-float cYFreq = 0.32f;
-float cXShift = 1.5f;
-float cYShift = 1.5f;
-float cXAmp = 1.0f;
-float cYAmp = 1.0f;
-float cXSpeed = 0.15f;
-float cYSpeed = 0.15f;
-float cModAmpRate = 0.5f;
-float cModAmpLevel = 0.5f;
-float cModSpeedRate = 0.1f;
-float cModSpeedLevel = 0.1f;
-float cModShiftRate = 0.5f;
-float cModShiftLevel = 0.5f;
-//flowFromCenter
-float cRadialStep = 0.15f;
-// directionalFlow
-float cWindStep = 0.95f;
-float cRotateSpeed = 0.25f;
-float cWaveAmp = 0.0f;
-float cWaveFreq = 0.20f;
-float cWaveSpeed = 1.20f;
-// ringFlow
-float cInnerSwirl = -0.2f;
-float cOuterSwirl = 0.2f;
-float cMidDrift = 0.3f;
-float cModBreatheRate = 1.0f;
-float cModBreatheLevel = 1.0f;
-// spiral
-float cAngularStep = 0.28f;
-bool cOutward = false;
-
-// AUDIO -----------------------
-bool maxBins = false;
-uint16_t cNoiseGateOpen = 70;
-uint16_t cNoiseGateClose = 50;
-float cAudioGain = 1.0f; 
-float cAudioFloor = 0.0f;
-bool autoFloor = false;
-float cAutoFloorAlpha = 0.01f;
-float cAutoFloorMin = 0.0f;
-float cAutoFloorMax = 0.5f;
-bool avLeveler = true;
-float cAvLevelerTarget = 0.5f;
-float cThreshold = 0.40f;
-float cMinBeatInterval = 75.f;
-float cRampAttack = 0.f;
-float cRampDecay = 100.f;
-float cPeakBase = 1.0f;
-float cExpDecayFactor = 0.9f;
+//#define FORMAT_LITTLEFS_IF_FAILED true
 
 ArduinoJson::JsonDocument sendDoc;
 ArduinoJson::JsonDocument receivedJSON;
@@ -343,7 +51,7 @@ void sendReceiptButton(uint8_t receivedValue) {
 }
 
 void sendReceiptCheckbox(String receivedID, bool receivedValue) {
-  
+
    sendDoc.clear();
    sendDoc["id"] = receivedID;
    sendDoc["val"] = receivedValue;
@@ -352,9 +60,9 @@ void sendReceiptCheckbox(String receivedID, bool receivedValue) {
    serializeJson(sendDoc, jsonString);
 
    pCheckboxCharacteristic->setValue(jsonString);
-   
+
    pCheckboxCharacteristic->notify();
-   
+
    if (debug) {
       Serial.print("Sent receipt for ");
       Serial.print(receivedID);
@@ -374,9 +82,9 @@ void sendReceiptNumber(String receivedID, float receivedValue) {
    serializeJson(sendDoc, jsonString);
 
    pNumberCharacteristic->setValue(jsonString);
-   
+
    pNumberCharacteristic->notify();
-   
+
    if (debug) {
       Serial.print("Sent receipt for ");
       Serial.print(receivedID);
@@ -397,7 +105,7 @@ void sendReceiptString(String receivedID, String receivedValue) {
    pStringCharacteristic->setValue(jsonString);
 
    pStringCharacteristic->notify();
-   
+
    if (debug) {
       Serial.print("Sent receipt for ");
       Serial.print(receivedID);
@@ -408,83 +116,6 @@ void sendReceiptString(String receivedID, String receivedValue) {
 
 //*****************************************************************************
 // PARAMETER/PRESET MANAGEMENT SYSTEM ("PPMS")
-// X-Macro table 
-#define PARAMETER_TABLE \
-   X(uint8_t, OverrideMapping, 0) \
-   X(float, AudioGain, 1.0f) \
-   X(float, AvLevelerTarget, 0.5f) \
-   X(float, AudioFloor, 0.05f) \
-   X(float, AutoFloorAlpha, 0.05f) \
-   X(float, AutoFloorMin, 0.0f) \
-   X(float, AutoFloorMax, 0.05f) \
-   X(uint16_t, NoiseGateOpen, 70) \
-   X(uint16_t, NoiseGateClose, 50) \
-   X(float, Threshold, 0.25f) \
-   X(float, MinBeatInterval, 75.0f) \
-   X(float, RampAttack, 0.f) \
-   X(float, RampDecay, 150.f) \
-   X(float, PeakBase, 1.0f) \
-   X(float, ExpDecayFactor, 1.0f) \
-   X(float, OrbitSpeed, 0.35f) \
-   X(float, Persistence, 0.02f) \
-   X(float, XShift, 1.8f) \
-   X(float, YShift, 1.8f) \
-   X(float, OrbitDiam, 10.0f) \
-   X(float, ModOrbitSpeedRate, 0.00005f) \
-   X(float, ModOrbitSpeedLevel, 1.0f) \
-   X(float, ModOrbitDiamRate, 0.0005f) \
-   X(float, ModOrbitDiamLevel, 1.0f) \
-   X(uint8_t, NumDots, 3) \
-   X(float, DotDiam, 1.5f) \
-   X(float, SwarmSpeed, 0.5f) \
-   X(float, SwarmSpread, 0.5f) \
-   X(float, ModSwarmSpeedRate, 1.0f) \
-   X(float, ModSwarmSpeedLevel, 0.0f) \
-   X(float, ModSwarmSpreadRate, 1.0f) \
-   X(float, ModSwarmSpreadLevel, 1.0f) \
-   X(float, LineSpeed, 0.35f) \
-   X(float, ModLineSpeedRate, 1.0f) \
-   X(float, ModLineSpeedLevel, 0.0f) \
-   X(float, DriftSpeed, 0.35f) \
-   X(float, NoiseScale, 0.0375f) \
-   X(float, NoiseBand, 0.1f) \
-   X(float, KaleidoGamma, 0.65f) \
-   X(float, ColorShift, 0.10f) \
-   X(float, LineAmp, 13.5f) \
-   X(float, XFreq, 0.33f) \
-   X(float, YFreq, 0.32f) \
-   X(float, XSpeed, -0.25f) \
-   X(float, YSpeed, -0.25f) \
-   X(float, XAmp, 1.0f) \
-   X(float, YAmp, 1.0f) \
-   X(float, ModAmpRate, 1.0f) \
-   X(float, ModAmpLevel, 1.0f) \
-   X(float, ModSpeedRate, 1.0f) \
-   X(float, ModSpeedLevel, 0.0f) \
-   X(float, ModShiftRate, 1.0f) \
-   X(float, ModShiftLevel, 0.0f) \
-   X(float, RadialStep, 0.18f) \
-   X(float, BlendFactor, 0.45f) \
-   X(float, WindStep, 0.95f) \
-   X(float, RotateSpeed, 0.25f) \
-   X(float, WaveAmp, 0.0f) \
-   X(float, WaveFreq, 0.20f) \
-   X(float, WaveSpeed, 1.20f) \
-   X(float, InnerSwirl, -0.26f) \
-   X(float, OuterSwirl, 0.24f) \
-   X(float, MidDrift, 0.42f) \
-   X(float, ModBreatheRate, 1.0f) \
-   X(float, ModBreatheLevel, 1.0f) \
-   X(float, Scale, 1.0f) \
-   X(float, AngleRateX, 0.02f) \
-   X(float, AngleRateY, 0.03f) \
-   X(float, AngleRateZ, 0.01f) \
-   X(bool, AngleFreezeX, false) \
-   X(bool, AngleFreezeY, false) \
-   X(bool, AngleFreezeZ, false) \
-   X(float, AngularStep, 0.28f) \
-   X(bool, Outward, false)
-
 
 // Auto-generated helper functions using X-macros
 void captureCurrentParameters(ArduinoJson::JsonObject& params) {
@@ -512,25 +143,25 @@ bool savePreset(int presetNumber) {
     String filename = "/preset_";
     filename += presetNumber;
     filename += ".json";
-    
+
     ArduinoJson::JsonDocument preset;
     preset["programNum"] = PROGRAM;
-    if (MODE_COUNTS[PROGRAM] > 0) { 
+    if (MODE_COUNTS[PROGRAM] > 0) {
       preset["modeNum"] = MODE;
-    }    
+    }
     ArduinoJson::JsonObject params = preset["parameters"].to<ArduinoJson::JsonObject>();
     captureCurrentParameters(params);
-    
+
     File file = LittleFS.open(filename, "w");
     if (!file) {
         Serial.print("Failed to save preset: ");
         Serial.println(filename);
         return false;
     }
-    
+
     serializeJson(preset, file);
     file.close();
-    
+
     Serial.print("Preset saved: ");
     Serial.println(filename);
     return true;
@@ -540,18 +171,18 @@ bool loadPreset(int presetNumber) {
     String filename = "/preset_";
     filename += presetNumber;
     filename += ".json";
-    
+
     File file = LittleFS.open(filename, "r");
     if (!file) {
         Serial.print("Failed to load preset: ");
         Serial.println(filename);
         return false;
     }
-    
+
     ArduinoJson::JsonDocument preset;
     ArduinoJson::DeserializationError error = deserializeJson(preset, file);
     file.close();
-    
+
     if (preset["programNum"].isNull() || preset["parameters"].isNull()) {
         Serial.print("Invalid preset format: ");
         Serial.println(filename);
@@ -565,7 +196,7 @@ bool loadPreset(int presetNumber) {
     //pauseAnimation = true;
     applyCurrentParameters(preset["parameters"]);
     //pauseAnimation = false;
-    
+
     Serial.print("Preset loaded: ");
     Serial.println(filename);
     return true;
@@ -575,14 +206,14 @@ bool loadPreset(int presetNumber) {
 
 //void sendDeviceState() {
 
-void sendEmitterState() { 
+void sendEmitterState() {
    if (debug) {
       Serial.println("Sending emitter state...");
    }
-   
+
    ArduinoJson::JsonDocument stateDoc;
    stateDoc["emitter"] = EMITTER;
-   
+
    // Get parameter list for current visualizer
    const EmitterParamEntry* emitterParams = getEmitterParams(EMITTER);
 
@@ -598,13 +229,13 @@ void sendEmitterState() {
            Serial.println(emitterParams->count);
        }
    }
-   
+
    if (emitterParams != nullptr) {
        // Loop through parameters for current emitter
        for (uint8_t i = 0; i < emitterParams->count; i++) {
            char paramName[32];
            ::strcpy(paramName, (char*)pgm_read_ptr(&emitterParams->params[i]));
-           
+
            if (debug) {
                Serial.print("Processing parameter: ");
                Serial.println(paramName);
@@ -616,7 +247,7 @@ void sendEmitterState() {
    for (uint8_t i = 0; i < emitterParams->count; i++) {
        char paramName[32];
        ::strcpy(paramName, (char*)pgm_read_ptr(&emitterParams->params[i]));
-       
+
        bool paramFound = false;
        // Use X-macro to match parameter names and add values
        // Handle case-insensitive comparison for parameter names
@@ -633,13 +264,13 @@ void sendEmitterState() {
            }
        PARAMETER_TABLE
        #undef X
-       
+
        if (!paramFound) {
            Serial.print("Warning: Parameter not found in X-macro table: ");
            Serial.println(paramName);
        }
    }
-   
+
    // Send as a single JSON doc with nested val object (avoids double-encoding
    // that would exceed BLE MTU when string-escaping the inner JSON).
    ArduinoJson::JsonDocument envelope;
@@ -665,14 +296,14 @@ void sendEmitterState() {
 
   // -----------------------------------
 
-void sendFlowState() { 
+void sendFlowState() {
    if (debug) {
       Serial.println("Sending flow state...");
    }
-   
+
    ArduinoJson::JsonDocument stateDoc;
    stateDoc["flow"] = FLOW;
-   
+
    // Get parameter list for current flow
    const FlowParamEntry* flowParams = getFlowParams(FLOW);
 
@@ -688,13 +319,13 @@ void sendFlowState() {
            Serial.println(flowParams->count);
        }
    }
-   
+
    if (flowParams != nullptr) {
        // Loop through parameters for current flow
        for (uint8_t i = 0; i < flowParams->count; i++) {
            char paramName[32];
            ::strcpy(paramName, (char*)pgm_read_ptr(&flowParams->params[i]));
-           
+
            if (debug) {
                Serial.print("Processing parameter: ");
                Serial.println(paramName);
@@ -706,7 +337,7 @@ void sendFlowState() {
    for (uint8_t i = 0; i < flowParams->count; i++) {
        char paramName[32];
        ::strcpy(paramName, (char*)pgm_read_ptr(&flowParams->params[i]));
-       
+
        bool paramFound = false;
        // Use X-macro to match parameter names and add values
        // Handle case-insensitive comparison for parameter names
@@ -723,13 +354,13 @@ void sendFlowState() {
            }
        PARAMETER_TABLE
        #undef X
-       
+
        if (!paramFound) {
            Serial.print("Warning: Parameter not found in X-macro table: ");
            Serial.println(paramName);
        }
    }
-   
+
    // Send as a single JSON doc with nested val object (avoids double-encoding
    // that would exceed BLE MTU when string-escaping the inner JSON).
    ArduinoJson::JsonDocument envelope;
@@ -859,12 +490,12 @@ std::string convertToStdString(const String& flStr) {
 void processButton(uint8_t receivedValue) {
 
    sendReceiptButton(receivedValue);
-      
+
    if (receivedValue < 20) { // Emitter selection
       EMITTER = receivedValue;
       displayOn = true;
    }
-   
+
    if (receivedValue >= 20 && receivedValue < 40) { // Flow selection
       FLOW = receivedValue - 20;
       displayOn = true;
@@ -876,13 +507,13 @@ void processButton(uint8_t receivedValue) {
    if (receivedValue == 94) { sendBusState(); }
    //if (receivedValue == 95) { resetAll(); }
    if (receivedValue == 96) { sendFlowState(); }
-   
+
    if (receivedValue == 98) { displayOn = true; }
    if (receivedValue == 99) { displayOn = false; }
 
-   /*if (receivedValue >= 101 && receivedValue <= 120) { 
-      uint8_t savedPreset = receivedValue - 100;  
-      //savePreset(savedPreset); 
+   /*if (receivedValue >= 101 && receivedValue <= 120) {
+      uint8_t savedPreset = receivedValue - 100;
+      //savePreset(savedPreset);
    }*/
 
    /*if (receivedValue >= 121 && receivedValue <= 140) {
@@ -894,7 +525,7 @@ void processButton(uint8_t receivedValue) {
    }*/
 
    //if (receivedValue == 160) { Trigger = true; }
-   
+
 }
 
 //*****************************************************************************
@@ -907,7 +538,7 @@ void processNumber(String receivedID, float receivedValue, int8_t busId = -1) {
       setBusParam((uint8_t)busId, receivedID, receivedValue);
       return;
    }
-  
+
    if (receivedID == "inBright") {
       cBright = receivedValue;
       BRIGHTNESS = cBright;
@@ -925,7 +556,7 @@ void processNumber(String receivedID, float receivedValue, int8_t busId = -1) {
       }
    };
    */
-  
+
    //-------------------------------------------------------
    // Auto-generated custom parameter handling using X-macros
    #define X(type, parameter, def) \
@@ -936,13 +567,13 @@ void processNumber(String receivedID, float receivedValue, int8_t busId = -1) {
 }
 
 void processCheckbox(String receivedID, bool receivedValue ) {
-   
+
    sendReceiptCheckbox(receivedID, receivedValue);
-   
+
    if (receivedID == "cx5") {audioEnabled = receivedValue;};
    if (receivedID == "cx6") {avLeveler = receivedValue;};
    if (receivedID == "cx7") {autoFloor = receivedValue;};
-   
+
    if (receivedID == "cx11") {mappingOverride = receivedValue;};
 
    if (receivedID == "cx21") {cAngleFreezeX = receivedValue;};
@@ -983,14 +614,14 @@ void processString(String receivedID, String receivedValue ) {
          if (value.size() > 0) {
 
             uint8_t receivedValue = value[0];
-            
+
             if (debug) {
                Serial.print("Button value received: ");
                Serial.println(receivedValue);
             }
-            
+
             processButton(receivedValue);
-         
+
          }
       }
    };
@@ -999,26 +630,26 @@ void processString(String receivedID, String receivedValue ) {
       void onWrite(NimBLECharacteristic *pCharacteristic, NimBLEConnInfo& connInfo) override {
 
          String receivedBuffer = String(pCharacteristic->getValue().c_str());
-   
+
          if (receivedBuffer.length() > 0) {
-                     
+
             if (debug) {
                Serial.print("Received buffer: ");
                Serial.println(receivedBuffer);
             }
-         
+
             ArduinoJson::deserializeJson(receivedJSON, receivedBuffer);
             String receivedID = receivedJSON["id"] ;
             bool receivedValue = receivedJSON["val"];
-         
+
             if (debug) {
                Serial.print(receivedID);
                Serial.print(": ");
                Serial.println(receivedValue);
             }
-         
+
             processCheckbox(receivedID, receivedValue);
-         
+
          }
       }
    };
@@ -1027,14 +658,14 @@ void processString(String receivedID, String receivedValue ) {
       void onWrite(NimBLECharacteristic *pCharacteristic, NimBLEConnInfo& connInfo) override {
 
          String receivedBuffer = String(pCharacteristic->getValue().c_str());
-         
+
          if (receivedBuffer.length() > 0) {
-         
+
             if (debug) {
                Serial.print("Received buffer: ");
                Serial.println(receivedBuffer);
             }
-         
+
             ArduinoJson::deserializeJson(receivedJSON, receivedBuffer);
             String receivedID = receivedJSON["id"] ;
             float receivedValue = receivedJSON["val"];
@@ -1058,24 +689,24 @@ void processString(String receivedID, String receivedValue ) {
       void onWrite(NimBLECharacteristic *pCharacteristic, NimBLEConnInfo& connInfo) override {
 
          String receivedBuffer = String(pCharacteristic->getValue().c_str());
-         
+
          if (receivedBuffer.length() > 0) {
-         
+
             if (debug) {
                Serial.print("Received buffer: ");
                Serial.println(receivedBuffer);
             }
-         
+
             ArduinoJson::deserializeJson(receivedJSON, receivedBuffer);
             String receivedID = receivedJSON["id"] ;
             String receivedValue = receivedJSON["val"];
-         
+
             if (debug) {
                Serial.print(receivedID);
                Serial.print(": ");
                Serial.println(receivedValue);
             }
-         
+
             processString(receivedID, receivedValue);
          }
       }
@@ -1107,7 +738,7 @@ void bleSetup() {
                         NIMBLE_PROPERTY::NOTIFY
                      );
       pButtonCharacteristic->setCallbacks(new ButtonCharacteristicCallbacks());
-      
+
       pCheckboxCharacteristic = pService->createCharacteristic(
                         CHECKBOX_CHARACTERISTIC_UUID,
                         NIMBLE_PROPERTY::WRITE |
@@ -1115,7 +746,7 @@ void bleSetup() {
                         NIMBLE_PROPERTY::NOTIFY
                      );
       pCheckboxCharacteristic->setCallbacks(new CheckboxCharacteristicCallbacks());
-      
+
       pNumberCharacteristic = pService->createCharacteristic(
                         NUMBER_CHARACTERISTIC_UUID,
                         NIMBLE_PROPERTY::WRITE |
@@ -1123,7 +754,7 @@ void bleSetup() {
                         NIMBLE_PROPERTY::NOTIFY
                      );
       pNumberCharacteristic->setCallbacks(new NumberCharacteristicCallbacks());
-      
+
       pStringCharacteristic = pService->createCharacteristic(
                         STRING_CHARACTERISTIC_UUID,
                         NIMBLE_PROPERTY::WRITE |
@@ -1131,7 +762,7 @@ void bleSetup() {
                         NIMBLE_PROPERTY::NOTIFY
                      );
       pStringCharacteristic->setCallbacks(new StringCharacteristicCallbacks());
-      
+
 
       //**********************************************************
 

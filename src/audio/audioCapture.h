@@ -8,7 +8,7 @@
 
 #include "audioTypes.h"
 #include "audioInput.h"
-#include "bleControl.h"
+#include "parameterSchema.h"
 
 namespace myAudio {
 
