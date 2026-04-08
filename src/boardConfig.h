@@ -9,20 +9,35 @@
 #define BIG_BOARD
 //#undef BIG_BOARD
 
-#ifdef BIG_BOARD
+#if defined(CONFIG_IDF_TARGET_ESP32S3)
+    
+    #ifdef BIG_BOARD
+        
+        // --- 32x48, 3 strips ---
+        #include "reference/matrixMap_32x48_3pin.h"
+        #define PIN0 2
+        #define PIN1 3
+        #define PIN2 4
+        #define HEIGHT 32
+        #define WIDTH 48
+        #define NUM_STRIPS 3
+        #define NUM_LEDS_PER_STRIP 512
+        #define LED_DRIVER "RMT"
 
-    /*
-    // --- 32x48, 3 strips ---
-    #include "reference/matrixMap_32x48_3pin.h"
-    #define PIN0 2
-    #define PIN1 3
-    #define PIN2 4
-    #define HEIGHT 32
-    #define WIDTH 48
-    #define NUM_STRIPS 3
-    #define NUM_LEDS_PER_STRIP 512
-    #define LED_DRIVER "RMT"
-    */
+    #else
+
+        // --- 22x22 matrix ---
+        #include "reference/matrixMap_22x22.h"
+        #define PIN0 2
+        #define HEIGHT 22
+        #define WIDTH 22
+        #define NUM_STRIPS 1
+        #define NUM_LEDS_PER_STRIP 484
+        #define LED_DRIVER "RMT"
+
+    #endif
+
+#else
 
     // --- 48x64, 6 strips (P4-WIFI6 / Waveshare) ---
     #include "reference/matrixMap_48x64_6pin.h"
@@ -37,17 +52,6 @@
     #define NUM_STRIPS 6
     #define NUM_LEDS_PER_STRIP 512
     #define LED_DRIVER "PARLIO"
-
-#else
-
-    // --- 22x22 matrix ---
-    #include "reference/matrixMap_22x22.h"
-    #define PIN0 2
-    #define HEIGHT 22
-    #define WIDTH 22
-    #define NUM_STRIPS 1
-    #define NUM_LEDS_PER_STRIP 484
-    #define LED_DRIVER "RMT"
 
 #endif
 

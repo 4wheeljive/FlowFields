@@ -15,7 +15,6 @@ namespace flowFields {
     //  AUDIO DOTS
     // ═══════════════════════════════════════════════════════════════════
 
-#ifdef AUDIO_ENABLED
     const myAudio::AudioFrame* cFrame = nullptr;
 
     inline void getAudio(myAudio::binConfig& b) {
@@ -46,9 +45,6 @@ namespace flowFields {
             drawDot(cx, cy, audioDots.dotDiam, c.r, c.g, c.b);
         }
     }
-#else
-    static void emitAudioDots(float) { /* no-op: audio not available */ }
-#endif
 
     
     // ═══════════════════════════════════════════════════════════════════

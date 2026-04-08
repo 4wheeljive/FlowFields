@@ -1,7 +1,7 @@
 #pragma once
 
 #include "fl/audio/audio.h"
-#include "fl/audio/audio_input.h"
+#include "fl/audio/input.h"
 
 namespace myAudio {
 
@@ -13,15 +13,13 @@ namespace myAudio {
     // INMP441 L/R pin determines output channel:
     //   L/R pin LOW  (or GND) → outputs on Left channel
     //   L/R pin HIGH (or VCC) → outputs on Right channel
-    #define I2S_CHANNEL fl::Left 
 
-    // declare fl::audio_input.h objects
-    //fl::AudioConfig config = fl::AudioConfig::CreateInmp441(I2S_WS_PIN, I2S_SD_PIN, I2S_CLK_PIN, I2S_CHANNEL);
-    
-    fl::AudioConfigI2S i2sConfig(I2S_WS_PIN, I2S_SD_PIN, I2S_CLK_PIN, 0, fl::Left, 44100, 16, fl::Philips);
-    fl::AudioConfig config(i2sConfig);
+    fl::audio::Config config = fl::audio::Config::CreateInmp441(
+        I2S_WS_PIN, I2S_SD_PIN, I2S_CLK_PIN,
+        fl::audio::AudioChannel::Left
+    );
         
-    fl::shared_ptr<fl::IAudioInput> audioSource;
+    fl::shared_ptr<fl::audio::IInput> audioSource;
     bool audioInputInitialized = false;
 
     //=========================================================================
@@ -33,7 +31,7 @@ namespace myAudio {
         }
 
         fl::string errorMsg;
-        myAudio::audioSource = fl::IAudioInput::create(config, &errorMsg);
+        myAudio::audioSource = fl::audio::IInput::create(config, &errorMsg);
 
         Serial.println("Waiting 2000ms for audio device to stdout initialization...");
         delay(2000);

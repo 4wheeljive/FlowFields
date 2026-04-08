@@ -240,8 +240,8 @@ namespace myAudio {
         frame.pcm = filteredSample.pcm();
 
         // *** STAGE: Run FFT engine once per timestamp
-        static const fl::FFTBins* lastFft = nullptr;
-        const fl::FFTBins* fftForBeat = nullptr;
+        static const fl::audio::fft::Bins* lastFft = nullptr;
+        const fl::audio::fft::Bins* fftForBeat = nullptr;
         float rmsNormFast = 0.0f;
         float timeEnergy = 0.0f;
         float beatBins[MAX_FFT_BINS] = {0.0f};
@@ -410,11 +410,11 @@ namespace myAudio {
     //bool audioLatencyDiagnostics = true;
 
     inline uint32_t getAudioSampleRate() {
-        uint32_t sampleRate = fl::FFT_Args::DefaultSampleRate();
-        if (config.is<fl::AudioConfigI2S>()) {
-            sampleRate = static_cast<uint32_t>(config.get<fl::AudioConfigI2S>().mSampleRate);
-        } else if (config.is<fl::AudioConfigPdm>()) {
-            sampleRate = static_cast<uint32_t>(config.get<fl::AudioConfigPdm>().mSampleRate);
+        uint32_t sampleRate = fl::audio::fft::Args::DefaultSampleRate();
+        if (config.is<fl::audio::ConfigI2S>()) {
+            sampleRate = static_cast<uint32_t>(config.get<fl::audio::ConfigI2S>().mSampleRate);
+        } else if (config.is<fl::audio::ConfigPdm>()) {
+            sampleRate = static_cast<uint32_t>(config.get<fl::audio::ConfigPdm>().mSampleRate);
         }
         return sampleRate;
     }

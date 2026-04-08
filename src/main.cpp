@@ -26,7 +26,7 @@ bool audioLatencyDiagnostics = false;
 #endif
 */
 
-#include "board_config.h"
+#include "boardConfig.h"
 
 const uint16_t MIN_DIMENSION = FL_MIN(WIDTH, HEIGHT);
 const uint16_t MAX_DIMENSION = FL_MAX(WIDTH, HEIGHT);
@@ -44,10 +44,8 @@ uint8_t BRIGHTNESS = 35;
 uint8_t defaultMapping = 0;
 bool mappingOverride = false;
 
-#ifdef AUDIO_ENABLED
 #include "audio/audioInput.h"
 #include "audio/audioProcessing.h"
-#endif
 #include "bleControl.h"
 #include "flowFieldsEngine.hpp"
 
@@ -141,12 +139,10 @@ void setup() {
 	Serial.println("LittleFS mounted successfully.");
 	*/
 
-#ifdef AUDIO_ENABLED
 	if (audioEnabled){
 		myAudio::initAudioInput();
 		myAudio::initAudioProcessing();
 	}
-#endif
 
 }
 
@@ -162,7 +158,6 @@ void loop() {
 	// newest. When captureAudioFrame() calls it again later (inside
 	// the pattern), readAll() returns 0 and the already-captured data
 	// is preserved and reused for FFT/bus processing.
-#ifdef AUDIO_ENABLED
 	if (audioEnabled) {
 		if (myAudio::audioInputInitialized) {
 			//PROFILE_START("audio_capture");
@@ -170,7 +165,6 @@ void loop() {
 			//PROFILE_END();
 		}
 	}
-#endif
 
 	EVERY_N_SECONDS(3) {
 		uint8_t fps = FastLED.getFPS();

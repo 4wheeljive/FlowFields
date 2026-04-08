@@ -19,8 +19,8 @@ namespace myAudio {
     void sampleAudio() {
 
         if (!audioSource) {
-            currentSample = AudioSample();
-            filteredSample = AudioSample();
+            currentSample = fl::audio::Sample();
+            filteredSample = fl::audio::Sample();
             return;
         }
 
@@ -30,8 +30,8 @@ namespace myAudio {
         if (audioSource->error(&errorMsg)) {
             Serial.print("Audio error: ");
             Serial.println(errorMsg.c_str());
-            currentSample = AudioSample();
-            filteredSample = AudioSample();
+            currentSample = fl::audio::Sample();
+            filteredSample = fl::audio::Sample();
             return;
         }
 
@@ -39,7 +39,7 @@ namespace myAudio {
         // Drain all available audio buffers and keep only the newest sample.
         // This prevents accumulating stale audio when render FPS is slower
         // than the audio production rate.
-        fl::vector_inlined<AudioSample, 16> samples;
+        fl::vector_inlined<fl::audio::Sample, 16> samples;
         samples.clear();
         size_t readCount = audioSource->readAll(&samples);
         if (readCount == 0) {
@@ -47,8 +47,8 @@ namespace myAudio {
             // (e.g., captured earlier this loop iteration), keep it rather
             // than invalidating. Only invalidate on true startup (no prior data).
             if (!filteredSample.isValid()) {
-                currentSample = AudioSample();
-                filteredSample = AudioSample();
+                currentSample = fl::audio::Sample();
+                filteredSample = fl::audio::Sample();
             }
             return;
         }
@@ -164,7 +164,7 @@ namespace myAudio {
 
         // Create filtered AudioSample from the cleaned buffer
         fl::span<const int16_t> filteredSpan(filteredPcmBuffer, nClamped);
-        filteredSample = AudioSample(filteredSpan, currentSample.timestamp());
+        filteredSample = fl::audio::Sample(filteredSpan, currentSample.timestamp());
 
         // Process through AudioProcessor (triggers callbacks)
             // - only needed if there are active callbacks to trigger
@@ -235,23 +235,23 @@ namespace myAudio {
     // Uses static FFT storage and explicit args for consistent bins.
     //=====================================================================
 
-    static fl::FFTBins fftBins(myAudio::MAX_FFT_BINS);
-    static fl::FFT fftEngine;
+    static fl::audio::fft::Bins fftBins(myAudio::MAX_FFT_BINS);
+    static fl::audio::fft::FFT fftEngine;
 
-    const fl::FFTBins* getFFT(binConfig& b) {
+    const fl::audio::fft::Bins* getFFT(binConfig& b) {
         if (!filteredSample.isValid()) return nullptr;
 
         const auto &pcm = filteredSample.pcm();
         if (pcm.size() == 0) return nullptr;
 
-        int sampleRate = fl::FFT_Args::DefaultSampleRate();
-        if (config.is<fl::AudioConfigI2S>()) {
-            sampleRate = static_cast<int>(config.get<fl::AudioConfigI2S>().mSampleRate);
-        } else if (config.is<fl::AudioConfigPdm>()) {
-            sampleRate = static_cast<int>(config.get<fl::AudioConfigPdm>().mSampleRate);
+        int sampleRate = fl::audio::fft::Args::DefaultSampleRate();
+        if (config.is<fl::audio::ConfigI2S>()) {
+            sampleRate = static_cast<int>(config.get<fl::audio::ConfigI2S>().mSampleRate);
+        } else if (config.is<fl::audio::ConfigPdm>()) {
+            sampleRate = static_cast<int>(config.get<fl::audio::ConfigPdm>().mSampleRate);
         }
 
-        fl::FFT_Args args(
+        fl::audio::fft::Args args(
             static_cast<int>(pcm.size()),
             b.NUM_FFT_BINS,
             FFT_MIN_FREQ,
@@ -264,7 +264,7 @@ namespace myAudio {
         return &fftBins;
     }
 
-    const fl::FFTBins* getFFT_direct(binConfig& b) {
+    const fl::audio::fft::Bins* getFFT_direct(binConfig& b) {
         return getFFT(b);
     }
 
