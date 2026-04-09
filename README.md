@@ -46,10 +46,8 @@ Both targets share all source files. Compile-time guards handle platform differe
 | `platformio_p4.ini` | P4 config (CLI only) |
 | `sdkconfig.defaults` | ESP-IDF settings for P4 (ESP-Hosted, NimBLE, PSRAM, PARLIO) |
 | `src/boardConfig.h` | Hardware abstraction: pins, matrix size, LED driver |
-| `src/parameterSchema.h` | cVar declarations, PARAMETER_TABLE X-macro, component registries |
 | `src/bleControl.h` | NimBLE BLE transport, callbacks, state sync |
 | `src/hosted_ble_bridge.cpp/.h` | P4-specific ESP-Hosted BLE controller init |
-| `src/flowFieldsEngine.hpp` | Visualization pipeline: emitter/flow dispatch, rendering |
 
 ### NimBLE Libraries
 

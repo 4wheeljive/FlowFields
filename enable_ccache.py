@@ -8,9 +8,10 @@ env.SetOption("num_jobs", 12)
 os.environ["IDF_CCACHE_ENABLE"] = "1"
 os.environ["CCACHE_COMPILER_TYPE"] = "gcc"
 
-# Also wrap SCons-level compilers for any non-CMake compilation
-env.Replace(
-    CC='"ccache" "${CC}"',
-    CXX='"ccache" "${CXX}"',
-    AS='"ccache" "${AS}"',
-)
+# Wrap SCons-level compilers with ccache
+cc = env["CC"]
+cxx = env["CXX"]
+if "ccache" not in cc:
+    env.Replace(CC="ccache " + cc)
+if "ccache" not in cxx:
+    env.Replace(CXX="ccache " + cxx)
