@@ -185,7 +185,8 @@ namespace flowFields {
     // Push emitter + universal defaults into cVars (called on emitter/mode change)
     static void pushDefaultsToCVars() {
         // Universal
-        cPersistence = vizConfig.persistence;
+        cPersistence = floorf(vizConfig.persistence);
+        cPersistFine = vizConfig.persistence - cPersistence;
         cColorShift = vizConfig.colorShift;
         // Emitter: orbitalDots
         cNumDots = orbitalDots.numDots;
@@ -225,7 +226,7 @@ namespace flowFields {
 
     // Read cVars into component structs (called every frame)
     static void syncFromCVars() {
-        vizConfig.persistence = cPersistence;
+        vizConfig.persistence = cPersistence + cPersistFine;
         vizConfig.colorShift = cColorShift;
         orbitalDots.numDots = cNumDots;
         orbitalDots.orbitSpeed = cOrbitSpeed;

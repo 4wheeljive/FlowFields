@@ -749,29 +749,34 @@
 
 
         // Characteristic Send Functions *************************************
-        
+
+        // BLE write queue — serializes all writes to avoid "GATT operation already in progress"
+        let bleWriteQueue = Promise.resolve();
+
+        function queueBleWrite(characteristic, data, label) {
+            bleWriteQueue = bleWriteQueue
+                .then(() => characteristic.writeValue(data))
+                .then(() => {
+                    const display = typeof label === 'string' ? label : `Button: ${label}`;
+                    lastValueSent = display;
+                    document.getElementById('lastMessage').textContent = display;
+                    console.log(`✅ ${display} written`);
+                    logEvent(`✅ Sent ${display}`);
+                })
+                .catch(error => {
+                    console.error(`Error writing ${label}:`, error);
+                    logEvent(`❌ Send failed (${label}): ${error.message}`);
+                });
+        }
+
         window.sendButtonCharacteristic = function(buttonValue) {
             if (!deviceConnected || !buttonCharacteristicFound) {
                 console.error("Bluetooth is not connected. Cannot write to button characteristic.");
                 logEvent("⚠️ Bluetooth is not connected. Cannot write to button characteristic.");
                 return;
             }
-
-            const data = new Uint8Array([buttonValue]);
-            
-            buttonCharacteristicFound.writeValue(data)
-                .then(() => {
-                    lastValueSent = buttonValue.toString();
-                    document.getElementById('lastMessage').textContent = `Button: ${buttonValue}`;
-                    console.log("✅ Button value written:", buttonValue);
-                    logEvent(`✅ Sent button: ${buttonValue}`);
-                })
-                .catch(error => {
-                    console.error("Error writing to button characteristic:", error);
-                    logEvent(`❌ Button send failed: ${error.message}`);
-                });
+            queueBleWrite(buttonCharacteristicFound, new Uint8Array([buttonValue]), `button: ${buttonValue}`);
         };
-
 
         window.sendCheckboxCharacteristic = function(checkboxId, value) {
             if (!deviceConnected || !checkboxCharacteristicFound) {
@@ -779,27 +784,9 @@
                 logEvent("⚠️ Bluetooth is not connected. Cannot write to checkbox characteristic.");
                 return;
             }
-
-            var sendDoc = {
-                "id": checkboxId,
-                "val": value
-            };
-            var sendString = JSON.stringify(sendDoc);
-            var sendBuffer = str2ab(sendString);
-
-            checkboxCharacteristicFound.writeValue(sendBuffer)
-                .then(() => {
-                    lastValueSent = sendString;
-                    document.getElementById('lastMessage').textContent = sendString;
-                    console.log("✅ Checkbox value written:", sendString);
-                    logEvent(`✅ Sent checkbox: ${sendString}`);
-                })
-                .catch(error => {
-                    console.error("Error writing to checkbox characteristic:", error);
-                    logEvent(`❌ Checkbox send failed: ${error.message}`);
-                });
+            var sendString = JSON.stringify({"id": checkboxId, "val": value});
+            queueBleWrite(checkboxCharacteristicFound, str2ab(sendString), `checkbox: ${sendString}`);
         };
-
 
         window.sendNumberCharacteristic = function(inputID, inputValue) {
             if (!deviceConnected || !numberCharacteristicFound) {
@@ -807,25 +794,8 @@
                 logEvent("⚠️ Bluetooth is not connected. Cannot write to number characteristic.");
                 return;
             }
-
-            var sendDoc = {
-                "id": inputID,
-                "val": inputValue
-            };
-            var sendString = JSON.stringify(sendDoc);
-            var sendBuffer = str2ab(sendString);
-
-            numberCharacteristicFound.writeValue(sendBuffer)
-                .then(() => {
-                    lastValueSent = sendString;
-                    document.getElementById('lastMessage').textContent = sendString;
-                    console.log("✅ Number value written:", sendString);
-                    logEvent(`✅ Sent number: ${sendString}`);
-                })
-                .catch(error => {
-                    console.error("Error writing to number characteristic:", error);
-                    logEvent(`❌ Number send failed: ${error.message}`);
-                });
+            var sendString = JSON.stringify({"id": inputID, "val": inputValue});
+            queueBleWrite(numberCharacteristicFound, str2ab(sendString), `number: ${sendString}`);
         };
 
         window.sendBusParamCharacteristic = function(paramId, value, busId) {
@@ -834,20 +804,8 @@
                 logEvent("⚠️ Bluetooth is not connected. Cannot write to number characteristic.");
                 return;
             }
-            var sendDoc = { "id": paramId, "val": value, "bus": busId };
-            var sendString = JSON.stringify(sendDoc);
-            var sendBuffer = str2ab(sendString);
-            numberCharacteristicFound.writeValue(sendBuffer)
-                .then(() => {
-                    lastValueSent = sendString;
-                    document.getElementById('lastMessage').textContent = sendString;
-                    console.log("✅ Bus param written:", sendString);
-                    logEvent(`✅ Sent bus param: ${sendString}`);
-                })
-                .catch(error => {
-                    console.error("Error writing bus param:", error);
-                    logEvent(`❌ Bus param send failed: ${error.message}`);
-                });
+            var sendString = JSON.stringify({"id": paramId, "val": value, "bus": busId});
+            queueBleWrite(numberCharacteristicFound, str2ab(sendString), `bus param: ${sendString}`);
         };
 
         window.sendStringCharacteristic = function(inputID, inputValue) {
@@ -856,25 +814,8 @@
                 logEvent("⚠️ Bluetooth is not connected. Cannot write to string characteristic.");
                 return;
             }
-
-            var sendDoc = {
-                "id": inputID,
-                "val": inputValue
-            };
-            var sendString = JSON.stringify(sendDoc);
-            var sendBuffer = str2ab(sendString);
-
-            stringCharacteristicFound.writeValue(sendBuffer)
-                .then(() => {
-                    lastValueSent = sendString;
-                    document.getElementById('lastMessage').textContent = sendString;
-                    console.log("✅ String value written:", sendString);
-                    logEvent(`✅ Sent string: ${sendString}`);
-                })
-                .catch(error => {
-                    console.error("Error writing to string characteristic:", error);
-                    logEvent(`❌ String send failed: ${error.message}`);
-                });
+            var sendString = JSON.stringify({"id": inputID, "val": inputValue});
+            queueBleWrite(stringCharacteristicFound, str2ab(sendString), `string: ${sendString}`);
         };
 
 
@@ -889,7 +830,8 @@
 
         const PARAMETER_REGISTRY = {
             // GLOBAL
-            persistence: {min: 0.02, max: 30, default: .05, step: 0.01},
+            persistence:  {min: 0, max: 20, default: 0, step: 1},
+            persistFine:  {min: 0, max: 0.99, default: 0.05, step: 0.01},
             colorShift:  {min: 0.01, max: 1, default: 0.10, step: 0.01},
 
             // EMITTERS
@@ -962,7 +904,7 @@
         };
 
         // Parameter lists per component
-        const GLOBAL_PARAMS  = ["persistence", "colorShift"];
+        const GLOBAL_PARAMS  = ["persistence", "persistFine", "colorShift"];
 
         const EMITTER_PARAMS = {
             "orbitaldots":  ["numDots", "dotDiam", "orbitSpeed", "orbitDiam",

@@ -23,10 +23,10 @@ extern uint8_t FLOW;
 // ═══════════════════════════════════════════════════════════════════
 
 const char* const GLOBAL_PARAMS[] PROGMEM = {
-   "persistence", "colorShift"
+   "persistence", "persistFine", "colorShift"
 };
 
-const uint8_t GLOBAL_PARAM_COUNT = 2;
+const uint8_t GLOBAL_PARAM_COUNT = 3;
 
 // ═══════════════════════════════════════════════════════════════════
 //  EMITTERS
@@ -197,7 +197,8 @@ uint8_t cEaseLum = 0;
 // ═══════════════════════════════════════════════════════════════════
 
 // GLOBAL -------------------------
-float cPersistence = 0.05f;
+float cPersistence = 0.0f;
+float cPersistFine = 0.05f;
 float cColorShift = 0.10f;
 bool cUseRainbow = false;
 
@@ -315,7 +316,8 @@ float cExpDecayFactor = 0.9f;
    X(float, PeakBase, 1.0f) \
    X(float, ExpDecayFactor, 1.0f) \
    X(float, OrbitSpeed, 0.35f) \
-   X(float, Persistence, 0.02f) \
+   X(float, Persistence, 0.0f) \
+   X(float, PersistFine, 0.05f) \
    X(float, XShift, 1.8f) \
    X(float, YShift, 1.8f) \
    X(float, OrbitDiam, 10.0f) \
