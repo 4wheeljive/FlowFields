@@ -124,8 +124,10 @@ namespace flowFields {
         const float shiftDepth = 0.75f;
         float workXShift = noiseFlow.xShift * (1.0f + shiftMod.modLevel * shiftDepth * xShiftSignal);
         float workYShift = noiseFlow.yShift * (1.0f + shiftMod.modLevel * shiftDepth * yShiftSignal);
-        workXShift = fmaxf(0.0f, workXShift);
-        workYShift = fmaxf(0.0f, workYShift);
+        // Ensure neither axis fully drops to zero (prevents pure cardinal motion)
+        const float minShift = 0.3f;
+        workXShift = fmaxf(minShift, workXShift);
+        workYShift = fmaxf(minShift, workYShift);
         
         // Publish working shift values for the advection pass
         workXShiftCurrent = workXShift;

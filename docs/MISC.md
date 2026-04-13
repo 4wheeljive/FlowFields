@@ -31,3 +31,31 @@ The spiffs SubType is what LittleFS looks for regardless of the partition name
 FORMAT_LITTLEFS_IF_FAILED true in your code auto-formats on first boot only
 OTA updates (app0/app1) don't touch the data partition — presets survive firmware updates
 For the S3, its default partition scheme already includes a spiffs partition, so presets will work there without a custom CSV.
+
+
+## xAmp/yAmp vs xShift/yShift
+
+ME:
+Help me understand exactly what xAmp/yAmp do and how they are distinct from, and interrelate with, xShift/yShift I know that the Amp settings are Perlin noise parameters, and I can observe changes in the display when I change them, but I still don't have a conceptual grasp of their function.
+
+CLAUDE:
+Looking at the code, here's how they work together:
+xAmp/yAmp control the shape of the noise profile — how extreme the noise values can be. In sampleProfile2D() (line 50-51):
+    const float v = n.noise(i * noiseFreq * scale, scrollY);
+    out[i] = clampf(v * amp, -1.0f, 1.0f);
+
+The raw Perlin noise value (roughly -0.5 to +0.5) is multiplied by amp. With xAmp = 1.0 (default), the profile values stay in roughly the -0.5 to +0.5 range. With xAmp = 2.0, they'd push toward -1.0 to +1.0 (clamped there). So amp controls the contrast of the noise profile — higher amp means more of the profile hits the extremes, lower amp means the profile stays subtle and gentle.
+
+xShift/yShift control the magnitude of pixel displacement. In noiseFlowAdvect() (line 150):
+float sh = yProf[y] * workXShiftCurrent;
+
+The profile value (-1 to +1) is multiplied by the shift value to get actual pixel displacement. With xShift = 1.5, pixels move at most 1.5 pixels per frame. With xShift = 3.0, up to 3 pixels.
+
+The interrelation: The final displacement for a given row/column is profile_value × shift. The profile value's range is shaped by amp. So:
+
+- Low amp, high shift: Most profile values are small (gentle noise shape), but the few that reach the extremes move pixels far. Result: mostly calm with occasional strong movement.
+- High amp, low shift: Profile values are pushed to extremes (contrasty shape), but the maximum displacement is small. Result: the flow has strong directional variation across the grid but everything moves slowly.
+- Both high: Strong contrast AND big displacement — chaotic, fast motion.
+- Both low: Gentle variation AND small displacement — subtle, dreamy drift.
+
+In short: amp shapes the noise curve, shift scales the displacement. Amp is about where on the grid things move differently; shift is about how far they move.
