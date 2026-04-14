@@ -109,8 +109,7 @@ namespace flowFields {
 
     // ===============================================================================
 
-    static void cubePrepare(float t) {
-        (void)t;
+    static void cubePrepare() {
 
         const ModConfig& scaleMod = cube.modScale;
         const ModConfig& rsxMod   = cube.modRotateSpeedX;
@@ -159,9 +158,9 @@ namespace flowFields {
 
     // =======================================================
 
-    static void emitCube(float t) {
+    static void emitCube() {
 
-		cubePrepare(t);
+		cubePrepare();
 		rotateCube();
 
 		// Draw all edges with rainbow colors onto the float grid

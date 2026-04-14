@@ -35,8 +35,7 @@ namespace flowFields {
     static float ringBreatheOuter = 1.0f;
 
     // --- Prepare: compute breathing factors from modulators ---
-    static void ringFlowPrepare(float t) {
-        (void)t;
+    static void ringFlowPrepare() {
         const ModConfig& breatheMod = ringFlow.modBreathe;
 
         const uint8_t innerTimer = breatheMod.modTimer;
@@ -66,8 +65,8 @@ namespace flowFields {
 
     // --- Advect: per-pixel polar backward-sampling with zone-weighted transport ---
     
-    static void ringFlowAdvect(float dt) {
-        float fade = fl::powf(0.5f, dt / vizConfig.persistence);
+    static void ringFlowAdvect() {
+        float fade = fl::powf(0.5f, dt / persistence);
 
         const float cx = (WIDTH - 1) * 0.5f;
         const float cy = (HEIGHT - 1) * 0.5f;
@@ -199,7 +198,7 @@ namespace flowFields {
     
     /*
     static void ringFlowAdvect(float dt) {
-        float fade = fl::powf(0.5f, dt / vizConfig.persistence);
+        float fade = fl::powf(0.5f, dt / persistence);
 
         float cx = (WIDTH  - 1) * 0.5f;
         float cy = (HEIGHT - 1) * 0.5f;

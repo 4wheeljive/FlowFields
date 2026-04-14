@@ -27,11 +27,16 @@ namespace flowFields {
     static float gR[HEIGHT][WIDTH], gG[HEIGHT][WIDTH], gB[HEIGHT][WIDTH];
     static float tR[HEIGHT][WIDTH], tG[HEIGHT][WIDTH], tB[HEIGHT][WIDTH];
 
-    static unsigned long t0;
     static unsigned long lastFrameMs;
     uint8_t lastEmitter = 255;  // force initial setup on first frame
     uint8_t lastFlow = 255;  // force initial setup on first frame
     bool useRainbow = false;  // false = spectrum (even HSV), true = FastLED rainbow character
+
+    // Shared frame timing — set once per frame in runFlowFields(), read by all emitters and flows.
+    // Scaled by globalSpeed so all time-based behavior respects the master clock.
+    static float t  = 0.0f;   // virtual elapsed time (seconds), accumulated each frame
+    static float dt = 0.0f;   // virtual frame delta (seconds), already scaled by globalSpeed
+    float globalSpeed = 1.0f;  // master clock multiplier
 
 
     // ═══════════════════════════════════════════════════════════════════
@@ -386,11 +391,10 @@ namespace flowFields {
 
     // Emitter and Flow enums defined in componentEnums.h
 
-    // Function pointer types for dispatch
-    using EmitterFn     = void(*)(float t);
-    using FlowPrepFn    = void(*)(float t);
-    using FlowAdvectFn  = void(*)(float dt);
-
+    // Function pointer types for dispatch (read shared t/dt from namespace)
+    using EmitterFn     = void(*)();
+    using FlowPrepFn    = void(*)();
+    using FlowAdvectFn  = void(*)();
 
     // ═══════════════════════════════════════════════════════════════════
     //  MODULATION TYPES
@@ -406,20 +410,13 @@ namespace flowFields {
     };
 
     // ═══════════════════════════════════════════════════════════════════
-    //  VIZUALIZER CONFIG
+    //  GLOBAL CONFIG
     // ═══════════════════════════════════════════════════════════════════
 
-    struct CtVizConfig {
-        // Global params
-        float persistence = 0.05f;  // trail half-life in seconds
-        float colorShift = 0.20f;
-        
-        // Active component selections
-        Emitter emitter = EMITTER_ORBITALDOTS;
-        Flow flow = FLOW_NOISE;
-    };
-
-    CtVizConfig vizConfig;
+    float persistence = 0.05f;   // trail half-life in seconds
+    float colorShift  = 0.20f;
+    Emitter activeEmitter = EMITTER_ORBITALDOTS;
+    Flow    activeFlow    = FLOW_NOISE;
 
     FL_OPTIMIZATION_LEVEL_O3_END
     FL_FAST_MATH_END

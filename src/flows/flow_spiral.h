@@ -40,9 +40,7 @@ namespace flowFields {
 
     // --- Prepare: nothing to build (geometry is purely radial/angular) ---
 
-    static void spiralPrepare(float t) {
-
-        (void)t;
+    static void spiralPrepare() {
 
         // -----------------------------------------------------------------
         // 1) Plumbing: assign modulation channels
@@ -96,13 +94,13 @@ namespace flowFields {
 
     // --- Advect: spiral transport with bilinear sampling + fade ---
 
-    static void spiralAdvect(float dt) {
+    static void spiralAdvect() {
         float cx = (WIDTH  - 1) * 0.5f;
         float cy = (HEIGHT - 1) * 0.5f;
         float maxRadius = fl::sqrtf(cx * cx + cy * cy);
 
         // Frame-rate-independent fade
-        float fade = fl::powf(0.5f, dt / vizConfig.persistence);
+        float fade = fl::powf(0.5f, dt / persistence);
 
         float aStep = workAngularStep;
         float rStep = workRadialStep;

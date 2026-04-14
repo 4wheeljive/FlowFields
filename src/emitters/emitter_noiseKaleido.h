@@ -48,7 +48,7 @@ namespace flowFields {
         return fmodPos(h0 + d * u, 1.0f);
     }
 
-    static void emitNoiseKaleido(float t) {
+    static void emitNoiseKaleido() {
         const float scale = noiseKaleido.noiseScale;
         const float speed = noiseKaleido.driftSpeed;
         const float band = noiseKaleido.noiseBand;
@@ -68,7 +68,7 @@ namespace flowFields {
 
         for (int layer = 0; layer < 2; layer++) {
             const LayerCfg& L = layers[layer];
-            float h0 = fmodPos(t * vizConfig.colorShift + L.phase, 1.0f);
+            float h0 = fmodPos(t * colorShift + L.phase, 1.0f);
             float h1 = fmodPos(h0 + L.span, 1.0f);
 
             for (int gy = 0; gy < baseY; gy++) {

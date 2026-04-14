@@ -24,17 +24,9 @@ namespace flowFields {
 
     OrbitalDotsParams orbitalDots; 
 
-    static void emitOrbitalDots(float t) {
+    static void emitOrbitalDots() {
         static float orbitAngle = 0.0f;
-        
-        static unsigned long lastOrbitMs = 0;
-        const unsigned long now = fl::millis();
-        if (lastOrbitMs == 0) {
-            lastOrbitMs = now;
-        }
-        const float dt = (now - lastOrbitMs) * 0.001f;
-        lastOrbitMs = now;
-        
+
         const ModConfig& speedMod = orbitalDots.modOrbitSpeed;
         const ModConfig& diamMod  = orbitalDots.modOrbitDiam;
 
@@ -87,7 +79,7 @@ namespace flowFields {
             const float cx = ocx + fl::cosf(a) * orad;
             const float cy = ocy + fl::sinf(a) * orad;
 
-            const ColorF c = rainbow(t, vizConfig.colorShift, i / fNumDots);
+            const ColorF c = rainbow(t, colorShift, i / fNumDots);
             drawDot(cx, cy, orbitalDots.dotDiam, c.r, c.g, c.b);
         }
     }

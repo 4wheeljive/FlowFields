@@ -25,19 +25,18 @@ namespace flowFields {
 
     // --- Prepare: nothing to build (geometry is purely radial) ---
 
-    static void radialPrepare(float t) {
-        (void)t;
+    static void radialPrepare() {
     }
 
 
     // --- Advect: radial transport with clamped bilinear sampling + fade ---
 
-    static void radialAdvect(float dt) {
+    static void radialAdvect() {
         float cx = (WIDTH  - 1) * 0.5f;
         float cy = (HEIGHT - 1) * 0.5f;
 
         // Frame-rate-independent fade: half-life = persistence seconds
-        float fade = fl::powf(0.5f, dt / vizConfig.persistence);
+        float fade = fl::powf(0.5f, dt / persistence);
 
         float step = radial.radialStep;
         if (radial.outward) {

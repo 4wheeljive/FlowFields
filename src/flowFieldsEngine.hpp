@@ -1,19 +1,18 @@
 #pragma once
 
-
 #include "parameterSchema.h"
 #include "flowFieldsTypes.h"
 #include "flows/flow_noise.h"
 #include "flows/flow_radial.h"
 #include "flows/flow_directional.h"
 #include "flows/flow_rings.h"
+#include "flows/flow_spiral.h"
 #include "emitters/emitters_other.h"
 #include "emitters/emitter_orbitalDots.h"
 #include "emitters/emitter_swarmingDots.h"
 #include "emitters/emitter_lissajousLine.h"
 #include "emitters/emitter_noiseKaleido.h"
 #include "emitters/emitter_cube.h"
-#include "flows/flow_spiral.h"
 #include "modulators.h"
 
 namespace flowFields {
@@ -62,8 +61,7 @@ namespace flowFields {
             for (int x = 0; x < WIDTH; x++)
                 gR[y][x] = gG[y][x] = gB[y][x] = 0.0f;
 
-        t0 = fl::millis();
-        lastFrameMs = t0;   
+        lastFrameMs = fl::millis();
         lastEmitter = 255;
         lastFlow = 255;
 
@@ -84,7 +82,7 @@ namespace flowFields {
 
     // Push flow field struct defaults into cVars (called on flow field change)
     static void pushFlowDefaultsToCVars() {
-        switch (vizConfig.flow) {
+        switch (activeFlow) {
             case FLOW_NOISE: {
                 noiseFlow = NoiseFlowParams{};
                 cXSpeed = noiseFlow.xSpeed;
@@ -197,9 +195,10 @@ namespace flowFields {
     // Push emitter + universal defaults into cVars (called on emitter/mode change)
     static void pushDefaultsToCVars() {
         // Universal
-        cPersistence = floorf(vizConfig.persistence);
-        cPersistFine = vizConfig.persistence - cPersistence;
-        cColorShift = vizConfig.colorShift;
+        cGlobalSpeed = globalSpeed;
+        cPersistence = floorf(persistence);
+        cPersistFine = persistence - cPersistence;
+        cColorShift = colorShift;
         // Emitter: orbitalDots
         cNumDots = orbitalDots.numDots;
         cOrbitSpeed = orbitalDots.orbitSpeed;
@@ -246,8 +245,9 @@ namespace flowFields {
 
     // Read cVars into component structs (called every frame)
     static void syncFromCVars() {
-        vizConfig.persistence = cPersistence + cPersistFine;
-        vizConfig.colorShift = cColorShift;
+        globalSpeed = cGlobalSpeed;
+        persistence = cPersistence + cPersistFine;
+        colorShift = cColorShift;
         orbitalDots.numDots = cNumDots;
         orbitalDots.orbitSpeed = cOrbitSpeed;
         orbitalDots.dotDiam  = cDotDiam;
@@ -293,13 +293,14 @@ namespace flowFields {
 
     void runFlowFields() {
         unsigned long now = fl::millis();
-        float dt = (now - lastFrameMs) * 0.001f;
+        float rawDt = (now - lastFrameMs) * 0.001f;
         lastFrameMs = now;
-        float t = (now - t0) * 0.001f;
+        dt = rawDt * globalSpeed;
+        t += dt;
 
         // Update emitter if changed
         if (EMITTER < EMITTER_COUNT && EMITTER != lastEmitter) {
-            vizConfig.emitter = (Emitter)EMITTER;
+            activeEmitter = (Emitter)EMITTER;
             lastEmitter = EMITTER;
             pushDefaultsToCVars();
             sendEmitterState();
@@ -307,7 +308,7 @@ namespace flowFields {
 
         // Update flow field if changed
         if (FLOW < FLOW_COUNT && FLOW != lastFlow) {
-            vizConfig.flow = (Flow)FLOW;
+            activeFlow = (Flow)FLOW;
             lastFlow = FLOW;
             pushFlowDefaultsToCVars();
             sendFlowState();
@@ -317,13 +318,13 @@ namespace flowFields {
         syncFromCVars();
 
         // 1. Flow field: prepare (build X and Y profiles)
-        FLOW_PREPARE[vizConfig.flow](t);
+        FLOW_PREPARE[activeFlow]();
 
         // 2. Emitter: inject color onto grid
-        EMITTER_RUN[vizConfig.emitter](t);
+        EMITTER_RUN[activeEmitter]();
 
         // 3. Flow field: advect + fade
-        FLOW_ADVECT[vizConfig.flow](dt);
+        FLOW_ADVECT[activeFlow]();
 
         // 4. Copy float grid to LED array
         for (uint8_t y = 0; y < HEIGHT; y++) {

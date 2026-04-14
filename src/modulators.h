@@ -40,7 +40,15 @@ namespace flowFields {
     modulators move;    // timer outputs; all time-based modulators in one place
 
     void calculate_modulators(timers &timings, uint8_t numActiveTimers) {
-        const float runtime = fl::millis();
+        // Virtual millis accumulator — scales with globalSpeed to avoid
+        // discontinuities when globalSpeed changes mid-run.
+        static unsigned long lastRealMs = 0;
+        static float virtualMs = 0.0f;
+        const unsigned long realMs = fl::millis();
+        if (lastRealMs == 0) lastRealMs = realMs;
+        virtualMs += (realMs - lastRealMs) * globalSpeed;
+        lastRealMs = realMs;
+        const float runtime = virtualMs;
 
         for (uint8_t i = 0; i < numActiveTimers; i++) {
             // -----------------------------------------------------------------

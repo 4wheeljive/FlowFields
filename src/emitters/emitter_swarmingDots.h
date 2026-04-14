@@ -29,7 +29,7 @@ namespace flowFields {
     // when speed modulation changes.
     // swarmSpread controls grouping (0 = clustered, 1 = independent, >1 = wide).
     // Max 5 dots (num_timers=10, 2 timers per dot).
-    static void emitSwarmingDots(float t) {
+    static void emitSwarmingDots() {
         const uint8_t n = swarmingDots.numDots;
         const float fNumDots = static_cast<float>(n);
 
@@ -91,13 +91,7 @@ namespace flowFields {
 
         // Integrated time base to preserve phase continuity under speed changes
         static float swarmTimeMs = 0.0f;
-        static unsigned long lastMs = 0;
-        const unsigned long now = fl::millis();
-        if (lastMs == 0) {
-            lastMs = now;
-        }
-        const float dtMs = (now - lastMs);
-        lastMs = now;
+        const float dtMs = dt * 1000.0f;  // shared dt is already scaled by globalSpeed
         swarmTimeMs += dtMs * currentSpeed;
   
         // Spread modulation adds above the base value
@@ -138,7 +132,7 @@ namespace flowFields {
             const float cx = (WIDTH  - 1) * 0.5f * (1.0f + sx);
             const float cy = (HEIGHT - 1) * 0.5f * (1.0f + sy);
 
-            const ColorF c = rainbow(t, vizConfig.colorShift, d / fNumDots);
+            const ColorF c = rainbow(t, colorShift, d / fNumDots);
             drawDot(cx, cy, swarmingDots.dotDiam, c.r, c.g, c.b);
         }
     }

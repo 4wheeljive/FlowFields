@@ -32,16 +32,16 @@ namespace flowFields {
     static float dirCos, dirSin;   // unit wind direction
     static float dirT;             // time snapshot for wave phase
 
-    static void directionalPrepare(float t) {
+    static void directionalPrepare() {
         float angle = t * (2.0f * CT_PI * directional.rotateSpeed);
         dirCos = fl::cosf(angle);
         dirSin = fl::sinf(angle);
         dirT   = t;
     }
 
-    static void directionalAdvect(float dt) {
+    static void directionalAdvect() {
         // Frame-rate-independent fade
-        float fade = fl::powf(0.5f, dt / vizConfig.persistence);
+        float fade = fl::powf(0.5f, dt / persistence);
 
         float step = directional.windStep;
         float frac = directional.blendFactor;

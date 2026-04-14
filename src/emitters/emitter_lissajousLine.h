@@ -20,20 +20,13 @@ namespace flowFields {
 
     LissajousParams lissajous;
 
-    static void emitLissajousLine(float t) {
+    static void emitLissajousLine() {
         const float cx = (WIDTH  - 1) * 0.5f;
         const float cy = (HEIGHT - 1) * 0.5f;
         const float amp = lissajous.lineAmp;
 
         // Integrate speed to preserve continuity when lineSpeed changes.
         static float phase = 0.0f;
-        static unsigned long lastMs = 0;
-        const unsigned long now = fl::millis();
-        if (lastMs == 0) {
-            lastMs = now;
-        }
-        const float dt = (now - lastMs) * 0.001f;
-        lastMs = now;
 
         const ModConfig& speedMod = lissajous.modLineSpeed;
         
@@ -68,9 +61,9 @@ namespace flowFields {
         // 4) Rendering
         // -----------------------------------------------------------------
 
-        drawAASubpixelLine(lx1, ly1, lx2, ly2, t, vizConfig.colorShift);
-        ColorF ca = rainbow(t, vizConfig.colorShift, 0.0f);
-        ColorF cb = rainbow(t, vizConfig.colorShift, 1.0f);
+        drawAASubpixelLine(lx1, ly1, lx2, ly2, t, colorShift);
+        ColorF ca = rainbow(t, colorShift, 0.0f);
+        ColorF cb = rainbow(t, colorShift, 1.0f);
         drawAAEndpointDisc(lx1, ly1, ca.r, ca.g, ca.b, 0.85f);
         drawAAEndpointDisc(lx2, ly2, cb.r, cb.g, cb.b, 0.85f);
     }

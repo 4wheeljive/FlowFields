@@ -53,7 +53,7 @@ namespace flowFields {
     }
 
     // --- Prepare: build noise profiles, apply modulator(s) ---
-    static void noiseFlowPrepare(float t) {
+    static void noiseFlowPrepare() {
         // -----------------------------------------------------------------
         // 1) Plumbing: assign paired modulation channels
         // -----------------------------------------------------------------
@@ -143,9 +143,9 @@ namespace flowFields {
 
     // --- Advect: two-pass fractional advection (bilinear interpolation) + fade ---
 
-    static void noiseFlowAdvect(float dt) {
+    static void noiseFlowAdvect() {
         // Frame-rate-independent fade: half-life = persistence seconds
-        float fade = fl::powf(0.5f, dt / vizConfig.persistence);
+        float fade = fl::powf(0.5f, dt / persistence);
 
         // Pass 1 — horizontal row shift  (Y-noise drives X movement)
         for (int y = 0; y < HEIGHT; y++) {
