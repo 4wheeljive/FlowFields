@@ -240,9 +240,9 @@ float cNoiseBand = 0.1f;
 float cKaleidoGamma = 0.65f;
 // cube
 float cScale = 1.f;
-float cRotateSpeedX = 0.02f;
-float cRotateSpeedY = 0.03f;
-float cRotateSpeedZ = 0.01f;
+float cRotateSpeedX = 0.6f;
+float cRotateSpeedY = 0.9f;
+float cRotateSpeedZ = 0.3f;
 bool cAxisFreezeX = false;
 bool cAxisFreezeY = false;
 bool cAxisFreezeZ = false;
@@ -389,9 +389,9 @@ float cExpDecayFactor = 0.9f;
    X(float, ModBreatheRate, 1.0f) \
    X(float, ModBreatheLevel, 1.0f) \
    X(float, Scale, 1.0f) \
-   X(float, RotateSpeedX, 0.02f) \
-   X(float, RotateSpeedY, 0.03f) \
-   X(float, RotateSpeedZ, 0.01f) \
+   X(float, RotateSpeedX, 0.6f) \
+   X(float, RotateSpeedY, 0.9f) \
+   X(float, RotateSpeedZ, 0.3f) \
    X(bool, AxisFreezeX, false) \
    X(bool, AxisFreezeY, false) \
    X(bool, AxisFreezeZ, false) \

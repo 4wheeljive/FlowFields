@@ -14,7 +14,7 @@ namespace flowFields {
 
     struct CubeParams {
         float scale = 1.0f;
-        float rotateSpeed[3] = {0.02f, 0.03f, 0.01f};  // X, Y, Z rotation rates
+        float rotateSpeed[3] = {0.6f, 0.9f, 0.3f};  // X, Y, Z rotation rates (radians/sec)
         bool axisFreeze[3] = {false, false, false};   // per-axis freeze toggles
 
         ModConfig modScale        = {0, 0.5f, 0.0f};  // modTimer, modRate, modLevel
@@ -176,10 +176,10 @@ namespace flowFields {
 					c.r, c.g, c.b);
 		}
 
-		// Update rotation angles
-		angleX += workRotateSpeed[0];
-		angleY += workRotateSpeed[1];
-		angleZ += workRotateSpeed[2];
+		// Update rotation angles (radians/sec * dt)
+		angleX += workRotateSpeed[0] * dt;
+		angleY += workRotateSpeed[1] * dt;
+		angleZ += workRotateSpeed[2] * dt;
 
     }
 
