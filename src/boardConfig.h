@@ -6,8 +6,8 @@
 //  live here — keeping main.cpp focused on application logic.
 // ═══════════════════════════════════════════════════════════════════
 
-//#define BIG_BOARD
-#undef BIG_BOARD
+#define BIG_BOARD
+//#undef BIG_BOARD
 
 #if defined(CONFIG_IDF_TARGET_ESP32S3)
     

@@ -822,8 +822,8 @@
         // ******************************************************************************************************
         // EMITTER / FLOW NAMES (parallel to ESP32 enums) *******************************************************
 
-        const EMITTER_NAMES = ["ORBITALDOTS", "SWARMINGDOTS", "AUDIODOTS", "LISSAJOUS", "BORDERRECT", "NOISEKALEIDO", "CUBE"];
-        const FLOW_NAMES    = ["NOISE", "RADIAL", "DIRECTIONAL", "RINGS", "SPIRAL"];
+        const EMITTER_NAMES = ["ORBITALDOTS", "SWARMINGDOTS", "AUDIODOTS", "LISSAJOUS", "BORDERRECT", "NOISEKALEIDO", "CUBE", "FLUIDJET"];
+        const FLOW_NAMES    = ["NOISE", "RADIAL", "DIRECTIONAL", "RINGS", "SPIRAL", "FLUID"];
 
         // ******************************************************************************************************
         // PARAMETER REGISTRY *******************************************************************************
@@ -919,6 +919,29 @@
             modRadialStepLevel:   {min: 0, max: 2.0, default: 0.5, step: 0.1},
             modBlendFactorRate:   {min: 0.1, max: 3.0, default: 0.5, step: 0.1},
             modBlendFactorLevel:  {min: 0, max: 2.0, default: 0.5, step: 0.1},
+
+            // EMITTER: fluidJet
+            jetDensity:    {min: 0, max: 200, default: 120, step: 1},
+            jetForce:      {min: 0, max: 5, default: 0.87, step: 0.05},
+            jetRadius:     {min: 1, max: 10, default: 4, step: 0.5},
+            jetSpread:     {min: 0, max: 60, default: 0, step: 1},
+            jetAngle:      {min: -1.5, max: 1.5, default: 0, step: 0.05},
+            jetSwingAmp:   {min: 0, max: 1.5, default: 0.58, step: 0.05},
+            jetSwingSpeed: {min: 0, max: 1.5, default: 0.28, step: 0.02},
+            jetHueSpeed:   {min: 0, max: 1.5, default: 0.69, step: 0.02},
+            modJetForceRate:  {min: 0.1, max: 3.0, default: 0.5, step: 0.1},
+            modJetForceLevel: {min: 0, max: 2.0, default: 0.0, step: 0.1},
+            modJetSwingRate:  {min: 0.1, max: 3.0, default: 0.5, step: 0.1},
+            modJetSwingLevel: {min: 0, max: 2.0, default: 0.0, step: 0.1},
+
+            // FLOW: fluid
+            viscosity:           {min: 0, max: 0.01, default: 0, step: 0.0005},
+            diffusion:           {min: 0, max: 0.01, default: 0, step: 0.0005},
+            velocityDissipation: {min: 0.01, max: 1.0, default: 0.5, step: 0.01},
+            dyeDissipation:      {min: 0.01, max: 1.0, default: 0.5, step: 0.01},
+            vorticity:           {min: 0, max: 8, default: 0, step: 0.1},
+            gravity:             {min: -5, max: 5, default: 0, step: 0.1},
+            solverIterations:    {min: 2, max: 10, default: 3, step: 1},
         };
 
         // Parameter lists per component
@@ -937,7 +960,11 @@
                             "modScaleRate", "modScaleLevel",
                             "modRotateSpeedXRate", "modRotateSpeedXLevel",
                             "modRotateSpeedYRate", "modRotateSpeedYLevel",
-                            "modRotateSpeedZRate", "modRotateSpeedZLevel"]
+                            "modRotateSpeedZRate", "modRotateSpeedZLevel"],
+            "fluidjet":     ["jetDensity", "jetForce", "jetRadius", "jetSpread",
+                            "jetAngle", "jetSwingAmp", "jetSwingSpeed", "jetHueSpeed",
+                            "modJetForceRate", "modJetForceLevel",
+                            "modJetSwingRate", "modJetSwingLevel"]
         };
 
         const FLOW_PARAMS = {
@@ -948,7 +975,9 @@
             "spiral":      ["angularStep", "radialStep", "blendFactor",
                             "modAngularStepRate", "modAngularStepLevel",
                             "modRadialStepRate", "modRadialStepLevel",
-                            "modBlendFactorRate", "modBlendFactorLevel"]
+                            "modBlendFactorRate", "modBlendFactorLevel"],
+            "fluid":       ["viscosity", "diffusion", "velocityDissipation", "dyeDissipation",
+                            "vorticity", "gravity", "solverIterations"]
         };
 
 

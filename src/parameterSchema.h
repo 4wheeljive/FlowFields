@@ -40,12 +40,13 @@ const char lissajous_str[] PROGMEM = "lissajous";
 const char borderrect_str[] PROGMEM = "borderrect";
 const char noisekaleido_str[] PROGMEM = "noisekaleido";
 const char cube_str[] PROGMEM = "cube";
+const char fluidjet_str[] PROGMEM = "fluidjet";
 
 const char* const EMITTERS[] PROGMEM = {
-      orbitaldots_str, swarmingdots_str, audiodots_str, lissajous_str, borderrect_str, noisekaleido_str, cube_str
+      orbitaldots_str, swarmingdots_str, audiodots_str, lissajous_str, borderrect_str, noisekaleido_str, cube_str, fluidjet_str
    };
 
-const uint8_t EMITTER_COUNTS[] = {7};
+const uint8_t EMITTER_COUNTS[] = {8};
 
 // Emitter params
 const char* const ORBITALDOTS_PARAMS[] PROGMEM = {
@@ -74,6 +75,12 @@ const char* const CUBE_PARAMS[] PROGMEM = {
    "modRotateSpeedYRate", "modRotateSpeedYLevel",
    "modRotateSpeedZRate", "modRotateSpeedZLevel"
 };
+const char* const FLUIDJET_PARAMS[] PROGMEM = {
+   "jetDensity", "jetForce", "jetRadius", "jetSpread",
+   "jetAngle", "jetSwingAmp", "jetSwingSpeed", "jetHueSpeed",
+   "modJetForceRate", "modJetForceLevel",
+   "modJetSwingRate", "modJetSwingLevel"
+};
 
 // Struct to hold emitter name and parameter array reference
 struct EmitterParamEntry {
@@ -90,6 +97,7 @@ const EmitterParamEntry EMITTER_PARAM_LOOKUP[] PROGMEM = {
    {"borderrect", BORDERRECT_PARAMS, 0},
    {"noisekaleido", NOISEKALEIDO_PARAMS, 4},
    {"cube", CUBE_PARAMS, 12},
+   {"fluidjet", FLUIDJET_PARAMS, 12},
 };
 
 static const EmitterParamEntry* getEmitterParams(uint8_t emitterIdx) {
@@ -107,11 +115,12 @@ const char radial_str[] PROGMEM = "radial";
 const char directional_str[] PROGMEM = "directional";
 const char rings_str[] PROGMEM = "rings";
 const char spiral_str[] PROGMEM = "spiral";
+const char fluid_str[] PROGMEM = "fluid";
 
-const uint8_t FLOW_COUNTS[] = {5};
+const uint8_t FLOW_COUNTS[] = {6};
 
 const char* const FLOWS[] PROGMEM = {
-      noise_str, radial_str, directional_str, rings_str, spiral_str
+      noise_str, radial_str, directional_str, rings_str, spiral_str, fluid_str
    };
 
 // Flow field params
@@ -136,6 +145,10 @@ const char* const SPIRAL_PARAMS[] PROGMEM = {
    "modRadialStepRate", "modRadialStepLevel",
    "modBlendFactorRate", "modBlendFactorLevel"
 };
+const char* const FLUID_PARAMS[] PROGMEM = {
+   "viscosity", "diffusion", "velocityDissipation", "dyeDissipation",
+   "vorticity", "gravity", "solverIterations"
+};
 // Note: spiral reuses shared cVars radialStep and blendFactor
 
 // Struct to hold flow field name and parameter array reference
@@ -150,7 +163,8 @@ const FlowParamEntry FLOW_PARAM_LOOKUP[] PROGMEM = {
    {"radial", RADIAL_PARAMS, 2},
    {"directional", DIRECTIONAL_PARAMS, 6},
    {"rings", RINGS_PARAMS, 5},
-   {"spiral", SPIRAL_PARAMS, 9}
+   {"spiral", SPIRAL_PARAMS, 9},
+   {"fluid", FLUID_PARAMS, 7}
 };
 
 static const FlowParamEntry* getFlowParams(uint8_t flowIdx) {
@@ -259,6 +273,19 @@ float cModRotateSpeedYRate = 0.5f;
 float cModRotateSpeedYLevel = 0.0f;
 float cModRotateSpeedZRate = 0.5f;
 float cModRotateSpeedZLevel = 0.0f;
+// fluidJet
+float cJetDensity = 120.0f;
+float cJetForce = 0.87f;
+float cJetRadius = 4.0f;
+float cJetSpread = 0.0f;
+float cJetAngle = 0.0f;
+float cJetSwingAmp = 0.58f;
+float cJetSwingSpeed = 0.28f;
+float cJetHueSpeed = 0.69f;
+float cModJetForceRate = 0.5f;
+float cModJetForceLevel = 0.0f;
+float cModJetSwingRate = 0.5f;
+float cModJetSwingLevel = 0.0f;
 
 // FLOWS -----------------------
 // shared
@@ -301,6 +328,14 @@ float cModRadialStepRate = 0.5f;
 float cModRadialStepLevel = 0.5f;
 float cModBlendFactorRate = 0.5f;
 float cModBlendFactorLevel = 0.5f;
+// fluid
+float cViscosity = 0.0f;
+float cDiffusion = 0.0f;
+float cVelocityDissipation = 0.5f;
+float cDyeDissipation = 0.5f;
+float cVorticity = 0.0f;
+float cGravity = 0.0f;
+float cSolverIterations = 3.0f;
 
 // AUDIO -----------------------
 bool maxBins = false;
@@ -418,4 +453,23 @@ float cExpDecayFactor = 0.9f;
    X(float, ModRadialStepRate, 0.5f) \
    X(float, ModRadialStepLevel, 0.5f) \
    X(float, ModBlendFactorRate, 0.5f) \
-   X(float, ModBlendFactorLevel, 0.5f)
+   X(float, ModBlendFactorLevel, 0.5f) \
+   X(float, JetDensity, 120.0f) \
+   X(float, JetForce, 0.87f) \
+   X(float, JetRadius, 4.0f) \
+   X(float, JetSpread, 0.0f) \
+   X(float, JetAngle, 0.0f) \
+   X(float, JetSwingAmp, 0.58f) \
+   X(float, JetSwingSpeed, 0.28f) \
+   X(float, JetHueSpeed, 0.69f) \
+   X(float, ModJetForceRate, 0.5f) \
+   X(float, ModJetForceLevel, 0.0f) \
+   X(float, ModJetSwingRate, 0.5f) \
+   X(float, ModJetSwingLevel, 0.0f) \
+   X(float, Viscosity, 0.0f) \
+   X(float, Diffusion, 0.0f) \
+   X(float, VelocityDissipation, 0.5f) \
+   X(float, DyeDissipation, 0.5f) \
+   X(float, Vorticity, 0.0f) \
+   X(float, Gravity, 0.0f) \
+   X(float, SolverIterations, 3.0f)

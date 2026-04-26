@@ -9,6 +9,7 @@ enum Emitter : uint8_t {
     EMITTER_BORDERRECT,
     EMITTER_NOISEKALEIDO,
     EMITTER_CUBE,
+    EMITTER_FLUIDJET,
     EMITTER_COUNT
 };
 
@@ -18,5 +19,6 @@ enum Flow : uint8_t {
     FLOW_DIRECTIONAL,
     FLOW_RINGS,
     FLOW_SPIRAL,
+    FLOW_FLUID,
     FLOW_COUNT
 };
