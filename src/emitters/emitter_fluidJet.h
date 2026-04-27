@@ -87,9 +87,16 @@ namespace flowFields {
         const float currentSwingAmp = fluidJet.jetSwingAmp *
             ((1.0f - swingMod.modLevel) + swingMod.modLevel * swingSignal);
 
-        // Swing animation: sinusoidal angle wobble around base direction
-        const float swing = currentSwingAmp * sin_fast(fluidJet.jetSwingSpeed * t * CT_2PI);
-        const float angle = fluidJet.jetAngle + swing;
+        // Swing animation: sinusoidal angle wobble around base direction.
+        // Wrap to [0, 2π) — sin_fast/cos_fast/sincos_fast cast through uint32_t,
+        // which is UB for negative inputs and overflows past ~256 cycles.
+        constexpr float INV_2PI = 1.0f / CT_2PI;
+        float swingArg = fluidJet.jetSwingSpeed * t * CT_2PI;
+        swingArg -= fl::floorf(swingArg * INV_2PI) * CT_2PI;
+        const float swing = currentSwingAmp * sin_fast(swingArg);
+
+        float angle = fluidJet.jetAngle + swing;
+        angle -= fl::floorf(angle * INV_2PI) * CT_2PI;
 
         // Direction decomposition: angle 0 = straight up (negative y)
         SinCosResult sc = sincos_fast(angle);
