@@ -89,3 +89,11 @@ It's essentially free. The f2u8 loop processes each pixel once per frame:
 		< 0.05% of frame time
 
 The frame budget is overwhelmingly spent in the Jacobi solver and advection passes. f2u8 is already a tiny fraction of total time, and dithering adds maybe 2× to that tiny fraction. No material FPS impact.
+
+ME:
+Very quick either/or question: Was the "every cell in the splat receives the same hue per frame" issue present in the original FlowFields\colorTrailsOrig\navier_stokes_1.py sketch, or was that introduced in the C++ port here?
+
+CLAUDE:
+Present in the original. Python's _splat() (navier_stokes_1.py:191-214) injects a single RGB color across all cells in the Gaussian footprint per frame — same pattern. The port faithfully reproduces this behavior; we didn't introduce it.
+
+The reason it doesn't manifest as banding in Python is the output target: pygame renders to a true 24-bit RGB display with no correction/brightness compression, plus the 64-cell sim grid is upscaled 11× to ~704 visible pixels (so per-sim-cell uint8 quantization isn't visible at the grid level). Our LED output is direct 1-cell-to-1-LED at 8-bit per channel, with setCorrection further reducing effective levels — that's where the latent banding becomes visible.
