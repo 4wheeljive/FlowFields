@@ -63,6 +63,22 @@ namespace flowFields {
         return (uint8_t)i;
     }
 
+    // 4x4 Bayer matrix for ordered output dithering. Values are centered at 0
+    // with range ~[-0.47, +0.47] (16 distinct values, 1/16 spacing).
+    static const float bayerOutputDither[4][4] = {
+        { -7.5f / 16.0f, +0.5f / 16.0f, -5.5f / 16.0f, +2.5f / 16.0f },
+        { +4.5f / 16.0f, -3.5f / 16.0f, +6.5f / 16.0f, -1.5f / 16.0f },
+        { -4.5f / 16.0f, +3.5f / 16.0f, -6.5f / 16.0f, +1.5f / 16.0f },
+        { +7.5f / 16.0f, -0.5f / 16.0f, +5.5f / 16.0f, -2.5f / 16.0f }
+    };
+
+    // Dithered float→uint8: shifts the rounding boundary spatially per pixel.
+    // Adjacent cells with similar float values quantize to different uint8s,
+    // breaking the visible bands at the LED hardware boundary.
+    static inline uint8_t f2u8d(float v, int x, int y) {
+        return f2u8(v + bayerOutputDither[y & 3][x & 3]);
+    }
+
     // Wrapper functions that take radians and return float (-1.0 to 1.0)
     // Using FastLED's sin32/cos32 approximations for better performance
     constexpr float RADIANS_TO_SIN32 = 2671177.0f;  // 16777216 / (2*PI)

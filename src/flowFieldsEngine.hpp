@@ -393,9 +393,9 @@ namespace flowFields {
                 if (idx >= NUM_LEDS) {
                     continue;
                 }
-                leds[idx].r = f2u8(gR[y][x]);
-                leds[idx].g = f2u8(gG[y][x]);
-                leds[idx].b = f2u8(gB[y][x]);
+                leds[idx].r = f2u8d(gR[y][x], x, y);
+                leds[idx].g = f2u8d(gG[y][x], x, y);
+                leds[idx].b = f2u8d(gB[y][x], x, y);
             }
         }
     }
