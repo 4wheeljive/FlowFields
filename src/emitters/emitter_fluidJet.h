@@ -33,10 +33,24 @@ namespace flowFields {
 
     FluidJetParams fluidJet;
 
+    // 4x4 Bayer matrix, values normalized to [-0.5, +0.5].
+    // Used for per-cell hue dithering to break uint8 banding from single-color splats.
+    static const float bayerHueDither[4][4] = {
+        { -7.5f / 16.0f, +1.5f / 16.0f, -5.5f / 16.0f, +3.5f / 16.0f },
+        { +5.5f / 16.0f, -3.5f / 16.0f, +7.5f / 16.0f, -1.5f / 16.0f },
+        { -4.5f / 16.0f, +4.5f / 16.0f, -6.5f / 16.0f, +2.5f / 16.0f },
+        { +6.5f / 16.0f, -2.5f / 16.0f, +4.5f / 16.0f, -0.5f / 16.0f }
+    };
+
+    // Hue dither magnitude. Max per-cell hue offset = scale * 0.5.
+    // 0.002 → ±0.001 hue cycle → ~1.5 RGB units max delta — enough to break bands.
+    static constexpr float HUE_DITHER_SCALE = 0.002f;
+
     // 2D Gaussian splat: writes dye to gR/gG/gB and momentum to u/v.
-    // Uses fastpow as a stand-in for exp() — ~5% error is fine for visual falloff.
+    // Per-cell hue dither ensures adjacent cells get distinct uint8 values
+    // at LED output, breaking the banding inherent to single-color splats.
     static void fluidJetSplat(float cx, float cy, float radius,
-                              float dyeR, float dyeG, float dyeB,
+                              float densityMag,
                               float velX, float velY) {
         const float r2  = radius * radius * 0.6f;
         const float invR2 = 1.0f / r2;
@@ -44,6 +58,8 @@ namespace flowFields {
         int x1 = min(WIDTH  - 1,  (int)fl::ceilf (cx + radius));
         int y0 = max(0,           (int)fl::floorf(cy - radius));
         int y1 = min(HEIGHT - 1,  (int)fl::ceilf (cy + radius));
+
+        const float densityScale = densityMag * (1.0f / 255.0f);
 
         for (int y = y0; y <= y1; y++) {
             for (int x = x0; x <= x1; x++) {
@@ -54,9 +70,16 @@ namespace flowFields {
                 float w = fastpow(2.71828183f, -d2 * invR2);
                 if (w < 0.005f) continue;
 
-                gR[y][x] += dyeR * w;
-                gG[y][x] += dyeG * w;
-                gB[y][x] += dyeB * w;
+                // Per-cell hue offset from Bayer matrix — deterministic spatial
+                // pattern, so the same cell gets the same offset across frames
+                // (no temporal flicker).
+                const float hueOffset = bayerHueDither[y & 3][x & 3] * HUE_DITHER_SCALE;
+                ColorF c = rainbow(t, fluidJet.jetHueSpeed, hueOffset);
+
+                const float wScale = w * densityScale;
+                gR[y][x] += c.r * wScale;
+                gG[y][x] += c.g * wScale;
+                gB[y][x] += c.b * wScale;
                 u[y][x]  += velX * w;
                 v[y][x]  += velY * w;
             }
@@ -99,11 +122,9 @@ namespace flowFields {
         const float velX = dirX * currentForce;
         const float velY = dirY * currentForce;
 
-        // Hue from time × hueSpeed
-        ColorF c = rainbow(t, fluidJet.jetHueSpeed, 0.0f);
-        const float dyeR = c.r * fluidJet.jetDensity * (1.0f / 255.0f);
-        const float dyeG = c.g * fluidJet.jetDensity * (1.0f / 255.0f);
-        const float dyeB = c.b * fluidJet.jetDensity * (1.0f / 255.0f);
+        // Color is now computed per-cell inside the splat (with hue dither),
+        // so we just pass a per-layer density magnitude.
+        const float density = fluidJet.jetDensity;
 
         // Jet position: bottom-center
         const float jx = (float)WIDTH * 0.5f;
@@ -114,15 +135,15 @@ namespace flowFields {
         const float r = fluidJet.jetRadius;
         // Core layer: 55% density, 100% velocity
         fluidJetSplat(jx, jy, r,
-                      dyeR * 0.55f, dyeG * 0.55f, dyeB * 0.55f,
+                      density * 0.55f,
                       velX,         velY);
         // Middle layer: 30% density, 82% velocity, shifted 1 cell along jet
         fluidJetSplat(jx + dirX * 1.2f, jy + dirY * 1.2f, r,
-                      dyeR * 0.30f, dyeG * 0.30f, dyeB * 0.30f,
+                      density * 0.30f,
                       velX * 0.82f, velY * 0.82f);
         // Outer layer: 15% density, 65% velocity, shifted further
         fluidJetSplat(jx + dirX * 2.2f, jy + dirY * 2.2f, r,
-                      dyeR * 0.15f, dyeG * 0.15f, dyeB * 0.15f,
+                      density * 0.15f,
                       velX * 0.65f, velY * 0.65f);
 
         // ─── 5) Side injections (lateral push outward) ────────────
@@ -133,11 +154,11 @@ namespace flowFields {
             const float side = fluidJet.jetSpread;
             // Left side: push left (negative perp)
             fluidJetSplat(jx - perpX * 1.5f, jy - perpY * 1.5f, r * 0.7f,
-                          dyeR * 0.15f, dyeG * 0.15f, dyeB * 0.15f,
+                          density * 0.15f,
                           -perpX * side * 0.35f, -perpY * side * 0.35f);
             // Right side: push right (positive perp)
             fluidJetSplat(jx + perpX * 1.5f, jy + perpY * 1.5f, r * 0.7f,
-                          dyeR * 0.15f, dyeG * 0.15f, dyeB * 0.15f,
+                          density * 0.15f,
                            perpX * side * 0.35f,  perpY * side * 0.35f);
         }
     }

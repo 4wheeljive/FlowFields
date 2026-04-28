@@ -1,17 +1,11 @@
 //================================================================================================================
-/*
-CREDITS:
- - flowFields based on visualizer by Stefan Petrick first introduced here:
-			https://www.reddit.com/r/FastLED/comments/1rny5j3/i_used_codex_for_the_first_time/
-*/
+// CREDITS:
+//  - FlowFields based on visualizer by Stefan Petrick first introduced here:
+// 		https://www.reddit.com/r/FastLED/comments/1rny5j3/i_used_codex_for_the_first_time/
 //===============================================================================================================
-
-//===================================================================================================================
-//
-// 
-// C:/Users/Jeff/.platformio/penv/Scripts/pio.exe run -c platformio_p4.ini -t upload
-//
-//===================================================================================================================
+// cli command for P4 build/upload: 
+// 	C:/Users/Jeff/.platformio/penv/Scripts/pio.exe run -c platformio_p4.ini -t upload
+//=====================================================================================
 
 #include <Arduino.h>
 
@@ -33,9 +27,6 @@ bool audioLatencyDiagnostics = false;
 
 #include "boardConfig.h"
 
-const uint16_t MIN_DIMENSION = FL_MIN(WIDTH, HEIGHT);
-const uint16_t MAX_DIMENSION = FL_MAX(WIDTH, HEIGHT);
-
 fl::CRGB leds[NUM_LEDS];
 uint16_t ledNum = 0;
 
@@ -56,110 +47,92 @@ bool mappingOverride = false;
 
 using namespace fl;
 
-// MAPPINGS *****************************************************************************
-
-extern const uint16_t progTopDown[NUM_LEDS] PROGMEM;
-extern const uint16_t progBottomUp[NUM_LEDS] PROGMEM;
-extern const uint16_t serpTopDown[NUM_LEDS] PROGMEM;
-extern const uint16_t serpBottomUp[NUM_LEDS] PROGMEM;
-
-enum Mapping {
-	TopDownProgressive = 0,
-	TopDownSerpentine,
-	BottomUpProgressive,
-	BottomUpSerpentine
-};
-
-uint16_t myXY(uint8_t x, uint8_t y) {
-		if (x >= WIDTH || y >= HEIGHT) return 0;
-		uint16_t i = ( y * WIDTH ) + x;
-		switch(cMapping){
-			case 0:	 ledNum = progTopDown[i]; break;
-			case 1:	 ledNum = progBottomUp[i]; break;
-			case 2:	 ledNum = serpTopDown[i]; break;
-			case 3:	 ledNum = serpBottomUp[i]; break;
-		}
-		return ledNum;
-}
-
-//XYMap myXYmap = XYMap::constructWithLookUpTable(WIDTH, HEIGHT, progBottomUp);
-//XYMap xyRect = XYMap::constructRectangularGrid(WIDTH, HEIGHT);
-
 // **********************************************************************************
 
 void setup() {
 
 	Serial.begin(115200);
-#if defined(CONFIG_IDF_TARGET_ESP32S3)
-	Serial.setTxTimeoutMs(1);  // S3-only: avoids unsigned underflow on USB CDC
-#endif
+	#if defined(CONFIG_IDF_TARGET_ESP32S3)
+		Serial.setTxTimeoutMs(1);  // S3-only: avoids unsigned underflow on USB CDC
+	#endif
 	delay(1000);
 
 	FastLED.setExclusiveDriver(LED_DRIVER);
 
-	FastLED.addLeds<WS2812B, PIN0, GRB>(leds, 0, NUM_LEDS_PER_STRIP)
-		.setCorrection(TypicalLEDStrip);
+	#ifndef S3_15x38_2PIN 
 
-	#ifdef PIN1
-		FastLED.addLeds<WS2812B, PIN1, GRB>(leds, NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP)
+		FastLED.addLeds<WS2812B, PIN0, GRB>(leds, 0, NUM_LEDS_PER_STRIP)
 			.setCorrection(TypicalLEDStrip);
+
+		#ifdef PIN1
+			FastLED.addLeds<WS2812B, PIN1, GRB>(leds, NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP)
+				.setCorrection(TypicalLEDStrip);
+		#endif
+
+		#ifdef PIN2
+			FastLED.addLeds<WS2812B, PIN2, GRB>(leds, NUM_LEDS_PER_STRIP * 2, NUM_LEDS_PER_STRIP)
+				.setCorrection(TypicalLEDStrip);
+		#endif
+
+		#ifdef PIN3
+			FastLED.addLeds<WS2812B, PIN3, GRB>(leds, NUM_LEDS_PER_STRIP * 3, NUM_LEDS_PER_STRIP)
+				.setCorrection(TypicalLEDStrip);
+		#endif
+
+		#ifdef PIN4
+			FastLED.addLeds<WS2812B, PIN4, GRB>(leds, NUM_LEDS_PER_STRIP * 4, NUM_LEDS_PER_STRIP)
+				.setCorrection(TypicalLEDStrip);
+		#endif
+
+		#ifdef PIN5
+			FastLED.addLeds<WS2812B, PIN5, GRB>(leds, NUM_LEDS_PER_STRIP * 5, NUM_LEDS_PER_STRIP)
+				.setCorrection(TypicalLEDStrip);
+		#endif
+		
+		#ifdef PIN6
+			FastLED.addLeds<WS2812B, PIN6, GRB>(leds, NUM_LEDS_PER_STRIP * 6, NUM_LEDS_PER_STRIP)
+				.setCorrection(TypicalLEDStrip);
+		#endif
+
+		#ifdef PIN7
+			FastLED.addLeds<WS2812B, PIN7, GRB>(leds, NUM_LEDS_PER_STRIP * 7, NUM_LEDS_PER_STRIP)
+				.setCorrection(TypicalLEDStrip);
+		#endif
+
+		#ifdef PIN8
+			FastLED.addLeds<WS2812B, PIN8, GRB>(leds, NUM_LEDS_PER_STRIP * 8, NUM_LEDS_PER_STRIP)
+				.setCorrection(TypicalLEDStrip);
+		#endif
+
+		#ifdef PIN9
+			FastLED.addLeds<WS2812B, PIN9, GRB>(leds, NUM_LEDS_PER_STRIP * 9, NUM_LEDS_PER_STRIP)
+				.setCorrection(TypicalLEDStrip);
+		#endif
+
+		#ifdef PIN10
+			FastLED.addLeds<WS2812B, PIN10, GRB>(leds, NUM_LEDS_PER_STRIP * 10, NUM_LEDS_PER_STRIP)
+				.setCorrection(TypicalLEDStrip);
+		#endif
+
+		#ifdef PIN11
+			FastLED.addLeds<WS2812B, PIN11, GRB>(leds, NUM_LEDS_PER_STRIP * 11, NUM_LEDS_PER_STRIP)
+				.setCorrection(TypicalLEDStrip);
+		#endif
+
+	#else // ifdef S3_15x38_2PIN
+
+		FastLED.addLeds<WS2812B, PIN0, GRB>(leds, 0, 304)
+			.setCorrection(TypicalLEDStrip);
+
+		FastLED.addLeds<WS2812B, PIN1, GRB>(leds, 304, 266)
+			.setCorrection(TypicalLEDStrip);
+
 	#endif
 
-	#ifdef PIN2
-		FastLED.addLeds<WS2812B, PIN2, GRB>(leds, NUM_LEDS_PER_STRIP * 2, NUM_LEDS_PER_STRIP)
-			.setCorrection(TypicalLEDStrip);
-	#endif
-
-	#ifdef PIN3
-		FastLED.addLeds<WS2812B, PIN3, GRB>(leds, NUM_LEDS_PER_STRIP * 3, NUM_LEDS_PER_STRIP)
-			.setCorrection(TypicalLEDStrip);
-	#endif
-
-	#ifdef PIN4
-		FastLED.addLeds<WS2812B, PIN4, GRB>(leds, NUM_LEDS_PER_STRIP * 4, NUM_LEDS_PER_STRIP)
-			.setCorrection(TypicalLEDStrip);
-	#endif
-
-	#ifdef PIN5
-		FastLED.addLeds<WS2812B, PIN5, GRB>(leds, NUM_LEDS_PER_STRIP * 5, NUM_LEDS_PER_STRIP)
-			.setCorrection(TypicalLEDStrip);
+	#if defined(S3_22x22) || defined(S3_15x38_2PIN)
+		FastLED.setMaxPowerInVoltsAndMilliamps(5, 2000);
 	#endif
 	
-	#ifdef PIN6
-		FastLED.addLeds<WS2812B, PIN6, GRB>(leds, NUM_LEDS_PER_STRIP * 6, NUM_LEDS_PER_STRIP)
-			.setCorrection(TypicalLEDStrip);
-	#endif
-
-	#ifdef PIN7
-		FastLED.addLeds<WS2812B, PIN7, GRB>(leds, NUM_LEDS_PER_STRIP * 7, NUM_LEDS_PER_STRIP)
-			.setCorrection(TypicalLEDStrip);
-	#endif
-
-	#ifdef PIN8
-		FastLED.addLeds<WS2812B, PIN8, GRB>(leds, NUM_LEDS_PER_STRIP * 8, NUM_LEDS_PER_STRIP)
-			.setCorrection(TypicalLEDStrip);
-	#endif
-
-	#ifdef PIN9
-		FastLED.addLeds<WS2812B, PIN9, GRB>(leds, NUM_LEDS_PER_STRIP * 9, NUM_LEDS_PER_STRIP)
-			.setCorrection(TypicalLEDStrip);
-	#endif
-
-	#ifdef PIN10
-		FastLED.addLeds<WS2812B, PIN10, GRB>(leds, NUM_LEDS_PER_STRIP * 10, NUM_LEDS_PER_STRIP)
-			.setCorrection(TypicalLEDStrip);
-	#endif
-
-	#ifdef PIN11
-		FastLED.addLeds<WS2812B, PIN11, GRB>(leds, NUM_LEDS_PER_STRIP * 11, NUM_LEDS_PER_STRIP)
-			.setCorrection(TypicalLEDStrip);
-	#endif
-
-	#ifdef CONFIG_IDF_TARGET_ESP32S3
-		#ifndef BIG_BOARD
-			FastLED.setMaxPowerInVoltsAndMilliamps(5, 750);
-		#endif
-	#endif
 	FastLED.setBrightness(BRIGHTNESS);
 
 	FastLED.clear();
