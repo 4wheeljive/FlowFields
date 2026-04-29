@@ -43,7 +43,7 @@ bool mappingOverride = false;
 #include "audio/audioInput.h"
 #include "audio/audioProcessing.h"
 #include "bleControl.h"
-#include "flowFieldsEngine.hpp"
+#include "FlowFieldsEngine.h"
 
 using namespace fl;
 

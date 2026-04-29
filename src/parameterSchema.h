@@ -6,14 +6,14 @@
 
 #include "componentEnums.h"
 
-bool displayOn = true;
+inline bool displayOn = true;
 
 typedef void (*BusParamSetterFn)(uint8_t busId, const String& paramId, float value);
-BusParamSetterFn setBusParam = nullptr;
+inline BusParamSetterFn setBusParam = nullptr;
 
 // Callback to read a bus parameter value by busId and param name
 typedef float (*BusParamGetterFn)(uint8_t busId, const String& paramName);
-BusParamGetterFn getBusParam = nullptr;
+inline BusParamGetterFn getBusParam = nullptr;
 
 extern uint8_t EMITTER;
 extern uint8_t FLOW;
@@ -191,9 +191,9 @@ const uint8_t AUDIO_PARAM_COUNT = 15;
 //  MISCELLANEOUS CONTROLS
 // ═══════════════════════════════════════════════════════════════════
 
-uint8_t cBright = 35;
-uint8_t cMapping = 0;
-uint8_t cOverrideMapping = 0;
+inline uint8_t cBright = 35;
+inline uint8_t cMapping = 0;
+inline uint8_t cOverrideMapping = 0;
 
 /*fl::EaseType getEaseType(uint8_t value) {
     switch (value) {
@@ -212,152 +212,152 @@ uint8_t cOverrideMapping = 0;
     return fl::EASE_NONE;
 }*/
 
-uint8_t cEaseSat = 0;
-uint8_t cEaseLum = 0;
+inline uint8_t cEaseSat = 0;
+inline uint8_t cEaseLum = 0;
 
 // ═══════════════════════════════════════════════════════════════════
 //  PARAMETER DECLARATIONS
 // ═══════════════════════════════════════════════════════════════════
 
 // GLOBAL -------------------------
-float cGlobalSpeed = 1.0f;
-float cPersistence = 0.0f;
-float cPersistFine = 0.05f;
-float cColorShift = 0.10f;
-bool cUseRainbow = false;
+inline float cGlobalSpeed = 1.0f;
+inline float cPersistence = 0.0f;
+inline float cPersistFine = 0.05f;
+inline float cColorShift = 0.10f;
+inline bool cUseRainbow = false;
 
 // EMITTERS -----------------------
 
 // Dot family shared ------
-uint8_t cNumDots = 3;
-float cDotDiam = 1.5f;
+inline float cNumDots = 3.0f;
+inline float cDotDiam = 1.5f;
 // orbitalDots
-float cOrbitSpeed = 0.15f;
-float cOrbitDiam = 10.0f;
-float cModOrbitSpeedRate = 0.00005f;
-float cModOrbitSpeedLevel = 1.0f;
-float cModOrbitDiamRate = 0.0005f;
-float cModOrbitDiamLevel = 1.0f;
+inline float cOrbitSpeed = 0.15f;
+inline float cOrbitDiam = 10.0f;
+inline float cModOrbitSpeedRate = 0.00005f;
+inline float cModOrbitSpeedLevel = 1.0f;
+inline float cModOrbitDiamRate = 0.0005f;
+inline float cModOrbitDiamLevel = 1.0f;
 // swarmingDots
-float cSwarmSpeed = 0.5f;
-float cSwarmSpread = 0.5f;
-float cModSwarmSpeedRate = 1.0f;
-float cModSwarmSpeedLevel = 0.0f;
-float cModSwarmSpreadRate = 1.0f;
-float cModSwarmSpreadLevel = 1.0f;
+inline float cSwarmSpeed = 0.5f;
+inline float cSwarmSpread = 0.5f;
+inline float cModSwarmSpeedRate = 1.0f;
+inline float cModSwarmSpeedLevel = 0.0f;
+inline float cModSwarmSpreadRate = 1.0f;
+inline float cModSwarmSpreadLevel = 1.0f;
 // lissajous line
-float cLineSpeed = 0.35f;
-float cLineAmp = 13.5f;
-float cLineClamp = 0.0f;
-float cModLineSpeedRate = 1.0f;
-float cModLineSpeedLevel = 0.0f;
-float cModLineAmpRate = 0.5f;
-float cModLineAmpLevel = 0.0f;
+inline float cLineSpeed = 0.35f;
+inline float cLineAmp = 13.5f;
+inline float cLineClamp = 0.0f;
+inline float cModLineSpeedRate = 1.0f;
+inline float cModLineSpeedLevel = 0.0f;
+inline float cModLineAmpRate = 0.5f;
+inline float cModLineAmpLevel = 0.0f;
 //noiseKaleido
-float cDriftSpeed = 0.35f;
-float cNoiseScale = 0.0375f;
-float cNoiseBand = 0.1f;
-float cKaleidoGamma = 0.65f;
+inline float cDriftSpeed = 0.35f;
+inline float cNoiseScale = 0.0375f;
+inline float cNoiseBand = 0.1f;
+inline float cKaleidoGamma = 0.65f;
 // cube
-float cScale = 1.f;
-float cRotateSpeedX = 0.6f;
-float cRotateSpeedY = 0.9f;
-float cRotateSpeedZ = 0.3f;
-bool cAxisFreezeX = false;
-bool cAxisFreezeY = false;
-bool cAxisFreezeZ = false;
-float cModScaleRate = 0.5f;
-float cModScaleLevel = 0.0f;
-float cModRotateSpeedXRate = 0.5f;
-float cModRotateSpeedXLevel = 0.0f;
-float cModRotateSpeedYRate = 0.5f;
-float cModRotateSpeedYLevel = 0.0f;
-float cModRotateSpeedZRate = 0.5f;
-float cModRotateSpeedZLevel = 0.0f;
+inline float cScale = 1.f;
+inline float cRotateSpeedX = 0.6f;
+inline float cRotateSpeedY = 0.9f;
+inline float cRotateSpeedZ = 0.3f;
+inline bool cAxisFreezeX = false;
+inline bool cAxisFreezeY = false;
+inline bool cAxisFreezeZ = false;
+inline float cModScaleRate = 0.5f;
+inline float cModScaleLevel = 0.0f;
+inline float cModRotateSpeedXRate = 0.5f;
+inline float cModRotateSpeedXLevel = 0.0f;
+inline float cModRotateSpeedYRate = 0.5f;
+inline float cModRotateSpeedYLevel = 0.0f;
+inline float cModRotateSpeedZRate = 0.5f;
+inline float cModRotateSpeedZLevel = 0.0f;
 // fluidJet
-float cJetDensity = 60.0f;
-float cJetForce = 0.35f;
-float cJetRadius = 2.0f;
-float cJetSpread = 1.0f;
-float cJetAngle = 0.0f;
-float cJetHueSpeed = 0.69f;
-float cModJetForceRate = 0.5f;
-float cModJetForceLevel = 0.0f;
-float cModAngleRate = 0.5f;
-float cModAngleLevel = 0.0f;
+inline float cJetDensity = 60.0f;
+inline float cJetForce = 0.35f;
+inline float cJetRadius = 2.0f;
+inline float cJetSpread = 1.0f;
+inline float cJetAngle = 0.0f;
+inline float cJetHueSpeed = 0.69f;
+inline float cModJetForceRate = 0.5f;
+inline float cModJetForceLevel = 0.0f;
+inline float cModAngleRate = 0.5f;
+inline float cModAngleLevel = 0.0f;
 
 // FLOWS -----------------------
 // shared
-float cBlendFactor = 0.45f;
+inline float cBlendFactor = 0.45f;
 // noiseFlow
-float cXFreq = 0.33f;
-float cYFreq = 0.32f;
-float cXShift = 1.5f;
-float cYShift = 1.5f;
-float cXAmp = 1.0f;
-float cYAmp = 1.0f;
-float cXSpeed = 0.15f;
-float cYSpeed = 0.15f;
-float cModAmpRate = 0.5f;
-float cModAmpLevel = 0.5f;
-float cModSpeedRate = 0.1f;
-float cModSpeedLevel = 0.1f;
-float cModShiftRate = 0.5f;
-float cModShiftLevel = 0.5f;
+inline float cXFreq = 0.33f;
+inline float cYFreq = 0.32f;
+inline float cXShift = 1.5f;
+inline float cYShift = 1.5f;
+inline float cXAmp = 1.0f;
+inline float cYAmp = 1.0f;
+inline float cXSpeed = 0.15f;
+inline float cYSpeed = 0.15f;
+inline float cModAmpRate = 0.5f;
+inline float cModAmpLevel = 0.5f;
+inline float cModSpeedRate = 0.1f;
+inline float cModSpeedLevel = 0.1f;
+inline float cModShiftRate = 0.5f;
+inline float cModShiftLevel = 0.5f;
 //flowFromCenter
-float cRadialStep = 0.15f;
+inline float cRadialStep = 0.15f;
 // directionalFlow
-float cWindStep = 0.95f;
-float cRotateSpeed = 0.25f;
-float cWaveAmp = 0.0f;
-float cWaveFreq = 0.20f;
-float cWaveSpeed = 1.20f;
+inline float cWindStep = 0.95f;
+inline float cRotateSpeed = 0.25f;
+inline float cWaveAmp = 0.0f;
+inline float cWaveFreq = 0.20f;
+inline float cWaveSpeed = 1.20f;
 // ringFlow
-float cInnerSwirl = -0.2f;
-float cOuterSwirl = 0.2f;
-float cMidDrift = 0.3f;
-float cModBreatheRate = 1.0f;
-float cModBreatheLevel = 1.0f;
+inline float cInnerSwirl = -0.2f;
+inline float cOuterSwirl = 0.2f;
+inline float cMidDrift = 0.3f;
+inline float cModBreatheRate = 1.0f;
+inline float cModBreatheLevel = 1.0f;
 // spiral
-float cAngularStep = 0.28f;
-bool cOutward = false;
-float cModAngularStepRate = 0.5f;
-float cModAngularStepLevel = 0.5f;
-float cModRadialStepRate = 0.5f;
-float cModRadialStepLevel = 0.5f;
-float cModBlendFactorRate = 0.5f;
-float cModBlendFactorLevel = 0.5f;
+inline float cAngularStep = 0.28f;
+inline bool cOutward = false;
+inline float cModAngularStepRate = 0.5f;
+inline float cModAngularStepLevel = 0.5f;
+inline float cModRadialStepRate = 0.5f;
+inline float cModRadialStepLevel = 0.5f;
+inline float cModBlendFactorRate = 0.5f;
+inline float cModBlendFactorLevel = 0.5f;
 // fluid
-float cViscosity = 0.0f;
-float cDiffusion = 0.0f;
-float cVelocityDissipation = 0.5f;
-float cDyeDissipation = 0.5f;
-float cVorticity = 7.0f;
-float cGravity = 0.3f;
-float cSolverIterations = 5.0f;
-float cModVelDissipRate = 0.5f;
-float cModVelDissipLevel = 0.0f;
-float cModDyeDissipRate = 0.5f;
-float cModDyeDissipLevel = 0.0f;
+inline float cViscosity = 0.0f;
+inline float cDiffusion = 0.0f;
+inline float cVelocityDissipation = 0.5f;
+inline float cDyeDissipation = 0.5f;
+inline float cVorticity = 7.0f;
+inline float cGravity = 0.3f;
+inline float cSolverIterations = 5.0f;
+inline float cModVelDissipRate = 0.5f;
+inline float cModVelDissipLevel = 0.0f;
+inline float cModDyeDissipRate = 0.5f;
+inline float cModDyeDissipLevel = 0.0f;
 
 // AUDIO -----------------------
-bool maxBins = false;
-uint16_t cNoiseGateOpen = 70;
-uint16_t cNoiseGateClose = 50;
-float cAudioGain = 1.0f;
-float cAudioFloor = 0.0f;
-bool autoFloor = false;
-float cAutoFloorAlpha = 0.01f;
-float cAutoFloorMin = 0.0f;
-float cAutoFloorMax = 0.5f;
-bool avLeveler = true;
-float cAvLevelerTarget = 0.5f;
-float cThreshold = 0.40f;
-float cMinBeatInterval = 75.f;
-float cRampAttack = 0.f;
-float cRampDecay = 100.f;
-float cPeakBase = 1.0f;
-float cExpDecayFactor = 0.9f;
+inline bool maxBins = false;
+inline uint16_t cNoiseGateOpen = 70;
+inline uint16_t cNoiseGateClose = 50;
+inline float cAudioGain = 1.0f;
+inline float cAudioFloor = 0.0f;
+inline bool autoFloor = false;
+inline float cAutoFloorAlpha = 0.01f;
+inline float cAutoFloorMin = 0.0f;
+inline float cAutoFloorMax = 0.5f;
+inline bool avLeveler = true;
+inline float cAvLevelerTarget = 0.5f;
+inline float cThreshold = 0.40f;
+inline float cMinBeatInterval = 75.f;
+inline float cRampAttack = 0.f;
+inline float cRampDecay = 100.f;
+inline float cPeakBase = 1.0f;
+inline float cExpDecayFactor = 0.9f;
 
 // ═══════════════════════════════════════════════════════════════════
 //  X-MACRO PARAMETER TABLE
@@ -390,7 +390,7 @@ float cExpDecayFactor = 0.9f;
    X(float, ModOrbitSpeedLevel, 1.0f) \
    X(float, ModOrbitDiamRate, 0.0005f) \
    X(float, ModOrbitDiamLevel, 1.0f) \
-   X(uint8_t, NumDots, 3) \
+   X(float, NumDots, 3.0f) \
    X(float, DotDiam, 1.5f) \
    X(float, SwarmSpeed, 0.5f) \
    X(float, SwarmSpread, 0.5f) \

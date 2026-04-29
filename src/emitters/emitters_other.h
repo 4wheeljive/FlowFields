@@ -12,7 +12,13 @@ namespace flowFields {
 
     // ═══════════════════════════════════════════════════════════════════
     //  AUDIO DOTS
+    //  Full implementation requires -DAUDIO_ENABLED and the audioTypes.h
+    //  inline fix (see FlowFieldsAsALibrary.md backlog: Audio integration).
+    //  Without AUDIO_ENABLED, the emitter is a no-op stub.
     // ═══════════════════════════════════════════════════════════════════
+
+#ifdef AUDIO_ENABLED
+    extern bool audioEnabled;   // defined in main.cpp
 
     const myAudio::AudioFrame* cFrame = nullptr;
 
@@ -23,14 +29,12 @@ namespace flowFields {
 
     struct AudioDotsParams {
         uint8_t dotDiam = 1.0f;
-        //uint8_t numActiveTimers = 0;
     };
 
     AudioDotsParams audioDots;
 
     static void emitAudioDots() {
-
-        if (audioEnabled){
+        if (audioEnabled) {
             myAudio::binConfig& b = maxBins ? myAudio::bin32 : myAudio::bin16;
             getAudio(b);
         }
@@ -39,7 +43,6 @@ namespace flowFields {
         if (myAudio::busC.newBeat) {
             float cx = random8(0, g_engine->_width  - 1) + random8() / 255.0f;
             float cy = random8(0, g_engine->_height - 1) + random8() / 255.0f;
-            // Color from rainbow based on current time
             ColorF c = g_engine->rainbow(g_engine->t, g_engine->colorShift, random8() / 255.0f);
             g_engine->drawDot(cx, cy, audioDots.dotDiam * 5, c.r, c.g, c.b);
         }
@@ -47,11 +50,13 @@ namespace flowFields {
         if (myAudio::busB.newBeat) {
             float cx = random8(0, g_engine->_width  - 1) + random8() / 255.0f;
             float cy = random8(0, g_engine->_height - 1) + random8() / 255.0f;
-            // Color from rainbow based on current time
             ColorF c = g_engine->rainbow(g_engine->t, g_engine->colorShift, random8() / 255.0f);
             g_engine->drawDot(cx, cy, audioDots.dotDiam, c.r, c.g, c.b);
         }
     }
+#else
+    static void emitAudioDots() {}   // no-op: build without -DAUDIO_ENABLED
+#endif
 
 
     // ═══════════════════════════════════════════════════════════════════

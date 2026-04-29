@@ -1,5 +1,3 @@
-#pragma once
-
 #include "parameterSchema.h"
 #include "FlowFieldsEngine.h"
 #include "flows/flow_noise.h"
@@ -117,6 +115,13 @@ void FlowFieldsEngine::teardown() {
 
 void FlowFieldsEngine::run(fl::CRGB* leds) {
     g_engine = this;
+
+    // Apply external parameter bindings (registered once in setup via bindParam).
+    // Each entry is a pointer-to-pointer-dereference: *external → *cvar.
+    if (pEmitterSel_) EMITTER = (uint8_t)(*pEmitterSel_);
+    if (pFlowSel_)    FLOW    = (uint8_t)(*pFlowSel_);
+    for (int i = 0; i < numParamBindings_; i++)
+        *paramBindings_[i].cvar = *paramBindings_[i].external;
 
     unsigned long now = fl::millis();
     float rawDt = (now - lastFrameMs) * 0.001f;
@@ -519,7 +524,7 @@ void FlowFieldsEngine::syncFromCVars() {
     globalSpeed = cGlobalSpeed;
     persistence = cPersistence + cPersistFine;
     colorShift = cColorShift;
-    orbitalDots.numDots = cNumDots;
+    orbitalDots.numDots = (uint8_t)cNumDots;
     orbitalDots.orbitSpeed = cOrbitSpeed;
     orbitalDots.dotDiam  = cDotDiam;
     orbitalDots.orbitDiam = cOrbitDiam;
@@ -527,7 +532,7 @@ void FlowFieldsEngine::syncFromCVars() {
     orbitalDots.modOrbitSpeed.modLevel = cModOrbitSpeedLevel;
     orbitalDots.modOrbitDiam.modRate = cModOrbitDiamRate;
     orbitalDots.modOrbitDiam.modLevel = cModOrbitDiamLevel;
-    swarmingDots.numDots = cNumDots;
+    swarmingDots.numDots = (uint8_t)cNumDots;
     swarmingDots.swarmSpeed = cSwarmSpeed;
     swarmingDots.swarmSpread = cSwarmSpread;
     swarmingDots.modSwarmSpeed.modRate = cModSwarmSpeedRate;
@@ -574,6 +579,135 @@ void FlowFieldsEngine::syncFromCVars() {
     fluidJet.modAngle.modLevel = cModAngleLevel;
     // Flow field + modulator
     syncFlowFromCVars();
+}
+
+// ── Parameter binding (Phase 3) ───────────────────────────────────────────────
+
+void FlowFieldsEngine::bindParam(const char* name, float* externalPtr) {
+    // Special-case the two uint8_t selection globals.
+    if (strcasecmp(name, "emitter") == 0) { pEmitterSel_ = externalPtr; return; }
+    if (strcasecmp(name, "flow")    == 0) { pFlowSel_    = externalPtr; return; }
+
+    if (numParamBindings_ >= MAX_PARAM_BINDINGS) return;
+    float* cvar = resolveCVar(name);
+    if (!cvar) return;
+    paramBindings_[numParamBindings_++] = { externalPtr, cvar };
+}
+
+// One-time string lookup called from bindParam() during setup().
+// Returns a pointer to the matching cVar global, or nullptr if unknown.
+float* FlowFieldsEngine::resolveCVar(const char* name) {
+    // Global
+    if (strcasecmp(name, "globalSpeed")          == 0) return &cGlobalSpeed;
+    if (strcasecmp(name, "persistence")          == 0) return &cPersistence;
+    if (strcasecmp(name, "persistFine")          == 0) return &cPersistFine;
+    if (strcasecmp(name, "colorShift")           == 0) return &cColorShift;
+    // Dot family shared
+    if (strcasecmp(name, "numDots")              == 0) return &cNumDots;
+    if (strcasecmp(name, "dotDiam")              == 0) return &cDotDiam;
+    // OrbitalDots
+    if (strcasecmp(name, "orbitSpeed")           == 0) return &cOrbitSpeed;
+    if (strcasecmp(name, "orbitDiam")            == 0) return &cOrbitDiam;
+    if (strcasecmp(name, "modOrbitSpeedRate")    == 0) return &cModOrbitSpeedRate;
+    if (strcasecmp(name, "modOrbitSpeedLevel")   == 0) return &cModOrbitSpeedLevel;
+    if (strcasecmp(name, "modOrbitDiamRate")     == 0) return &cModOrbitDiamRate;
+    if (strcasecmp(name, "modOrbitDiamLevel")    == 0) return &cModOrbitDiamLevel;
+    // SwarmingDots
+    if (strcasecmp(name, "swarmSpeed")           == 0) return &cSwarmSpeed;
+    if (strcasecmp(name, "swarmSpread")          == 0) return &cSwarmSpread;
+    if (strcasecmp(name, "modSwarmSpeedRate")    == 0) return &cModSwarmSpeedRate;
+    if (strcasecmp(name, "modSwarmSpeedLevel")   == 0) return &cModSwarmSpeedLevel;
+    if (strcasecmp(name, "modSwarmSpreadRate")   == 0) return &cModSwarmSpreadRate;
+    if (strcasecmp(name, "modSwarmSpreadLevel")  == 0) return &cModSwarmSpreadLevel;
+    // LissajousLine
+    if (strcasecmp(name, "lineSpeed")            == 0) return &cLineSpeed;
+    if (strcasecmp(name, "lineAmp")              == 0) return &cLineAmp;
+    if (strcasecmp(name, "lineClamp")            == 0) return &cLineClamp;
+    if (strcasecmp(name, "modLineSpeedRate")     == 0) return &cModLineSpeedRate;
+    if (strcasecmp(name, "modLineSpeedLevel")    == 0) return &cModLineSpeedLevel;
+    if (strcasecmp(name, "modLineAmpRate")       == 0) return &cModLineAmpRate;
+    if (strcasecmp(name, "modLineAmpLevel")      == 0) return &cModLineAmpLevel;
+    // NoiseKaleido
+    if (strcasecmp(name, "driftSpeed")           == 0) return &cDriftSpeed;
+    if (strcasecmp(name, "noiseScale")           == 0) return &cNoiseScale;
+    if (strcasecmp(name, "noiseBand")            == 0) return &cNoiseBand;
+    if (strcasecmp(name, "kaleidoGamma")         == 0) return &cKaleidoGamma;
+    // Cube
+    if (strcasecmp(name, "scale")                == 0) return &cScale;
+    if (strcasecmp(name, "rotateSpeedX")         == 0) return &cRotateSpeedX;
+    if (strcasecmp(name, "rotateSpeedY")         == 0) return &cRotateSpeedY;
+    if (strcasecmp(name, "rotateSpeedZ")         == 0) return &cRotateSpeedZ;
+    if (strcasecmp(name, "modScaleRate")         == 0) return &cModScaleRate;
+    if (strcasecmp(name, "modScaleLevel")        == 0) return &cModScaleLevel;
+    if (strcasecmp(name, "modRotateSpeedXRate")  == 0) return &cModRotateSpeedXRate;
+    if (strcasecmp(name, "modRotateSpeedXLevel") == 0) return &cModRotateSpeedXLevel;
+    if (strcasecmp(name, "modRotateSpeedYRate")  == 0) return &cModRotateSpeedYRate;
+    if (strcasecmp(name, "modRotateSpeedYLevel") == 0) return &cModRotateSpeedYLevel;
+    if (strcasecmp(name, "modRotateSpeedZRate")  == 0) return &cModRotateSpeedZRate;
+    if (strcasecmp(name, "modRotateSpeedZLevel") == 0) return &cModRotateSpeedZLevel;
+    // FluidJet
+    if (strcasecmp(name, "jetDensity")           == 0) return &cJetDensity;
+    if (strcasecmp(name, "jetForce")             == 0) return &cJetForce;
+    if (strcasecmp(name, "jetRadius")            == 0) return &cJetRadius;
+    if (strcasecmp(name, "jetSpread")            == 0) return &cJetSpread;
+    if (strcasecmp(name, "jetAngle")             == 0) return &cJetAngle;
+    if (strcasecmp(name, "jetHueSpeed")          == 0) return &cJetHueSpeed;
+    if (strcasecmp(name, "modJetForceRate")      == 0) return &cModJetForceRate;
+    if (strcasecmp(name, "modJetForceLevel")     == 0) return &cModJetForceLevel;
+    if (strcasecmp(name, "modAngleRate")         == 0) return &cModAngleRate;
+    if (strcasecmp(name, "modAngleLevel")        == 0) return &cModAngleLevel;
+    // Flows shared
+    if (strcasecmp(name, "blendFactor")          == 0) return &cBlendFactor;
+    // NoiseFlow
+    if (strcasecmp(name, "xFreq")                == 0) return &cXFreq;
+    if (strcasecmp(name, "yFreq")                == 0) return &cYFreq;
+    if (strcasecmp(name, "xShift")               == 0) return &cXShift;
+    if (strcasecmp(name, "yShift")               == 0) return &cYShift;
+    if (strcasecmp(name, "xAmp")                 == 0) return &cXAmp;
+    if (strcasecmp(name, "yAmp")                 == 0) return &cYAmp;
+    if (strcasecmp(name, "xSpeed")               == 0) return &cXSpeed;
+    if (strcasecmp(name, "ySpeed")               == 0) return &cYSpeed;
+    if (strcasecmp(name, "modAmpRate")           == 0) return &cModAmpRate;
+    if (strcasecmp(name, "modAmpLevel")          == 0) return &cModAmpLevel;
+    if (strcasecmp(name, "modSpeedRate")         == 0) return &cModSpeedRate;
+    if (strcasecmp(name, "modSpeedLevel")        == 0) return &cModSpeedLevel;
+    if (strcasecmp(name, "modShiftRate")         == 0) return &cModShiftRate;
+    if (strcasecmp(name, "modShiftLevel")        == 0) return &cModShiftLevel;
+    // RadialFlow
+    if (strcasecmp(name, "radialStep")           == 0) return &cRadialStep;
+    // DirectionalFlow
+    if (strcasecmp(name, "windStep")             == 0) return &cWindStep;
+    if (strcasecmp(name, "rotateSpeed")          == 0) return &cRotateSpeed;
+    if (strcasecmp(name, "waveAmp")              == 0) return &cWaveAmp;
+    if (strcasecmp(name, "waveFreq")             == 0) return &cWaveFreq;
+    if (strcasecmp(name, "waveSpeed")            == 0) return &cWaveSpeed;
+    // RingFlow
+    if (strcasecmp(name, "innerSwirl")           == 0) return &cInnerSwirl;
+    if (strcasecmp(name, "outerSwirl")           == 0) return &cOuterSwirl;
+    if (strcasecmp(name, "midDrift")             == 0) return &cMidDrift;
+    if (strcasecmp(name, "modBreatheRate")       == 0) return &cModBreatheRate;
+    if (strcasecmp(name, "modBreatheLevel")      == 0) return &cModBreatheLevel;
+    // Spiral
+    if (strcasecmp(name, "angularStep")          == 0) return &cAngularStep;
+    if (strcasecmp(name, "modAngularStepRate")   == 0) return &cModAngularStepRate;
+    if (strcasecmp(name, "modAngularStepLevel")  == 0) return &cModAngularStepLevel;
+    if (strcasecmp(name, "modRadialStepRate")    == 0) return &cModRadialStepRate;
+    if (strcasecmp(name, "modRadialStepLevel")   == 0) return &cModRadialStepLevel;
+    if (strcasecmp(name, "modBlendFactorRate")   == 0) return &cModBlendFactorRate;
+    if (strcasecmp(name, "modBlendFactorLevel")  == 0) return &cModBlendFactorLevel;
+    // Fluid
+    if (strcasecmp(name, "viscosity")            == 0) return &cViscosity;
+    if (strcasecmp(name, "diffusion")            == 0) return &cDiffusion;
+    if (strcasecmp(name, "velocityDissipation")  == 0) return &cVelocityDissipation;
+    if (strcasecmp(name, "dyeDissipation")       == 0) return &cDyeDissipation;
+    if (strcasecmp(name, "vorticity")            == 0) return &cVorticity;
+    if (strcasecmp(name, "gravity")              == 0) return &cGravity;
+    if (strcasecmp(name, "solverIterations")     == 0) return &cSolverIterations;
+    if (strcasecmp(name, "modVelDissipRate")     == 0) return &cModVelDissipRate;
+    if (strcasecmp(name, "modVelDissipLevel")    == 0) return &cModVelDissipLevel;
+    if (strcasecmp(name, "modDyeDissipRate")     == 0) return &cModDyeDissipRate;
+    if (strcasecmp(name, "modDyeDissipLevel")    == 0) return &cModDyeDissipLevel;
+    return nullptr;
 }
 
 } // namespace flowFields

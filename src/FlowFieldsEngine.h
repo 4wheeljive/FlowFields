@@ -83,15 +83,31 @@ public:
                             float radius = 0.85f);
     void drawAASubpixelLine(float x0, float y0, float x1, float y1);
 
-    // ── cVar bridge (implemented in flowFieldsEngine.hpp; uses bleControl globals) ──
+    // ── cVar bridge (implemented in flowFieldsEngine.cpp; reads/writes parameterSchema.h cVars) ──
     void pushDefaultsToCVars();
     void syncFromCVars();
     void pushFlowDefaultsToCVars();
     void syncFlowFromCVars();
 
+    // ── Parameter binding (Phase 3) ───────────────────────────────────────────
+    // Call once during setup() to redirect a named cVar to an external float.
+    // run() copies *externalPtr → cVar before syncFromCVars() — zero per-frame
+    // string lookups, just one pointer dereference per bound parameter.
+    // The BLE firmware ignores this; bindings are only set by library consumers.
+    void bindParam(const char* name, float* externalPtr);
+
 private:
     static float** allocGrid(uint8_t w, uint8_t h);
     static void    freeGrid(float** g, uint8_t h);
+    float*         resolveCVar(const char* name);
+
+    struct ParamBinding { float* external; float* cvar; };
+    static constexpr int MAX_PARAM_BINDINGS = 80;
+    ParamBinding paramBindings_[MAX_PARAM_BINDINGS] = {};
+    int          numParamBindings_ = 0;
+    // Emitter/flow selects are uint8_t globals, handled separately.
+    float*       pEmitterSel_ = nullptr;
+    float*       pFlowSel_    = nullptr;
 };
 
 // Set by FlowFieldsEngine::run() before dispatching to any emitter/flow function.

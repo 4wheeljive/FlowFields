@@ -282,9 +282,26 @@ Add `library.json` at the repo root:
 }
 ```
 
-`main.cpp` and `hosted_ble_bridge.cpp` are excluded from the library build.  The BLE headers
-(`bleControl.h`, `boardConfig.h`) are not compiled independently so they do not need
-exclusion — they are only pulled in via `main.cpp`.
+**Explicitly excluded by `srcFilter`** (the two `.cpp` files that would cause linker conflicts):
+
+- `main.cpp` — the standalone firmware entry point
+- `hosted_ble_bridge.cpp` — the hosted/desktop BLE simulation
+
+**Effectively excluded** (headers that are never included by the library's own code — only pulled in via `main.cpp`):
+
+- `bleControl.h` — BLE stack, parameter table, cVar declarations
+- `boardConfig.h` — hardware pin assignments, compile-time `WIDTH`/`HEIGHT`, matrix maps
+- `audio/` — all six audio headers
+- `hosted_ble_bridge.h` — companion to the `.cpp`
+- `profiler.h` — frame timing diagnostics
+- `reference/` — hardware-specific XY lookup tables
+
+**Included in the library** (everything else in `src/`):
+
+- `FlowFieldsEngine.h` / `flowFieldsEngine.cpp` — engine class declaration and method implementations
+- `flowFieldsTypes.h`, `modulators.h`, `componentEnums.h`, `parameterSchema.h` — types and shared parameter globals
+- All six emitter headers (`emitters/`)
+- All six flow headers (`flows/`)
 
 The existing standalone firmware continues to build normally via `platformio.ini`; that build
 includes `main.cpp` in `src/` as usual.
@@ -569,3 +586,103 @@ Session 1 covered Phases 1, 2, and 6 from the plan — the structural core.
 **Phase 5 — FastLED-MM example** is a new file.  Zero risk.
 
 **Before Phase 4:** verify on device that the FastLED version change (pinned pre-release 4.x commit `c83f7632` instead of the old local copy) produces identical visuals.  If there are regressions, bisect to a different 4.x commit in `platformio.ini`.
+
+---
+
+## Session 2 Retrospective
+
+Session 2 covered the portability cleanup, Phase 4 (library manifest), Phase 5 (illustrative example), Phase 3 (pointer binding), and two pre-use library fixes (ODR violation and missing compiled source).
+
+### Definition of Done
+
+| Task | Status | Notes |
+|------|--------|-------|
+| Portability cleanup — fix null-ptr struct defaults | ✅ | `orbitDiam = g_engine->_minDim * 0.3f` → `6.6f`; `lineAmp = (g_engine->_minDim - 4) * 0.75f` → `13.5f` |
+| `library.json` — PlatformIO library manifest | ✅ | ArduinoJson `^7.4.2`; excludes `main.cpp` and `hosted_ble_bridge.cpp`; note on FastLED 4.x pre-release |
+| `examples/FastLEDMM/FlowFieldsEffect.h` — integration template | ✅ | `setup()` → `addControl` + `bindParam`; `loop()` → single `engine_.run(leds_)` |
+| Phase 3 — pointer binding (`bindParam` + `resolveCVar`) | ✅ | `bindParam(name, float*)` registered once in `setup()`; `run()` applies via pointer deref, zero string lookups in hot path |
+| ODR fix — `parameterSchema.h` variable definitions | ✅ | `inline` added to all ~70 non-const variable definitions; safe for C++17 (ESP32 Arduino GCC 12 default) |
+| Library source file — `flowFieldsEngine.hpp` → `.cpp` | ✅ | PlatformIO only compiles `.c`/`.cpp` as TUs; `.hpp` was never compiled in library builds → link errors. Renamed; `#pragma once` removed; `#include "flowFieldsEngine.hpp"` removed from `main.cpp` |
+| Compile regression fix — missing `FlowFieldsEngine.h` in `main.cpp` | ✅ | Removing the `.hpp` include also removed the only path to the engine class declaration; `#include "FlowFieldsEngine.h"` added explicitly |
+| Audio compile fix — `emitters_other.h` `myAudio::` guard | ✅ | All audio code wrapped in `#ifdef AUDIO_ENABLED`; no-op stub compiled otherwise. Prevents compile error when `flowFieldsEngine.cpp` is a separate TU without audio headers |
+
+### What Went Well
+
+- **The null-ptr bug was caught before device testing.** The `g_engine->_minDim` struct default initializers introduced in Session 1's find-replace would have crashed at startup — caught during the portability review step.
+- **`library.json` is exactly 20 lines.** The `srcFilter` approach cleanly excludes the BLE/hardware entry points without touching any source file.
+- **The example's hot path is a single line.** After pointer binding, `loop()` is `engine_.run(leds_)` — zero copy, zero string lookup per frame.
+- **The ODR fix is non-breaking.** `inline` variables in C++17 have identical semantics to non-inline for single-TU projects; they just allow multiple TUs to each see the definition without a linker error.
+
+### What Didn't Go So Well
+
+- **The find-replace in Session 1 introduced the null-ptr bug.** Replacing `MIN_DIMENSION` in struct default initializers with `g_engine->_minDim` was incorrect — `g_engine` is null at static initialization time. The correct fix (hardcoded values) was applied in Session 2.
+- **The `.hpp` extension was a latent link-time bomb.** `flowFieldsEngine.hpp` contained all class method implementations, but PlatformIO's library builder only compiles `.c`/`.cpp` files. The main firmware compiled correctly because `main.cpp` `#include`d the file directly, but any library consumer would have seen unresolved symbols. Not caught until pre-use review.
+- **ODR violations were hidden.** `parameterSchema.h` defined ~70 mutable variables directly — no `inline`, no `extern` + single definition. The firmware compiled because it was only built as a single TU (main.cpp included everything). A library consumer linking a second TU would have hit duplicate symbol errors immediately.
+- **The `.hpp` rename revealed two regressions.** (1) Removing `#include "flowFieldsEngine.hpp"` from `main.cpp` also removed the only path to the `FlowFieldsEngine` class declaration — fixed by adding `#include "FlowFieldsEngine.h"` explicitly. (2) `emitters_other.h` (compiled via `flowFieldsEngine.cpp`) referenced `myAudio::` types that were previously supplied transitively through `main.cpp`'s TU — now a separate TU, those types were invisible. Adding `audioProcessing.h` to `flowFieldsEngine.cpp` would have fixed the compile error but created link-time duplicate-symbol errors (audioTypes.h has non-inline variable definitions). Correct fix: `#ifdef AUDIO_ENABLED` guard with a no-op stub.
+
+### Remaining Backlog
+
+| Item | Priority | Notes |
+|------|----------|-------|
+| Verify visuals on device with FastLED 4.x | High | Do before merging to `main` |
+| `numDots` binding gap | ✅ Done | `cNumDots` changed to `float`; cast to `(uint8_t)` at struct-write sites; added to `resolveCVar` |
+| Audio integration (see below) | Medium | Step 1 done (`#ifdef AUDIO_ENABLED` guard + stub). Steps 2–3 remain: `audioTypes.h` inline fix + engine audio-data pointer |
+| Typed cVar storage (see below) | Low | All cVars are currently `float`; several should be `uint8_t`, `bool`, or `uint16_t` |
+| `boardConfig.h` `myXY()` — make runtime-aware | Low | Relevant when panel size changes at runtime; illustrative example already shows the pattern |
+
+#### Audio integration
+
+**How audio is currently used**
+
+The audio pipeline lives entirely in `src/audio/` and is excluded from the library build. `emitters_other.h` now guards all audio code with `#ifdef AUDIO_ENABLED` and compiles a no-op stub otherwise — so the library and firmware (without `-DAUDIO_ENABLED`) build cleanly. When `AUDIO_ENABLED` is defined, the emitter references:
+
+```cpp
+if (myAudio::busC.newBeat) { … }        // beat-triggered dot spawn
+cFrame = &myAudio::updateAudioFrame(b); // pull latest FFT + RMS frame
+```
+
+The `myAudio::` globals live in `audio/audioTypes.h`, which chains to FastLED's own `fl/audio/audio.h` and `fl/audio/fft/fft.h` (new in FastLED 4.x). Three frequency-band beat detectors (`busA` = kick/bass, `busB` = snare/mid, `busC` = vocals/lead) each expose `newBeat` (bool) and `avResponse` (float). A per-frame `AudioFrame` snapshot carries RMS, peak, FFT bins, vox confidence, and copies of all three bus outputs.
+
+`emitAudioDots()` listens to `busB` and `busC` beats and spawns dots at random positions. Everything else in the engine is audio-unaware.
+
+**The remaining problem**
+
+`audioTypes.h` defines its bus and config objects as non-`inline` variables at namespace scope. Including it from two TUs (e.g. `flowFieldsEngine.cpp` and `main.cpp`) causes linker "multiple definition" errors. This is why step 1 uses a compile-time guard rather than simply including the audio headers in `flowFieldsEngine.cpp`.
+
+**What still needs to happen**
+
+1. ~~**Guard the audio references**~~ ✅ Done — `#ifdef AUDIO_ENABLED` guard with no-op stub in `emitters_other.h`.
+
+2. **Expose an audio data pointer on the engine** — add an optional `const myAudio::AudioFrame* audioFrame = nullptr;` field (or a generic equivalent) to `FlowFieldsEngine`. Library consumers set it before each `run()` call. Emitters read from it instead of calling `myAudio::updateAudioFrame()` directly.
+
+3. **FastLED-MM integration** — a FastLED-MM consumer would pull an `AudioFrame` from FastLED's audio API each loop and pass it to the engine:
+   ```cpp
+   void loop() override {
+       engine_.audioFrame = myAudio::getLatestFrame();  // or equivalent FA API
+       engine_.run(leds_);
+   }
+   ```
+
+This approach keeps the engine itself audio-agnostic — it holds a pointer that is either null (no audio, emitter is a no-op) or valid (audio data flows through).
+
+#### Typed cVar storage
+
+**Why everything is currently `float`**
+
+The BLE transport sends all parameter values as JSON floating-point numbers (`{id: "inNumDots", val: 3.0}`). `processNumber()` receives a `float` and assigns it directly to the cVar. The `resolveCVar()` / `bindParam()` binding mechanism also returns `float*`, so any non-float cVar is invisible to library consumers.
+
+The PARAMETER_TABLE X-macro *does* carry the intended type — `X(uint8_t, NumDots, 3)`, `X(bool, AxisFreezeX, false)`, `X(uint16_t, NoiseGateOpen, 70)` — and uses it for preset serialization. But the live cVar storage was never made to match, because the single-TU BLE firmware was the only consumer and implicit float→uint8_t narrowing silently worked.
+
+`cNumDots` was changed to `float` during the Session 2 binding-gap fix as the path of least resistance. Several others should also be their real types:
+
+| cVar | Current type | Natural type |
+|------|-------------|--------------|
+| `cNumDots` | `float` (was `uint8_t`) | `uint8_t` |
+| `cBright` | `uint8_t` | `uint8_t` ✓ (not bound) |
+| `cUseRainbow`, `cAxisFreezeX/Y/Z`, `cOutward` | `bool` | `bool` (not bound) |
+| `cNoiseGateOpen`, `cNoiseGateClose` | `uint16_t` | `uint16_t` (not bound) |
+| `maxBins`, `autoFloor`, `avLeveler` | `bool` | `bool` (not bound) |
+
+**What needs to happen**
+
+`resolveCVar` and `bindParam` would need typed overloads (or a tagged-union / `std::variant` slot) so that `uint8_t`, `bool`, and `uint16_t` cVars can participate in binding without being widened to `float`. The BLE `processNumber()` already has the type available via the X-macro and could cast on assignment instead of relying on implicit conversion.

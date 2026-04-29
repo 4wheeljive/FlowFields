@@ -16,7 +16,7 @@ namespace flowFields {
         float orbitSpeed = 2.0f;
         ModConfig modOrbitSpeed = {0, 1.0f, 1.0f};       // modTimer, modRate, modLevel
         float dotDiam    = 1.5f;
-        float orbitDiam  = g_engine->_minDim * 0.3f;
+        float orbitDiam  = 6.6f;   // ~minDim * 0.3 for a 22-px grid; overridden by syncFromCVars()
         ModConfig modOrbitDiam = {1, 1.0f, 1.0f};         // modTimer, modRate, modLevel
         uint8_t numActiveTimers = 2;
     };
