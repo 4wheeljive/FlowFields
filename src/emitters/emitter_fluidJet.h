@@ -11,8 +11,7 @@
 //  Ported from FluidApp.emit_stationary_source() in
 //  colorTrailsOrig/navier_stokes_1.py.
 
-#include "flowFieldsTypes.h"
-#include "modulators.h"
+#include "FlowFieldsEngine.h"
 #include "../flows/flow_fluid.h"   // u, v arrays + fluidAddVelocity
 
 namespace flowFields {
@@ -43,7 +42,6 @@ namespace flowFields {
     };
 
     // Hue dither magnitude. Max per-cell hue offset = scale * 0.5.
-    // 0.002 → ±0.001 hue cycle → ~1.5 RGB units max delta — enough to break bands.
     static constexpr float HUE_DITHER_SCALE = 0.002f;
 
     // 2D Gaussian splat: writes dye to gR/gG/gB and momentum to u/v.
@@ -55,9 +53,9 @@ namespace flowFields {
         const float r2  = radius * radius * 0.6f;
         const float invR2 = 1.0f / r2;
         int x0 = max(0,           (int)fl::floorf(cx - radius));
-        int x1 = min(WIDTH  - 1,  (int)fl::ceilf (cx + radius));
+        int x1 = min(g_engine->_width  - 1,  (int)fl::ceilf (cx + radius));
         int y0 = max(0,           (int)fl::floorf(cy - radius));
-        int y1 = min(HEIGHT - 1,  (int)fl::ceilf (cy + radius));
+        int y1 = min(g_engine->_height - 1,  (int)fl::ceilf (cy + radius));
 
         const float densityScale = densityMag * (1.0f / 255.0f);
 
@@ -74,12 +72,12 @@ namespace flowFields {
                 // pattern, so the same cell gets the same offset across frames
                 // (no temporal flicker).
                 const float hueOffset = bayerHueDither[y & 3][x & 3] * HUE_DITHER_SCALE;
-                ColorF c = rainbow(t, fluidJet.jetHueSpeed, hueOffset);
+                ColorF c = g_engine->rainbow(g_engine->t, fluidJet.jetHueSpeed, hueOffset);
 
                 const float wScale = w * densityScale;
-                gR[y][x] += c.r * wScale;
-                gG[y][x] += c.g * wScale;
-                gB[y][x] += c.b * wScale;
+                g_engine->gR[y][x] += c.r * wScale;
+                g_engine->gG[y][x] += c.g * wScale;
+                g_engine->gB[y][x] += c.b * wScale;
                 u[y][x]  += velX * w;
                 v[y][x]  += velY * w;
             }
@@ -91,19 +89,17 @@ namespace flowFields {
         const ModConfig& angleMod = fluidJet.modAngle;
 
         // ─── 1) Plumbing: configure timer channels ─────────────────
-        timings.ratio[forceMod.modTimer] = 0.0004f  * forceMod.modRate;
-        timings.ratio[angleMod.modTimer] = 0.00045f * angleMod.modRate;
-        calculate_modulators(timings, 2);
+        g_engine->timings.ratio[forceMod.modTimer] = 0.0004f  * forceMod.modRate;
+        g_engine->timings.ratio[angleMod.modTimer] = 0.00045f * angleMod.modRate;
+        g_engine->calculate_modulators(2);
 
         // ─── 2) Signal acquisition ─────────────────────────────────
-        //const float forceSignal = move.directional_noise[forceMod.modTimer];
-        const float forceSignal = move.normalized_noise[forceMod.modTimer];
-        const float angleSignal = move.directional_noise[angleMod.modTimer];
+        const float forceSignal = g_engine->move.normalized_noise[forceMod.modTimer];
+        const float angleSignal = g_engine->move.directional_noise[angleMod.modTimer];
 
         // ─── 3) Artistic application ───────────────────────────────
         // Force: orbitalDots-style bipolar modulation
         const float currentForce = fluidJet.jetForce * (1.0f + forceSignal * 0.4f);
-            //((1.0f - forceMod.modLevel) + forceMod.modLevel * forceSignal);
 
         // Angle: noise-based offset around base direction.
         // Coefficient π/4 per modLevel unit → modLevel=2 reaches full ±π/2 (±90°).
@@ -122,13 +118,11 @@ namespace flowFields {
         const float velX = dirX * currentForce;
         const float velY = dirY * currentForce;
 
-        // Color is now computed per-cell inside the splat (with hue dither),
-        // so we just pass a per-layer density magnitude.
         const float density = fluidJet.jetDensity;
 
         // Jet position: bottom-center
-        const float jx = (float)WIDTH * 0.5f;
-        const float jy = (float)HEIGHT - 3.0f;
+        const float jx = (float)g_engine->_width * 0.5f;
+        const float jy = (float)g_engine->_height - 3.0f;
 
         // ─── 4) 3-layered Gaussian splat ──────────────────────────
         // Each layer is shifted along the jet axis to extend the plume.

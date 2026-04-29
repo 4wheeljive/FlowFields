@@ -4,8 +4,7 @@
 //  NOISE KALEIDO - emitter_noiseKaleido.h
 // ═══════════════════════════════════════════════════════════════════
 
-#include "flowFieldsTypes.h"
-#include "modulators.h"
+#include "FlowFieldsEngine.h"
 
 namespace flowFields {
 
@@ -32,7 +31,7 @@ namespace flowFields {
         float total = 0.0f;
         float freq = 1.0f;
         for (int i = 0; i < 4; i++) {
-            total += kaleidoNoise.noise(x * freq, y * freq) * amps[i];
+            total += g_engine->kaleidoNoise.noise(x * freq, y * freq) * amps[i];
             // Early exit: can remaining octaves bring total into band?
             float rem = FBM_REMAINING[i];
             if ((total + rem) * FBM_NORM_INV < bandLo) return -1.0f;
@@ -54,21 +53,22 @@ namespace flowFields {
         const float band = noiseKaleido.noiseBand;
         const float gamma = noiseKaleido.kaleidoGamma;
 
-        const int baseX = (WIDTH / 2) + 1;
-        const int baseY = (HEIGHT / 2) + 1;
+        const int baseX = (g_engine->_width / 2) + 1;
+        const int baseY = (g_engine->_height / 2) + 1;
         const int mirrorLimitX = baseX - 2;
         const int mirrorLimitY = baseY - 2;
 
         // Two layers with different drifts and color phases
         struct LayerCfg { float offX, offY, phase, span; };
+        const float et = g_engine->t;
         const LayerCfg layers[2] = {
-            {  t * 0.55f * speed, -t * 0.43f * speed,        0.00f,  0.16f },
-            { -t * 0.34f * speed + 9.7f, t * 0.61f * speed + 4.1f, 0.48f, -0.18f },
+            {  et * 0.55f * speed, -et * 0.43f * speed,        0.00f,  0.16f },
+            { -et * 0.34f * speed + 9.7f, et * 0.61f * speed + 4.1f, 0.48f, -0.18f },
         };
 
         for (int layer = 0; layer < 2; layer++) {
             const LayerCfg& L = layers[layer];
-            float h0 = fmodPos(t * colorShift + L.phase, 1.0f);
+            float h0 = fmodPos(et * g_engine->colorShift + L.phase, 1.0f);
             float h1 = fmodPos(h0 + L.span, 1.0f);
 
             for (int gy = 0; gy < baseY; gy++) {
@@ -90,7 +90,9 @@ namespace flowFields {
 
                     // Color from hue interpolation across noise range
                     float hm = lerpHue(h0, h1, u);
-                    ColorF c = useRainbow ? hsvRainbow(hm) : hsvSpectrum(hm);
+                    ColorF c = g_engine->useRainbow
+                               ? FlowFieldsEngine::hsvRainbow(hm)
+                               : FlowFieldsEngine::hsvSpectrum(hm);
                     float cr = c.r * gain;
                     float cg = c.g * gain;
                     float cb = c.b * gain;
@@ -114,20 +116,20 @@ namespace flowFields {
                         int tx = tapX[tap];
                         int ty = tapY[tap];
                         float w = weights[tap];
-                        int mx = WIDTH  - 1 - tx;
-                        int my = HEIGHT - 1 - ty;
+                        int mx = g_engine->_width  - 1 - tx;
+                        int my = g_engine->_height - 1 - ty;
 
                         // Original quadrant
-                        blendPixelWeighted(tx, ty, cr, cg, cb, w);
+                        g_engine->blendPixelWeighted(tx, ty, cr, cg, cb, w);
                         // Horizontal mirror
                         if (tx <= mirrorLimitX)
-                            blendPixelWeighted(mx, ty, cr, cg, cb, w);
+                            g_engine->blendPixelWeighted(mx, ty, cr, cg, cb, w);
                         // Vertical mirror
                         if (ty <= mirrorLimitY)
-                            blendPixelWeighted(tx, my, cr, cg, cb, w);
+                            g_engine->blendPixelWeighted(tx, my, cr, cg, cb, w);
                         // Diagonal mirror
                         if (tx <= mirrorLimitX && ty <= mirrorLimitY)
-                            blendPixelWeighted(mx, my, cr, cg, cb, w);
+                            g_engine->blendPixelWeighted(mx, my, cr, cg, cb, w);
                     }
                 }
             }
@@ -136,5 +138,5 @@ namespace flowFields {
 
     FL_OPTIMIZATION_LEVEL_O3_END
     FL_FAST_MATH_END
-    
+
 }

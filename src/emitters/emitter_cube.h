@@ -1,12 +1,11 @@
 #pragma once
 
 //========================================================================================
-// cube based originally on AI-generated code shared by Fluffy-Wishbone-3497 here: 
+// cube based originally on AI-generated code shared by Fluffy-Wishbone-3497 here:
 // https://www.reddit.com/r/FastLED/comments/1nvuzjg/claude_does_like_to_code_fastled/
 //========================================================================================
 
-#include "flowFieldsTypes.h"
-#include "modulators.h"
+#include "FlowFieldsEngine.h"
 
 namespace flowFields {
     FL_FAST_MATH_BEGIN
@@ -34,17 +33,17 @@ namespace flowFields {
     {-1, -1, -1}, {1, -1, -1}, {1, 1, -1}, {-1, 1, -1},
     {-1, -1, 1}, {1, -1, 1}, {1, 1, 1}, {-1, 1, 1}
     };
-    
+
     // Cube edges (pairs of vertex indices)
     int edges[12][2] = {
     {0, 1}, {1, 2}, {2, 3}, {3, 0},  // Back face
     {4, 5}, {5, 6}, {6, 7}, {7, 4},  // Front face
     {0, 4}, {1, 5}, {2, 6}, {3, 7}   // Connecting edges
     };
-    
+
     float rotated[8][3];
     float projected[8][2];
-    
+
     float angleX = 0;
     float angleY = 0;
     float angleZ = 0;
@@ -56,7 +55,7 @@ namespace flowFields {
         float dx = x1 - x0;
         float dy = y1 - y0;
         float maxd = fl::fabsf(dx) > fl::fabsf(dy) ? fl::fabsf(dx) : fl::fabsf(dy);
-        int steps = max(1, (int)(maxd)); // * 3.0f    multiply maxd to make edges thicker 
+        int steps = max(1, (int)(maxd)); // multiply maxd to make edges thicker
         for (int i = 0; i <= steps; i++) {
             float u  = (float)i / (float)steps;
             float x  = x0 + dx * u;
@@ -65,10 +64,10 @@ namespace flowFields {
             int   yi = (int)fl::floorf(y);
             float fx = x - xi;
             float fy = y - yi;
-            blendPixelWeighted(xi,     yi,     cr, cg, cb, (1.0f - fx) * (1.0f - fy));
-            blendPixelWeighted(xi + 1, yi,     cr, cg, cb, fx * (1.0f - fy));
-            blendPixelWeighted(xi,     yi + 1, cr, cg, cb, (1.0f - fx) * fy);
-            blendPixelWeighted(xi + 1, yi + 1, cr, cg, cb, fx * fy);
+            g_engine->blendPixelWeighted(xi,     yi,     cr, cg, cb, (1.0f - fx) * (1.0f - fy));
+            g_engine->blendPixelWeighted(xi + 1, yi,     cr, cg, cb, fx * (1.0f - fy));
+            g_engine->blendPixelWeighted(xi,     yi + 1, cr, cg, cb, (1.0f - fx) * fy);
+            g_engine->blendPixelWeighted(xi + 1, yi + 1, cr, cg, cb, fx * fy);
         }
     }
 
@@ -78,32 +77,32 @@ namespace flowFields {
         float cosX = cos(angleX), sinX = sin(angleX);
         float cosY = cos(angleY), sinY = sin(angleY);
         float cosZ = cos(angleZ), sinZ = sin(angleZ);
-    
+
         for (int i = 0; i < 8; i++) {
             float x = vertices[i][0];
             float y = vertices[i][1];
             float z = vertices[i][2];
-        
+
             // Rotate around X axis
             float y1 = y * cosX - z * sinX;
             float z1 = y * sinX + z * cosX;
-        
+
             // Rotate around Y axis
             float x2 = x * cosY + z1 * sinY;
             float z2 = -x * sinY + z1 * cosY;
-        
+
             // Rotate around Z axis
             float x3 = x2 * cosZ - y1 * sinZ;
             float y3 = x2 * sinZ + y1 * cosZ;
-        
+
             rotated[i][0] = x3;
             rotated[i][1] = y3;
             rotated[i][2] = z2;
-        
+
             // Perspective projection
-            float scale = MIN_DIMENSION / 4; // 22.0
-            projected[i][0] = x3 * scale * workScale + WIDTH / 2.0;
-            projected[i][1] = y3 * scale * workScale + HEIGHT / 2.0;
+            float scale = g_engine->_minDim / 4; // 22.0
+            projected[i][0] = x3 * scale * workScale + g_engine->_width / 2.0;
+            projected[i][1] = y3 * scale * workScale + g_engine->_height / 2.0;
         }
     } // rotateCube()
 
@@ -120,23 +119,23 @@ namespace flowFields {
         // 1) Plumbing: configure timer channels
         // -----------------------------------------------------------------
 
-        timings.ratio[scaleMod.modTimer] = 0.0004f * scaleMod.modRate;
-        timings.ratio[rsxMod.modTimer]   = 0.0004f * rsxMod.modRate;
-        timings.ratio[rsyMod.modTimer]   = 0.00045f * rsyMod.modRate;
-        timings.ratio[rszMod.modTimer]   = 0.0005f * rszMod.modRate;
+        g_engine->timings.ratio[scaleMod.modTimer] = 0.0004f * scaleMod.modRate;
+        g_engine->timings.ratio[rsxMod.modTimer]   = 0.0004f * rsxMod.modRate;
+        g_engine->timings.ratio[rsyMod.modTimer]   = 0.00045f * rsyMod.modRate;
+        g_engine->timings.ratio[rszMod.modTimer]   = 0.0005f * rszMod.modRate;
 
-        calculate_modulators(timings, 4);
+        g_engine->calculate_modulators(4);
 
         // -----------------------------------------------------------------
         // 2) Signal acquisition: centered bipolar control signals [-1, 1]
         // -----------------------------------------------------------------
 
-        const float scaleSignal = move.directional_noise[scaleMod.modTimer];
+        const float scaleSignal = g_engine->move.directional_noise[scaleMod.modTimer];
 
         const ModConfig* rsMods[3] = {&rsxMod, &rsyMod, &rszMod};
         float rsSignal[3];
         for (int i = 0; i < 3; i++) {
-            rsSignal[i] = move.directional_noise[rsMods[i]->modTimer];
+            rsSignal[i] = g_engine->move.directional_noise[rsMods[i]->modTimer];
         }
 
         // -----------------------------------------------------------------
@@ -160,26 +159,26 @@ namespace flowFields {
 
     static void emitCube() {
 
-		cubePrepare();
-		rotateCube();
+        cubePrepare();
+        rotateCube();
 
-		// Draw all edges with rainbow colors onto the float grid
-		for (int i = 0; i < 12; i++) {
-			int v0 = edges[i][0];
-			int v1 = edges[i][1];
+        // Draw all edges with rainbow colors onto the float grid
+        for (int i = 0; i < 12; i++) {
+            int v0 = edges[i][0];
+            int v1 = edges[i][1];
 
-			// Convert edge hue to float RGB (matching original CHSV(i * 21, 255, 255))
-			ColorF c = hsvRainbow((i * 21) / 255.0f);
+            // Convert edge hue to float RGB (matching original CHSV(i * 21, 255, 255))
+            ColorF c = FlowFieldsEngine::hsvRainbow((i * 21) / 255.0f);
 
-			drawFixedColorLine(projected[v0][0], projected[v0][1],
-					projected[v1][0], projected[v1][1],
-					c.r, c.g, c.b);
-		}
+            drawFixedColorLine(projected[v0][0], projected[v0][1],
+                    projected[v1][0], projected[v1][1],
+                    c.r, c.g, c.b);
+        }
 
-		// Update rotation angles (radians/sec * dt)
-		angleX += workRotateSpeed[0] * dt;
-		angleY += workRotateSpeed[1] * dt;
-		angleZ += workRotateSpeed[2] * dt;
+        // Update rotation angles (radians/sec * dt)
+        angleX += workRotateSpeed[0] * g_engine->dt;
+        angleY += workRotateSpeed[1] * g_engine->dt;
+        angleZ += workRotateSpeed[2] * g_engine->dt;
 
     }
 

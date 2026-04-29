@@ -4,8 +4,7 @@
 //  OTHER (SHORT) EMITTERS — emitters_other.h
 // ═══════════════════════════════════════════════════════════════════
 
-#include "flowFieldsTypes.h"
-#include "modulators.h"
+#include "FlowFieldsEngine.h"
 
 namespace flowFields {
     FL_FAST_MATH_BEGIN
@@ -38,23 +37,23 @@ namespace flowFields {
 
         // On each new beat, spawn a dot at a random grid position
         if (myAudio::busC.newBeat) {
-            float cx = random8(0, WIDTH  - 1) + random8() / 255.0f;
-            float cy = random8(0, HEIGHT - 1) + random8() / 255.0f;
+            float cx = random8(0, g_engine->_width  - 1) + random8() / 255.0f;
+            float cy = random8(0, g_engine->_height - 1) + random8() / 255.0f;
             // Color from rainbow based on current time
-            ColorF c = rainbow(t, colorShift, random8() / 255.0f);
-            drawDot(cx, cy, audioDots.dotDiam * 5, c.r, c.g, c.b);
+            ColorF c = g_engine->rainbow(g_engine->t, g_engine->colorShift, random8() / 255.0f);
+            g_engine->drawDot(cx, cy, audioDots.dotDiam * 5, c.r, c.g, c.b);
         }
-    
+
         if (myAudio::busB.newBeat) {
-            float cx = random8(0, WIDTH  - 1) + random8() / 255.0f;
-            float cy = random8(0, HEIGHT - 1) + random8() / 255.0f;
+            float cx = random8(0, g_engine->_width  - 1) + random8() / 255.0f;
+            float cy = random8(0, g_engine->_height - 1) + random8() / 255.0f;
             // Color from rainbow based on current time
-            ColorF c = rainbow(t, colorShift, random8() / 255.0f);
-            drawDot(cx, cy, audioDots.dotDiam, c.r, c.g, c.b);
+            ColorF c = g_engine->rainbow(g_engine->t, g_engine->colorShift, random8() / 255.0f);
+            g_engine->drawDot(cx, cy, audioDots.dotDiam, c.r, c.g, c.b);
         }
     }
 
-    
+
     // ═══════════════════════════════════════════════════════════════════
     //  RAINBOW BORDER
     // ═══════════════════════════════════════════════════════════════════
@@ -63,30 +62,30 @@ namespace flowFields {
     //BorderRectParams borderRect;
 
     static void emitRainbowBorder() {
-        const int total = 2 * (WIDTH + HEIGHT) - 4;
+        const int total = 2 * (g_engine->_width + g_engine->_height) - 4;
         int idx = 0;
         // Top edge: left to right
-        for (int x = 0; x < WIDTH; x++) {
-            ColorF c = rainbow(t, colorShift, (float)idx / total);
-            gR[0][x] = c.r; gG[0][x] = c.g; gB[0][x] = c.b;
+        for (int x = 0; x < g_engine->_width; x++) {
+            ColorF c = g_engine->rainbow(g_engine->t, g_engine->colorShift, (float)idx / total);
+            g_engine->gR[0][x] = c.r; g_engine->gG[0][x] = c.g; g_engine->gB[0][x] = c.b;
             idx++;
         }
         // Right edge: top+1 to bottom
-        for (int y = 1; y < HEIGHT; y++) {
-            ColorF c = rainbow(t, colorShift, (float)idx / total);
-            gR[y][WIDTH-1] = c.r; gG[y][WIDTH-1] = c.g; gB[y][WIDTH-1] = c.b;
+        for (int y = 1; y < g_engine->_height; y++) {
+            ColorF c = g_engine->rainbow(g_engine->t, g_engine->colorShift, (float)idx / total);
+            g_engine->gR[y][g_engine->_width-1] = c.r; g_engine->gG[y][g_engine->_width-1] = c.g; g_engine->gB[y][g_engine->_width-1] = c.b;
             idx++;
         }
         // Bottom edge: right-1 to left
-        for (int x = WIDTH - 2; x >= 0; x--) {
-            ColorF c = rainbow(t, colorShift, (float)idx / total);
-            gR[HEIGHT-1][x] = c.r; gG[HEIGHT-1][x] = c.g; gB[HEIGHT-1][x] = c.b;
+        for (int x = g_engine->_width - 2; x >= 0; x--) {
+            ColorF c = g_engine->rainbow(g_engine->t, g_engine->colorShift, (float)idx / total);
+            g_engine->gR[g_engine->_height-1][x] = c.r; g_engine->gG[g_engine->_height-1][x] = c.g; g_engine->gB[g_engine->_height-1][x] = c.b;
             idx++;
         }
         // Left edge: bottom-1 to top+1
-        for (int y = HEIGHT - 2; y > 0; y--) {
-            ColorF c = rainbow(t, colorShift, (float)idx / total);
-            gR[y][0] = c.r; gG[y][0] = c.g; gB[y][0] = c.b;
+        for (int y = g_engine->_height - 2; y > 0; y--) {
+            ColorF c = g_engine->rainbow(g_engine->t, g_engine->colorShift, (float)idx / total);
+            g_engine->gR[y][0] = c.r; g_engine->gG[y][0] = c.g; g_engine->gB[y][0] = c.b;
             idx++;
         }
     }

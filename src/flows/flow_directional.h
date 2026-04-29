@@ -11,7 +11,7 @@
 //  rotateSpeed > 0  -> wind vector rotates over time
 //  waveAmp     > 0  -> adds sinusoidal wobble perpendicular to wind
 
-#include "flowFieldsTypes.h"
+#include "FlowFieldsEngine.h"
 
 namespace flowFields {
     FL_FAST_MATH_BEGIN
@@ -33,15 +33,15 @@ namespace flowFields {
     static float dirT;             // time snapshot for wave phase
 
     static void directionalPrepare() {
-        float angle = t * (2.0f * CT_PI * directional.rotateSpeed);
+        float angle = g_engine->t * (2.0f * CT_PI * directional.rotateSpeed);
         dirCos = fl::cosf(angle);
         dirSin = fl::sinf(angle);
-        dirT   = t;
+        dirT   = g_engine->t;
     }
 
     static void directionalAdvect() {
         // Frame-rate-independent fade
-        float fade = fl::powf(0.5f, dt / persistence);
+        float fade = fl::powf(0.5f, g_engine->dt / g_engine->persistence);
 
         float step = directional.windStep;
         float frac = directional.blendFactor;
@@ -58,19 +58,19 @@ namespace flowFields {
         float wSpd  = directional.waveSpeed;
         bool  doWave = (wAmp > 0.001f);
 
-        float maxX = (float)(WIDTH  - 1) - 1e-6f;
-        float maxY = (float)(HEIGHT - 1) - 1e-6f;
+        float maxX = (float)(g_engine->_width  - 1) - 1e-6f;
+        float maxY = (float)(g_engine->_height - 1) - 1e-6f;
 
         // Snapshot live grid to scratch buffer
-        for (int y = 0; y < HEIGHT; y++)
-            for (int x = 0; x < WIDTH; x++) {
-                tR[y][x] = gR[y][x];
-                tG[y][x] = gG[y][x];
-                tB[y][x] = gB[y][x];
+        for (int y = 0; y < g_engine->_height; y++)
+            for (int x = 0; x < g_engine->_width; x++) {
+                g_engine->tR[y][x] = g_engine->gR[y][x];
+                g_engine->tG[y][x] = g_engine->gG[y][x];
+                g_engine->tB[y][x] = g_engine->gB[y][x];
             }
 
-        for (int y = 0; y < HEIGHT; y++) {
-            for (int x = 0; x < WIDTH; x++) {
+        for (int y = 0; y < g_engine->_height; y++) {
+            for (int x = 0; x < g_engine->_width; x++) {
                 // 1) Backward advection along wind
                 float sx = (float)x - wx;
                 float sy = (float)y - wy;
@@ -90,28 +90,28 @@ namespace flowFields {
                 // Bilinear sample from scratch buffer
                 int   ix0 = (int)fl::floorf(sx);
                 int   iy0 = (int)fl::floorf(sy);
-                int   ix1 = min(WIDTH  - 1, ix0 + 1);
-                int   iy1 = min(HEIGHT - 1, iy0 + 1);
+                int   ix1 = min(g_engine->_width  - 1, ix0 + 1);
+                int   iy1 = min(g_engine->_height - 1, iy0 + 1);
                 float fx  = sx - ix0;
                 float fy  = sy - iy0;
 
-                float rTop = tR[iy0][ix0] * (1.0f - fx) + tR[iy0][ix1] * fx;
-                float rBot = tR[iy1][ix0] * (1.0f - fx) + tR[iy1][ix1] * fx;
+                float rTop = g_engine->tR[iy0][ix0] * (1.0f - fx) + g_engine->tR[iy0][ix1] * fx;
+                float rBot = g_engine->tR[iy1][ix0] * (1.0f - fx) + g_engine->tR[iy1][ix1] * fx;
                 float sr   = rTop * (1.0f - fy) + rBot * fy;
 
-                float gTop = tG[iy0][ix0] * (1.0f - fx) + tG[iy0][ix1] * fx;
-                float gBot = tG[iy1][ix0] * (1.0f - fx) + tG[iy1][ix1] * fx;
+                float gTop = g_engine->tG[iy0][ix0] * (1.0f - fx) + g_engine->tG[iy0][ix1] * fx;
+                float gBot = g_engine->tG[iy1][ix0] * (1.0f - fx) + g_engine->tG[iy1][ix1] * fx;
                 float sg   = gTop * (1.0f - fy) + gBot * fy;
 
-                float bTop = tB[iy0][ix0] * (1.0f - fx) + tB[iy0][ix1] * fx;
-                float bBot = tB[iy1][ix0] * (1.0f - fx) + tB[iy1][ix1] * fx;
+                float bTop = g_engine->tB[iy0][ix0] * (1.0f - fx) + g_engine->tB[iy0][ix1] * fx;
+                float bBot = g_engine->tB[iy1][ix0] * (1.0f - fx) + g_engine->tB[iy1][ix1] * fx;
                 float sb   = bTop * (1.0f - fy) + bBot * fy;
 
                 // Blend current pixel with transported sample, then fade
                 // Keep full float precision; quantize only at LED output.
-                gR[y][x] = (tR[y][x] * inv + sr * frac) * fade;
-                gG[y][x] = (tG[y][x] * inv + sg * frac) * fade;
-                gB[y][x] = (tB[y][x] * inv + sb * frac) * fade;
+                g_engine->gR[y][x] = (g_engine->tR[y][x] * inv + sr * frac) * fade;
+                g_engine->gG[y][x] = (g_engine->tG[y][x] * inv + sg * frac) * fade;
+                g_engine->gB[y][x] = (g_engine->tB[y][x] * inv + sb * frac) * fade;
             }
         }
     }

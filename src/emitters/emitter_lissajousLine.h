@@ -4,8 +4,7 @@
 //  LISSAJOUS LINE - emitter_lissajousLine.h
 // ═══════════════════════════════════════════════════════════════════
 
-#include "flowFieldsTypes.h"
-#include "modulators.h"
+#include "FlowFieldsEngine.h"
 
 namespace flowFields {
 
@@ -14,7 +13,7 @@ namespace flowFields {
 
     struct LissajousParams {
         float lineSpeed = 0.35f;
-        float lineAmp = (MIN_DIMENSION - 4) * 0.75f;
+        float lineAmp = (g_engine->_minDim - 4) * 0.75f;
         uint8_t lineClamp = 0;  // 0 = free (wrap), 1 = clamp to grid, 2 = tether nearest to center
         ModConfig modLineSpeed = {0, 1.0f, 0.0f}; // modTimer, modRate, modLevel
         ModConfig modLineAmp   = {1, 0.5f, 0.0f};
@@ -23,8 +22,8 @@ namespace flowFields {
     LissajousParams lissajous;
 
     static void emitLissajousLine() {
-        const float cx = (WIDTH  - 1) * 0.5f;
-        const float cy = (HEIGHT - 1) * 0.5f;
+        const float cx = (g_engine->_width  - 1) * 0.5f;
+        const float cy = (g_engine->_height - 1) * 0.5f;
         const float amp = lissajous.lineAmp;
 
         // Integrate speed to preserve continuity when lineSpeed changes.
@@ -37,26 +36,26 @@ namespace flowFields {
         // 1) Plumbing: configure timer channels
         // -----------------------------------------------------------------
 
-        timings.ratio[speedMod.modTimer] = 0.00045f * speedMod.modRate;
-        timings.ratio[ampMod.modTimer]   = 0.0003f  * ampMod.modRate;
-        calculate_modulators(timings, 2);
+        g_engine->timings.ratio[speedMod.modTimer] = 0.00045f * speedMod.modRate;
+        g_engine->timings.ratio[ampMod.modTimer]   = 0.0003f  * ampMod.modRate;
+        g_engine->calculate_modulators(2);
 
         // -----------------------------------------------------------------
         // 2) Signal acquisition: get normalized modulation signals
         //    directional_noise is centered bipolar noise in roughly [-1, 1]
         // -----------------------------------------------------------------
 
-        const float speedSignal = move.directional_noise[speedMod.modTimer];
+        const float speedSignal = g_engine->move.directional_noise[speedMod.modTimer];
         const float currentSpeed =
             lissajous.lineSpeed * (1.0f + speedMod.modLevel * 0.85f * speedSignal);
 
-        const float ampSignal = move.directional_noise[ampMod.modTimer];
+        const float ampSignal = g_engine->move.directional_noise[ampMod.modTimer];
 
         // -----------------------------------------------------------------
         // 3) Artistic application: decide what those signals mean
         // -----------------------------------------------------------------
 
-        phase += currentSpeed * dt;
+        phase += currentSpeed * g_engine->dt;
 
         // Amplitude: exponential modulation for perceptually balanced ×4/÷4 range.
         // fastpow(4, signal) maps: -1→0.25, 0→1.0, +1→4.0
@@ -74,10 +73,10 @@ namespace flowFields {
 
         if (lissajous.lineClamp == 1) {
             // Clamp: pin endpoints to grid edges
-            lx1 = clampf(lx1, 0.0f, (float)(WIDTH  - 1));
-            ly1 = clampf(ly1, 0.0f, (float)(HEIGHT - 1));
-            lx2 = clampf(lx2, 0.0f, (float)(WIDTH  - 1));
-            ly2 = clampf(ly2, 0.0f, (float)(HEIGHT - 1));
+            lx1 = clampf(lx1, 0.0f, (float)(g_engine->_width  - 1));
+            ly1 = clampf(ly1, 0.0f, (float)(g_engine->_height - 1));
+            lx2 = clampf(lx2, 0.0f, (float)(g_engine->_width  - 1));
+            ly2 = clampf(ly2, 0.0f, (float)(g_engine->_height - 1));
         } else if (lissajous.lineClamp == 2) {
             // Tether: keep the nearer endpoint within half-grid of center
             float dx1 = lx1 - cx;
@@ -88,8 +87,8 @@ namespace flowFields {
             float nearDx = (fabsf(dx1) < fabsf(dx2)) ? dx1 : dx2;
             float nearDy = (fabsf(dy1) < fabsf(dy2)) ? dy1 : dy2;
 
-            float maxDx = (float)WIDTH  * 0.5f;
-            float maxDy = (float)HEIGHT * 0.5f;
+            float maxDx = (float)g_engine->_width  * 0.5f;
+            float maxDy = (float)g_engine->_height * 0.5f;
 
             float xOver = fmaxf(0.0f, fabsf(nearDx) - maxDx);
             float yOver = fmaxf(0.0f, fabsf(nearDy) - maxDy);
@@ -105,14 +104,15 @@ namespace flowFields {
         // 5) Rendering
         // -----------------------------------------------------------------
 
-        drawAASubpixelLine(lx1, ly1, lx2, ly2, t, colorShift);
-        ColorF ca = rainbow(t, colorShift, 0.0f);
-        ColorF cb = rainbow(t, colorShift, 1.0f);
-        drawAAEndpointDisc(lx1, ly1, ca.r, ca.g, ca.b, 0.85f);
-        drawAAEndpointDisc(lx2, ly2, cb.r, cb.g, cb.b, 0.85f);
+        // drawAASubpixelLine uses this->t and this->colorShift directly
+        g_engine->drawAASubpixelLine(lx1, ly1, lx2, ly2);
+        ColorF ca = g_engine->rainbow(g_engine->t, g_engine->colorShift, 0.0f);
+        ColorF cb = g_engine->rainbow(g_engine->t, g_engine->colorShift, 1.0f);
+        g_engine->drawAAEndpointDisc(lx1, ly1, ca.r, ca.g, ca.b, 0.85f);
+        g_engine->drawAAEndpointDisc(lx2, ly2, cb.r, cb.g, cb.b, 0.85f);
     }
 
     FL_OPTIMIZATION_LEVEL_O3_END
     FL_FAST_MATH_END
-    
+
 }

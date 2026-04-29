@@ -430,6 +430,35 @@ back to the UI — no additional API needed.
 
 ---
 
+## Effort Estimate & Sequencing
+
+### Per-phase breakdown
+
+| Phase | Description | Estimate |
+|-------|-------------|----------|
+| 1 — `FlowFieldsEngine` class | Extract ~40 namespace globals into a class; add `g_engine` pointer; convert `initFlowFields`/`runFlowFields` to `setup()`/`run()`; move drawing primitives to member functions | 3–4 h |
+| 2 — Dynamic grids | Replace `static float gR[HEIGHT][WIDTH]` with `float**` (row-pointer arrays); add `allocGrid`/`freeGrid` helpers; update all 50 grid access sites to `g_engine->gR[y][x]`; refactor `flow_fluid.h`'s internal functions from `float (*x)[WIDTH]` to `float**` (that file owns 6 internal 2D arrays and 5 helper functions that all need updating) | 3–4 h |
+| 3 — Pointer binding | Add `float* pXxx` members defaulting to `&cXxx`; add `bindParam()`; update `bleControl.h` call sites | 1–2 h |
+| 4 — `library.json` | New file, zero risk | 30 min |
+| 5 — FastLED-MM example | New file | 1–2 h |
+| 6 — `main.cpp` | 4 call-site changes + set 2 callbacks | 30 min |
+
+**Session 1** (Phase 1 + 2 + 6): ~7–9 hours. This is the structural core. Verify the standalone
+BLE firmware builds and visuals are identical before proceeding.
+
+**Session 2** (Phase 3 + 4 + 5): ~3–5 hours. Purely additive — no existing behaviour can
+break once Session 1 is verified.
+
+### Why phase-by-phase, not all at once
+
+Session 1 contains the only real risk: two independent mechanical changes (class extraction and
+grid refactor) happen simultaneously, and `flow_fluid.h` needs the most invasive edit. Keeping
+Session 2 separate means a known-good checkpoint exists before the public API surface is
+finalised. A broken `bindParam` call or `library.json` misconfiguration is much easier to
+diagnose when the underlying engine is already verified.
+
+---
+
 ## For the FlowFields Repo Owner — Impact & Benefits
 
 ### What changes in your repo
@@ -491,3 +520,52 @@ new flow fields are more likely to come back upstream when the barrier to entry 
 The existing `platformio.ini`, BLE stack, web UI (`index.html`), and audio pipeline are not
 part of the PR.  You flash and run the firmware exactly as you do today.  The only visible
 difference in `main.cpp` is four lines.
+
+---
+
+## Session 1 Retrospective
+
+Session 1 covered Phases 1, 2, and 6 from the plan — the structural core.
+
+### Definition of Done
+
+| Task | Status | Notes |
+|------|--------|-------|
+| `src/FlowFieldsEngine.h` — class declaration + `g_engine` extern | ✅ | Dynamic grids, noise members, modulator state, lifecycle API, callbacks |
+| `src/flowFieldsTypes.h` — stripped to types-only | ✅ | All variable definitions removed; math helpers, noise classes, ColorF, ModConfig kept |
+| `src/modulators.h` — stripped to type definitions only | ✅ | `timers` / `modulators` structs only; instances now live in `FlowFieldsEngine` |
+| `src/flowFieldsEngine.hpp` — class method implementations | ✅ | `setup`/`run`/`teardown`, `calculate_modulators`, color helpers, drawing primitives, cVar bridge, dispatch tables, `g_engine` definition |
+| All 6 emitter headers — `WIDTH`/`HEIGHT`/`MIN_DIMENSION` → `g_engine->` | ✅ | Logic unchanged; mechanical find-replace only |
+| 5 simple flow headers — same replacement | ✅ | `flow_noise`, `flow_radial`, `flow_directional`, `flow_rings`, `flow_spiral` |
+| `flow_fluid.h` — `SIM_SIZE` constexpr → runtime; `WIDTH`/`HEIGHT` → `g_engine->` | ✅ | Local `SIM_SIZE = (float)g_engine->_minDim` added in each function that uses it |
+| `src/main.cpp` — `engine.setup()` / `engine.run()` | ✅ | Old `initFlowFields`/`runFlowFields` removed; callbacks wired |
+| `platformio.ini` — GitHub deps instead of local `file://` paths | ✅ | FastLED and NimBLE-Arduino now resolved from GitHub |
+| Build compiles cleanly | ✅ | Verified on `seeed_xiao_esp32s3` target |
+
+### What Went Well
+
+- **The `g_engine` pattern was invisible to callers.** All emitter and flow functions needed only a mechanical find-replace (`WIDTH` → `g_engine->_width`, etc.).  No logic changed in any of the 12 component files.
+- **Dynamic `float**` grids dropped in without syntax changes.** Callers continue to write `g_engine->gR[y][x]` — the same `[y][x]` notation works for `float**` as for `float[H][W]`.
+- **The cVar bridge translated directly.** `pushDefaultsToCVars` and `syncFromCVars` became class methods with no logic changes — they already referenced named structs that are now class members.
+- **Separation of concerns paid off.** Because `flowFieldsTypes.h` already grouped types and `flowFieldsEngine.hpp` already grouped logic, the class extraction was a mechanical move, not a redesign.
+
+### What Didn't Go So Well
+
+- **Local library dependencies blocked the build.** `lib/FastLED-e713d6f` and `libNimBLE/NimBLE-Arduino-2.5.0` are gitignored. The specific FastLED commit (e713d6f) also has a `fl::span` overload ambiguity with ESP32 Arduino 3.3.5 that the local copy had apparently been patched to fix. Switched to `fastled/FastLED @ ^3.9.0` and NimBLE-Arduino from GitHub; the FastLED version change needs on-device verification.
+- **`MIN_DIMENSION` in struct defaults was not updated.** Struct member initializers like `float orbitDiam = MIN_DIMENSION * 0.3f` still reference the `boardConfig.h` compile-time macro.  These values are overwritten by `syncFromCVars()` at runtime so behavior is unchanged — but they prevent the struct from being portable to a different grid size without recompiling.
+- **pyyaml missing.** PlatformIO's ESP32 Arduino 3.3.5 framework requires `pyyaml` for its build script; had to install it manually.
+
+### Recommendations for Session 2
+
+**Portability cleanup (recommended before Phase 4 library manifest):**
+
+- Replace the remaining `MIN_DIMENSION` references in struct default values with hardcoded constants that match the current tuned defaults (e.g., `orbitDiam = 6.6f`, `lineAmp = 13.5f`).  These are already the effective runtime values on the 22×22 grid.
+- `boardConfig.h`'s `myXY()` still uses compile-time `WIDTH`/`HEIGHT` in the bounds check and index arithmetic. For the library's `library.json` to work cleanly, this function (or a replacement) needs to be runtime-aware.  The example `FlowFieldsEffect.h` in Phase 5 should demonstrate a portable `xyFunc`.
+
+**Phase 3 — pointer binding** is purely additive: new `float* pXxx` members defaulting to `&cXxx`, and a `bindParam()` method.  No existing code changes.  Zero risk.
+
+**Phase 4 — `library.json`** is a new file.  Zero risk.
+
+**Phase 5 — FastLED-MM example** is a new file.  Zero risk.
+
+**Before Phase 4:** verify on device that the FastLED version change (`@ ^3.9.0` instead of the pinned local copy) produces identical visuals.  If there are regressions, pin to a specific compatible version in `platformio.ini`.

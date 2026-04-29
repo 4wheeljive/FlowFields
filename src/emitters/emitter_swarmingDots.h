@@ -4,8 +4,7 @@
 //  SWARMING DOTS - emitter_swarmingDots.h
 // ═══════════════════════════════════════════════════════════════════
 
-#include "flowFieldsTypes.h"
-#include "modulators.h"
+#include "FlowFieldsEngine.h"
 
 namespace flowFields {
 
@@ -16,7 +15,7 @@ namespace flowFields {
         uint8_t numDots = 3;
         float swarmSpeed = 0.5f;
         float swarmSpread = 0.5f;
-        ModConfig modSwarmSpread = {10, 1.0f, 1.0f};       // modTimer, modRate, modLevel 
+        ModConfig modSwarmSpread = {10, 1.0f, 1.0f};       // modTimer, modRate, modLevel
         ModConfig modSwarmSpeed  = {11, 1.0f, 0.0f};       // modTimer, modRate, modLevel
         float dotDiam = 1.5f;
         uint8_t numActiveTimers = 12;
@@ -41,9 +40,9 @@ namespace flowFields {
         // -----------------------------------------------------------------
 
         // Parameter-owned modulation timer
-        timings.ratio[spreadMod.modTimer] = 0.00055f * spreadMod.modRate;
-        timings.ratio[speedMod.modTimer]  = 0.00033f * speedMod.modRate;
-        timings.offset[speedMod.modTimer] = 0.0f;
+        g_engine->timings.ratio[spreadMod.modTimer] = 0.00055f * spreadMod.modRate;
+        g_engine->timings.ratio[speedMod.modTimer]  = 0.00033f * speedMod.modRate;
+        g_engine->timings.offset[speedMod.modTimer] = 0.0f;
 
         // Structural per-dot motion timers:
         // 2 timers per dot: [d*2] = X, [d*2+1] = Y
@@ -67,17 +66,17 @@ namespace flowFields {
             2600.0f, 3800.0f     // dot 4
         };
 
-        calculate_modulators(timings, speedMod.modTimer + 1);
+        g_engine->calculate_modulators(speedMod.modTimer + 1);
 
         // -----------------------------------------------------------------
         // 2) Signal acquisition: sample structural motion signals
         // -----------------------------------------------------------------
-        
+
         // Speed modulation signal (centered around 1.0f, no reversals)
-        const float speedSignal = move.normalized_noise[speedMod.modTimer]; // 0..1
-       
-        float modSpread = move.normalized_noise[spreadMod.modTimer];
-       
+        const float speedSignal = g_engine->move.normalized_noise[speedMod.modTimer]; // 0..1
+
+        float modSpread = g_engine->move.normalized_noise[spreadMod.modTimer];
+
         // -----------------------------------------------------------------
         // 3) Artistic application: speed and spread modulation; position dots
         // -----------------------------------------------------------------
@@ -91,9 +90,9 @@ namespace flowFields {
 
         // Integrated time base to preserve phase continuity under speed changes
         static float swarmTimeMs = 0.0f;
-        const float dtMs = dt * 1000.0f;  // shared dt is already scaled by globalSpeed
+        const float dtMs = g_engine->dt * 1000.0f;  // shared dt is already scaled by globalSpeed
         swarmTimeMs += dtMs * currentSpeed;
-  
+
         // Spread modulation adds above the base value
         const float spread =
             swarmingDots.swarmSpread +
@@ -129,11 +128,11 @@ namespace flowFields {
             const float sx = cenX + spread * (dotX[d] - cenX);
             const float sy = cenY + spread * (dotY[d] - cenY);
 
-            const float cx = (WIDTH  - 1) * 0.5f * (1.0f + sx);
-            const float cy = (HEIGHT - 1) * 0.5f * (1.0f + sy);
+            const float cx = (g_engine->_width  - 1) * 0.5f * (1.0f + sx);
+            const float cy = (g_engine->_height - 1) * 0.5f * (1.0f + sy);
 
-            const ColorF c = rainbow(t, colorShift, d / fNumDots);
-            drawDot(cx, cy, swarmingDots.dotDiam, c.r, c.g, c.b);
+            const ColorF c = g_engine->rainbow(g_engine->t, g_engine->colorShift, d / fNumDots);
+            g_engine->drawDot(cx, cy, swarmingDots.dotDiam, c.r, c.g, c.b);
         }
     }
 

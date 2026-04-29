@@ -47,6 +47,8 @@ bool mappingOverride = false;
 
 using namespace fl;
 
+static flowFields::FlowFieldsEngine engine;
+
 // **********************************************************************************
 
 void setup() {
@@ -198,10 +200,14 @@ void loop() {
 		mappingOverride ? cMapping = cOverrideMapping : cMapping = defaultMapping;
 		defaultMapping = Mapping::TopDownProgressive;
 
-		if (!flowFields::flowFieldsInstance) {
-			flowFields::initFlowFields(myXY);
+		static bool engineInitialized = false;
+		if (!engineInitialized) {
+			engine.setup(WIDTH, HEIGHT, NUM_LEDS, myXY);
+			engine.onEmitterChanged = sendEmitterState;
+			engine.onFlowChanged    = sendFlowState;
+			engineInitialized = true;
 		}
-		flowFields::runFlowFields();
+		engine.run(leds);
 	}
 
 	PROFILE_START("led_show");

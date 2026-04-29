@@ -1,80 +1,39 @@
 #pragma once
 
 // ═══════════════════════════════════════════════════════════════════
-//  MODULATORS — modulators.h
+//  MODULATORS — modulators.h  (type definitions only)
+//
+//  Instances (timings, move) and calculate_modulators() live in
+//  FlowFieldsEngine as class members.  Emitters/flows call:
+//      g_engine->calculate_modulators(numActiveTimers);
+//  and read/write g_engine->timings / g_engine->move directly.
 // ═══════════════════════════════════════════════════════════════════
 
 #include "flowFieldsTypes.h"
 
 namespace flowFields {
 
-    // ═══════════════════════════════════════════════════════════════════
-    //  TIMER / MODULATOR ENGINE
-    // ═══════════════════════════════════════════════════════════════════
+#define num_timers 20
 
-    #define num_timers 20
+struct timers {
+    float offset[num_timers] = {};  // phase offset per timer (millis)
+    float ratio[num_timers]  = {};  // time-sensitivity per timer
+};
 
-    struct timers {
-        float offset[num_timers];  // timers can be separated by a time offset
-        float ratio[num_timers];   // ratio determines time-sensitivity
-    };
+struct modulators {
+    // Base progression
+    float linear[num_timers] = {};
 
-    struct modulators {
-        // Base progression
-        float linear[num_timers];
+    // Sine-family signals
+    float radial_phase[num_timers]     = {};  // 0 to 2π
+    float normalized_phase[num_timers] = {};  // 0 to 1
+    float directional_sine[num_timers] = {};  // −1 to 1
+    float normalized_sine[num_timers]  = {};  // 0 to 1
 
-        // Sine-family signals
-        float radial_phase[num_timers];      // angle, 0 to 2PI
-        float normalized_phase[num_timers];  // normalized angle, 0 to 1              
-        float directional_sine[num_timers];  // centered sine, -1 to 1
-        float normalized_sine[num_timers];   // normalized sine, 0 to 1
+    // Noise-family signals
+    float directional_noise[num_timers] = {};  // −1 to 1
+    float normalized_noise[num_timers]  = {};  // 0 to 1
+    float radial_noise[num_timers]      = {};  // 0 to 2π
+};
 
-        // Noise-family signals
-        float directional_noise[num_timers];        // centered noise, -1 to 1
-        float normalized_noise[num_timers];         // normalized noise, 0 to 1
-        float radial_noise[num_timers];             // noise mapped to angle, 0 to 2PI
-    };
-
-    timers timings;     // timer inputs; all time/speed settings in one place
-    modulators move;    // timer outputs; all time-based modulators in one place
-
-    void calculate_modulators(timers &timings, uint8_t numActiveTimers) {
-        // Virtual millis accumulator — scales with globalSpeed to avoid
-        // discontinuities when globalSpeed changes mid-run.
-        static unsigned long lastRealMs = 0;
-        static float virtualMs = 0.0f;
-        const unsigned long realMs = fl::millis();
-        if (lastRealMs == 0) lastRealMs = realMs;
-        virtualMs += (realMs - lastRealMs) * globalSpeed;
-        lastRealMs = realMs;
-        const float runtime = virtualMs;
-
-        for (uint8_t i = 0; i < numActiveTimers; i++) {
-            // -----------------------------------------------------------------
-            // Base time progression
-            // -----------------------------------------------------------------
-            move.linear[i] = (runtime + timings.offset[i]) * timings.ratio[i];
-
-            // -----------------------------------------------------------------
-            // Sine-family signals
-            // -----------------------------------------------------------------
-            move.radial_phase[i] = fl::fmodf(move.linear[i], CT_2PI);
-            move.normalized_phase[i] =
-                fl::map_range_clamped(move.radial_phase[i], 0.f, CT_2PI, 0.0f, 1.0f);
-            move.directional_sine[i] = fl::sinf(move.radial_phase[i]);
-            move.normalized_sine[i] = 0.5f + 0.5f * move.directional_sine[i];
-
-            // -----------------------------------------------------------------
-            // Noise-family signals
-            // Perlin1D raw output is roughly [-0.5, 0.5]
-            // directional_noise normalizes that to roughly [-1, 1]
-            // -----------------------------------------------------------------
-            const float rawNoise = noiseX.noise(move.linear[i]);
-
-            move.directional_noise[i] = 2.0f * rawNoise;
-            move.normalized_noise[i] = 0.5f + 0.5f * move.directional_noise[i];
-            move.radial_noise[i] = CT_PI * (1.0f + move.directional_noise[i]);
-        }
-    }
-    
 } // namespace flowFields
