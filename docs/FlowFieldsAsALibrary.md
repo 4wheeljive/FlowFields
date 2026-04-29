@@ -273,7 +273,7 @@ Add `library.json` at the repo root:
   "license": "MIT",
   "frameworks": ["arduino"],
   "platforms": ["espressif32"],
-  "dependencies": [{"name": "fastled/FastLED", "version": "^3.9.0"}],
+  "dependencies": [{"name": "fastled/FastLED", "version": ">=4.0.0"}],
   "build": {
     "srcDir": "src",
     "includeDir": "src",
@@ -551,7 +551,7 @@ Session 1 covered Phases 1, 2, and 6 from the plan — the structural core.
 
 ### What Didn't Go So Well
 
-- **Local library dependencies blocked the build.** `lib/FastLED-e713d6f` and `libNimBLE/NimBLE-Arduino-2.5.0` are gitignored. The specific FastLED commit (e713d6f) also has a `fl::span` overload ambiguity with ESP32 Arduino 3.3.5 that the local copy had apparently been patched to fix. Switched to `fastled/FastLED @ ^3.9.0` and NimBLE-Arduino from GitHub; the FastLED version change needs on-device verification.
+- **Local library dependencies blocked the build.** `lib/FastLED-e713d6f` and `libNimBLE/NimBLE-Arduino-2.5.0` are gitignored. The specific FastLED commit (e713d6f) also has a `fl::span` overload ambiguity with ESP32 Arduino 3.3.5 that the local copy had apparently been patched to fix. Switched to a pinned FastLED 4.x pre-release commit (`c83f7632`, 2026-04-11) and NimBLE-Arduino from GitHub; the FastLED version change needs on-device verification.
 - **`MIN_DIMENSION` in struct defaults was not updated.** Struct member initializers like `float orbitDiam = MIN_DIMENSION * 0.3f` still reference the `boardConfig.h` compile-time macro.  These values are overwritten by `syncFromCVars()` at runtime so behavior is unchanged — but they prevent the struct from being portable to a different grid size without recompiling.
 - **pyyaml missing.** PlatformIO's ESP32 Arduino 3.3.5 framework requires `pyyaml` for its build script; had to install it manually.
 
@@ -568,4 +568,4 @@ Session 1 covered Phases 1, 2, and 6 from the plan — the structural core.
 
 **Phase 5 — FastLED-MM example** is a new file.  Zero risk.
 
-**Before Phase 4:** verify on device that the FastLED version change (`@ ^3.9.0` instead of the pinned local copy) produces identical visuals.  If there are regressions, pin to a specific compatible version in `platformio.ini`.
+**Before Phase 4:** verify on device that the FastLED version change (pinned pre-release 4.x commit `c83f7632` instead of the old local copy) produces identical visuals.  If there are regressions, bisect to a different 4.x commit in `platformio.ini`.
