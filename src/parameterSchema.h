@@ -304,7 +304,7 @@ inline float cModSpeedRate = 0.1f;
 inline float cModSpeedLevel = 0.1f;
 inline float cModShiftRate = 0.5f;
 inline float cModShiftLevel = 0.5f;
-//flowFromCenter
+//radialFlow
 inline float cRadialStep = 0.15f;
 // directionalFlow
 inline float cWindStep = 0.95f;
