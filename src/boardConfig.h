@@ -9,14 +9,14 @@
 //#define S3_32x48_3PIN
 #undef S3_32x48_3PIN
 
-#define S3_22x22
-//#undef S3_22x22
+//#define S3_22x22
+#undef S3_22x22
 
 //#define S3_15x38_2PIN
 #undef S3_15x38_2PIN
 
-//#define P4_64x48_12PIN
-#undef P4_64x48_12PIN
+#define P4_64x48_12PIN
+//#undef P4_64x48_12PIN
 
 #ifdef S3_32x48_3PIN
     #include "reference/matrixMap_32x48_3pin.h"
