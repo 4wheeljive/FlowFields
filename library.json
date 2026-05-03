@@ -1,0 +1,20 @@
+{
+  "name": "FlowFields",
+  "version": "2.0.0",
+  "description": "Emitter + FlowField + Modulator LED visualization engine for ESP32/FastLED",
+  "keywords": ["fastled", "led", "visualization", "esp32", "effects", "particles"],
+  "authors": [{"name": "4wheeljive", "url": "https://github.com/4wheeljive"}],
+  "repository": {"type": "git", "url": "https://github.com/4wheeljive/FlowFields"},
+  "license": "MIT",
+  "frameworks": ["arduino"],
+  "platforms": ["espressif32"],
+  "_fastled_note": "FastLED 4.x (unreleased) is required. Pin a master commit in your platformio.ini — see this repo's platformio.ini for the reference commit.",
+  "dependencies": [
+    {"name": "bblanchon/ArduinoJson", "version": "^7.4.2"}
+  ],
+  "build": {
+    "srcDir": "src",
+    "includeDir": "src",
+    "srcFilter": "+<FlowFieldsModule.cpp> -<main.cpp> -<hosted_ble_bridge.cpp>"
+  }
+}

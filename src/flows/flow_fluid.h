@@ -42,14 +42,28 @@ namespace flowFields {
     static float workVelDissip = 0.5f;
     static float workDyeDissip = 0.5f;
 
-    // Persistent simulation state (survives across frames)
-    static float u[HEIGHT][WIDTH], v[HEIGHT][WIDTH];
-    static float uPrev[HEIGHT][WIDTH], vPrev[HEIGHT][WIDTH];
-    static float pressure[HEIGHT][WIDTH], divergence[HEIGHT][WIDTH];
+    // Persistent simulation state — dynamically allocated by allocFluidGrids(w,h)
+    static float** u;
+    static float** v;
+    static float** uPrev;
+    static float** vPrev;
+    static float** pressure;
+    static float** divergence;
 
-    // Internal "size" parameter for the solver (scales velocity-to-cells conversion).
-    // Stam's algorithm assumes a square grid; we pick a single representative size.
-    static constexpr float SIM_SIZE = (float)MIN_DIMENSION;
+    static void allocFluidGrids(int w, int h) {
+        u         = allocGrid(w, h);
+        v         = allocGrid(w, h);
+        uPrev     = allocGrid(w, h);
+        vPrev     = allocGrid(w, h);
+        pressure  = allocGrid(w, h);
+        divergence= allocGrid(w, h);
+    }
+
+    static void freeFluidGrids() {
+        freeGrid(u);     freeGrid(v);         u  = v  = nullptr;
+        freeGrid(uPrev); freeGrid(vPrev);     uPrev = vPrev = nullptr;
+        freeGrid(pressure); freeGrid(divergence); pressure = divergence = nullptr;
+    }
 
     // ───────────────────────────────────────────────────────────────
     //  Boundary conditions
@@ -57,7 +71,7 @@ namespace flowFields {
     //    b == 1: u-velocity — zero at left/right walls (no penetration)
     //    b == 2: v-velocity — zero at top/bottom walls (no penetration)
     // ───────────────────────────────────────────────────────────────
-    static void setBnd(int b, float (*x)[WIDTH]) {
+    static void setBnd(int b, float** x) {
         if (b == 1) {
             for (int y = 0; y < HEIGHT; y++) {
                 x[y][0]         = 0.0f;
@@ -72,7 +86,7 @@ namespace flowFields {
     }
 
     // Sample with edge clamping (mirror behavior of Python's set_bnd for scalars)
-    static inline float sampleClamped(float (*x)[WIDTH], int yi, int xi) {
+    static inline float sampleClamped(float** x, int yi, int xi) {
         if (yi < 0) yi = 0; else if (yi >= HEIGHT) yi = HEIGHT - 1;
         if (xi < 0) xi = 0; else if (xi >= WIDTH)  xi = WIDTH  - 1;
         return x[yi][xi];
@@ -82,7 +96,7 @@ namespace flowFields {
     //  Linear solver (Jacobi iteration)
     //    x[i,j] = (x0[i,j] + a*(x[i-1,j] + x[i+1,j] + x[i,j-1] + x[i,j+1])) / c
     // ───────────────────────────────────────────────────────────────
-    static void linSolve(int b, float (*x)[WIDTH], float (*x0)[WIDTH], float a, float c, int iter) {
+    static void linSolve(int b, float** x, float** x0, float a, float c, int iter) {
         const float invC = 1.0f / c;
         for (int k = 0; k < iter; k++) {
             for (int y = 0; y < HEIGHT; y++) {
@@ -98,20 +112,20 @@ namespace flowFields {
         }
     }
 
-    static void diffuse(int b, float (*x)[WIDTH], float (*x0)[WIDTH], float diff, float dt_) {
+    static void diffuse(int b, float** x, float** x0, float diff, float dt_) {
         if (diff <= 0.0f) {
-            // No diffusion: result is just x0
-            memcpy(x, x0, sizeof(float) * HEIGHT * WIDTH);
+            memcpy(x[0], x0[0], (size_t)WIDTH * HEIGHT * sizeof(float));
             setBnd(b, x);
             return;
         }
+        const float SIM_SIZE = (float)fl::min(WIDTH, HEIGHT);
         const float a = dt_ * diff * SIM_SIZE * SIM_SIZE;
         linSolve(b, x, x0, a, 1.0f + 4.0f * a, fluid.solverIterations);
     }
 
     // Semi-Lagrangian advection: backtrace each cell along velocity field, bilinearly sample source
-    static void advectField(int b, float (*d)[WIDTH], float (*d0)[WIDTH],
-                            float (*velU)[WIDTH], float (*velV)[WIDTH], float dt_) {
+    static void advectField(int b, float** d, float** d0, float** velU, float** velV, float dt_) {
+        const float SIM_SIZE = (float)fl::min(WIDTH, HEIGHT);
         const float dt0 = dt_ * SIM_SIZE;
         const float maxX = (float)WIDTH  - 1.5f;
         const float maxY = (float)HEIGHT - 1.5f;
@@ -143,6 +157,7 @@ namespace flowFields {
 
     // Hodge projection: subtract pressure gradient to make velocity divergence-free
     static void project() {
+        const float SIM_SIZE = (float)fl::min(WIDTH, HEIGHT);
         const float h = 1.0f / SIM_SIZE;
 
         // 1. Compute divergence of velocity field
@@ -261,14 +276,15 @@ namespace flowFields {
         }
 
         // ─── VELOCITY STEP ─────────────────────────────────────────
-        memcpy(uPrev, u, sizeof(u));
-        memcpy(vPrev, v, sizeof(v));
+        const size_t gridBytes = (size_t)WIDTH * HEIGHT * sizeof(float);
+        memcpy(uPrev[0], u[0], gridBytes);
+        memcpy(vPrev[0], v[0], gridBytes);
         diffuse(1, u, uPrev, fluid.viscosity, dt);
         diffuse(2, v, vPrev, fluid.viscosity, dt);
         project();
 
-        memcpy(uPrev, u, sizeof(u));
-        memcpy(vPrev, v, sizeof(v));
+        memcpy(uPrev[0], u[0], gridBytes);
+        memcpy(vPrev[0], v[0], gridBytes);
         advectField(1, u, uPrev, uPrev, vPrev, dt);
         advectField(2, v, vPrev, uPrev, vPrev, dt);
         project();
@@ -282,17 +298,17 @@ namespace flowFields {
         // For each channel: optionally diffuse, then advect through u,v.
         // Use tR/tG/tB as the previous-frame buffer.
         if (fluid.diffusion > 0.0f) {
-            memcpy(tR, gR, sizeof(gR));
-            memcpy(tG, gG, sizeof(gG));
-            memcpy(tB, gB, sizeof(gB));
+            memcpy(tR[0], gR[0], gridBytes);
+            memcpy(tG[0], gG[0], gridBytes);
+            memcpy(tB[0], gB[0], gridBytes);
             diffuse(0, gR, tR, fluid.diffusion, dt);
             diffuse(0, gG, tG, fluid.diffusion, dt);
             diffuse(0, gB, tB, fluid.diffusion, dt);
         }
 
-        memcpy(tR, gR, sizeof(gR));
-        memcpy(tG, gG, sizeof(gG));
-        memcpy(tB, gB, sizeof(gB));
+        memcpy(tR[0], gR[0], gridBytes);
+        memcpy(tG[0], gG[0], gridBytes);
+        memcpy(tB[0], gB[0], gridBytes);
         advectField(0, gR, tR, u, v, dt);
         advectField(0, gG, tG, u, v, dt);
         advectField(0, gB, tB, u, v, dt);

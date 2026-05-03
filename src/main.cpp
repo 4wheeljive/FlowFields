@@ -28,7 +28,7 @@ bool audioLatencyDiagnostics = false;
 #include "boardConfig.h"
 
 fl::CRGB leds[NUM_LEDS];
-uint16_t ledNum = 0;
+uint32_t ledNum = 0;
 
 // ***************************************************************************************
 // elements that must be set before #include "bleControl.h"
