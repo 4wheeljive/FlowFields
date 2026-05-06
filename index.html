@@ -324,17 +324,10 @@
                 </control-button>
             </span>-->
 
-            <!--<div class = "control-group" data-visualizers="animartrix">-->
-                <!-- Layer Selector -->     
-            <!--    <span class="label">Layers: </span>           
-                <layer-selector></layer-selector>
-            </div>  
-        
             <div>
                 <control-dropdown
                     label="Color Palette"
                     parameter-id="inPalNum"
-                    data-visualizers="waves,audiotest"
                     default-value="0">
                     Sunset_Real,
                     es_rivendell_15,
@@ -371,15 +364,19 @@
                     Blue_Cyan_Yellow
                 </control-dropdown>
 
-                <control-checkbox 
-                    label="Rotate waves" 
-                    data-my-number="10"
-                    data-visualizers="waves"
-                    checked>
-                </control-checkbox> -->
+                <control-checkbox
+                    label="Palette Mode"
+                    data-my-number="33"
+                    unchecked>
+                </control-checkbox>
 
-               
-                
+                <control-checkbox
+                    label="Rotate Palette"
+                    data-my-number="34"
+                    unchecked>
+                </control-checkbox>
+            </div>
+
                 <!--<div class = "control-group">
                     <control-checkbox 
                         label="Manual Scene Mode" 
@@ -834,6 +831,7 @@
             persistence:  {min: 0, max: 20, default: 0, step: 1},
             persistFine:  {min: 0.01, max: 0.99, default: 0.05, step: 0.01},
             colorShift:  {min: 0.01, max: 1, default: 0.10, step: 0.01},
+            paletteBlendRate: {min: 1, max: 64, default: 16, step: 1},
 
             // EMITTERS
             numDots:     {min: 1, max: 5, default: 3, step: 1},
@@ -947,7 +945,7 @@
         };
 
         // Parameter lists per component
-        const GLOBAL_PARAMS  = ["globalSpeed", "persistence", "persistFine", "colorShift"];
+        const GLOBAL_PARAMS  = ["globalSpeed", "persistence", "persistFine", "colorShift", "paletteBlendRate"];
 
         const EMITTER_PARAMS = {
             "orbitaldots":  ["numDots", "dotDiam", "orbitSpeed", "orbitDiam",

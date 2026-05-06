@@ -316,8 +316,21 @@ namespace flowFields {
     // Full-saturation, full-brightness rainbow from a continuous hue.
     // Float-precision HSV→RGB eliminates banding from uint8 hue quantization.
     // useRainbow toggles between even spectrum and FastLED rainbow character.
+    static ColorF paletteColor(float hue) {
+        uint16_t index = (uint16_t)(fmodPos(hue, 1.0f) * 65535.0f + 0.5f);
+        fl::CRGB16 c = fl::ColorFromPaletteHD(gCurrentPalette, index, 255, LINEARBLEND_NOWRAP);
+        return ColorF{
+            c.r.raw() * (1.0f / 256.0f),
+            c.g.raw() * (1.0f / 256.0f),
+            c.b.raw() * (1.0f / 256.0f)
+        };
+    }
+
     static ColorF rainbow(float t, float speed, float phase) {
         float hue = fmodPos(t * speed + phase, 1.0f);
+        if (cPaletteMode) {
+            return paletteColor(hue);
+        }
         return useRainbow ? hsvRainbow(hue) : hsvSpectrum(hue);
     }
 

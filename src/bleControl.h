@@ -117,6 +117,26 @@ void sendReceiptString(String receivedID, String receivedValue) {
 //*****************************************************************************
 // PARAMETER/PRESET MANAGEMENT SYSTEM ("PPMS")
 
+void startingPalette() {
+   if (gGradientPaletteCount == 0) {
+      return;
+   }
+
+   gCurrentPaletteNumber = random(0, gGradientPaletteCount);
+   gTargetPaletteNumber = gCurrentPaletteNumber;
+   gCurrentPalette = gGradientPalettes[gCurrentPaletteNumber];
+   gTargetPalette = gCurrentPalette;
+}
+
+void setTargetPalette(uint8_t paletteNumber) {
+   if (gGradientPaletteCount == 0) {
+      return;
+   }
+
+   gTargetPaletteNumber = paletteNumber % gGradientPaletteCount;
+   gTargetPalette = gGradientPalettes[gTargetPaletteNumber];
+}
+
 // Auto-generated helper functions using X-macros
 void captureCurrentParameters(ArduinoJson::JsonObject& params) {
     #define X(type, parameter, def) params[#parameter] = c##parameter;
@@ -546,16 +566,14 @@ void processNumber(String receivedID, float receivedValue, int8_t busId = -1) {
    };
 
 
-   /*
    if (receivedID == "inPalNum") {
       uint8_t newPalNum = receivedValue;
-      gTargetPalette = gGradientPalettes[ newPalNum ];
+      setTargetPalette(newPalNum);
       if(debug) {
          Serial.print("newPalNum: ");
          Serial.println(newPalNum);
       }
    };
-   */
 
    //-------------------------------------------------------
    // Auto-generated custom parameter handling using X-macros
@@ -582,6 +600,8 @@ void processCheckbox(String receivedID, bool receivedValue ) {
 
    if (receivedID == "cx31") {cOutward = receivedValue;};
    if (receivedID == "cx32") {cUseRainbow = receivedValue;};
+   if (receivedID == "cx33") {cPaletteMode = receivedValue;};
+   if (receivedID == "cx34") {cRotatePalette = receivedValue;};
 
 }
 

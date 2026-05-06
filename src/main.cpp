@@ -27,6 +27,14 @@ bool audioLatencyDiagnostics = false;
 
 #include "boardConfig.h"
 
+#include "reference/palettes.h"
+extern const TProgmemRGBGradientPaletteRef gGradientPalettes[];
+extern const uint8_t gGradientPaletteCount;
+uint8_t gCurrentPaletteNumber;
+uint8_t gTargetPaletteNumber;
+fl::CRGBPalette16 gCurrentPalette;
+fl::CRGBPalette16 gTargetPalette;
+
 fl::CRGB leds[NUM_LEDS];
 uint16_t ledNum = 0;
 
