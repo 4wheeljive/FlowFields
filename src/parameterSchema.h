@@ -15,8 +15,6 @@ BusParamSetterFn setBusParam = nullptr;
 typedef float (*BusParamGetterFn)(uint8_t busId, const String& paramName);
 BusParamGetterFn getBusParam = nullptr;
 
-extern uint8_t EMITTER;
-extern uint8_t FLOW;
 
 // ═══════════════════════════════════════════════════════════════════
 // GLOBAL PARAMETERS

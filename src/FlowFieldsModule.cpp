@@ -11,18 +11,18 @@
 // ── Runtime globals visible to engine headers ────────────────────
 // In firmware these come from boardConfig.h macros; here we define
 // them as actual int variables set by setup() / onSizeChanged().
-int WIDTH        = 0;
-int HEIGHT       = 0;
-int MIN_DIMENSION= 0;
-uint32_t NUM_LEDS= 0;
+static int WIDTH        = 0;
+static int HEIGHT       = 0;
+static int MIN_DIMENSION= 0;
+static uint32_t NUM_LEDS= 0;
 
 // leds pointer — accessed by flowFieldsEngine.hpp's runFlowFields().
-fl::CRGB* leds = nullptr;
+static fl::CRGB* leds = nullptr;
 
-// EMITTER / FLOW selection globals (extern-declared in parameterSchema.h)
-uint8_t EMITTER   = 0;
-uint8_t FLOW      = 0;
-uint8_t BRIGHTNESS= 35;
+// EMITTER / FLOW selection globals
+static uint8_t EMITTER   = 0;
+static uint8_t FLOW      = 0;
+static uint8_t BRIGHTNESS= 35;
 
 // ── No-op stubs for BLE state-sync functions ────────────────────
 // These are called from flowFieldsEngine.hpp but are BLE-only in firmware.
