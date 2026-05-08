@@ -78,6 +78,7 @@ namespace flowFields {
         timings = timers();
         move = modulators();
         startingPalette();
+    }
 
     void teardownFlowFields() {
         freeGrids();
@@ -112,8 +113,8 @@ namespace flowFields {
         tR = allocGrid(newW, newH);
         tG = allocGrid(newW, newH);
         tB = allocGrid(newW, newH);
-        xProf = (float*)malloc((size_t)newW * sizeof(float));
-        yProf = (float*)malloc((size_t)newH * sizeof(float));
+        xProf = (float*)fl::malloc((size_t)newW * sizeof(float));
+        yProf = (float*)fl::malloc((size_t)newH * sizeof(float));
         allocFluidGrids(newW, newH);
     }
 
@@ -264,7 +265,7 @@ namespace flowFields {
     static void pushDefaultsToCVars() {
         // Universal
         cGlobalSpeed = globalSpeed;
-        cPersistence = floorf(persistence);
+        cPersistence = fl::floorf(persistence);
         cPersistFine = persistence - cPersistence;
         cColorShift = colorShift;
         // Emitter: orbitalDots
