@@ -36,7 +36,7 @@ fl::CRGBPalette16 gCurrentPalette;
 fl::CRGBPalette16 gTargetPalette;
 
 fl::CRGB leds[NUM_LEDS];
-uint16_t ledNum = 0;
+uint32_t ledNum = 0;
 
 // ***************************************************************************************
 // elements that must be set before #include "bleControl.h"

@@ -22,3 +22,12 @@ enum Flow : uint8_t {
     FLOW_FLUID,
     FLOW_COUNT
 };
+
+inline const char* const EMITTER_NAMES[] = {
+    "OrbitalDots", "SwarmingDots", "AudioDots", "Lissajous",
+    "BorderRect", "NoiseKaleido", "Cube", "FluidJet"
+};
+
+inline const char* const FLOW_NAMES[] = {
+    "Noise", "Radial", "Directional", "Rings", "Spiral", "Fluid"
+};

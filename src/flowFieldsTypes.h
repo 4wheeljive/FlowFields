@@ -20,12 +20,17 @@ namespace flowFields {
     // ═══════════════════════════════════════════════════════════════════
 
     bool flowFieldsInstance = false;
-    uint16_t (*xyFunc)(uint8_t x, uint8_t y);
+    uint32_t (*xyFunc)(uint16_t x, uint16_t y);
 
     // Floating-point RGB grid, row-major [y][x].
     // Two copies: g* is the live buffer, t* is scratch for advection.
-    static float gR[HEIGHT][WIDTH], gG[HEIGHT][WIDTH], gB[HEIGHT][WIDTH];
-    static float tR[HEIGHT][WIDTH], tG[HEIGHT][WIDTH], tB[HEIGHT][WIDTH];
+    // Dynamic allocation via allocGrids(w,h) — contiguous backing, row-pointer index.
+    float** gR = nullptr;
+    float** gG = nullptr;
+    float** gB = nullptr;
+    float** tR = nullptr;
+    float** tG = nullptr;
+    float** tB = nullptr;
 
     static unsigned long lastFrameMs;
     uint8_t lastEmitter = 255;  // force initial setup on first frame
@@ -263,8 +268,45 @@ namespace flowFields {
     static Perlin2D noise2X, noise2Y;
     static ValueNoise2D kaleidoNoise;
 
-    static float xProf[WIDTH];    // one noise value per column
-    static float yProf[HEIGHT];   // one noise value per row
+    float* xProf = nullptr;   // one noise value per column
+    float* yProf = nullptr;   // one noise value per row
+
+    // ─── Dynamic grid allocation ─────────────────────────────────────
+    // Single contiguous backing block + a row-pointer table.
+    // gR[y][x] syntax is identical to a static 2-D array.
+    static float** allocGrid(int w, int h) {
+        float* data = (float*)
+#if defined(BOARD_HAS_PSRAM) || defined(CONFIG_SPIRAM_SUPPORT)
+            ps_malloc((size_t)w * h * sizeof(float));
+#else
+            malloc((size_t)w * h * sizeof(float));
+#endif
+        if (!data) return nullptr;
+        memset(data, 0, (size_t)w * h * sizeof(float));
+        float** rows = (float**)malloc((size_t)h * sizeof(float*));
+        if (!rows) { free(data); return nullptr; }
+        for (int y = 0; y < h; y++) rows[y] = data + (size_t)y * w;
+        return rows;
+    }
+
+    static void freeGrid(float** g) {
+        if (g) { free(g[0]); free(g); }
+    }
+
+    static void allocGrids(int w, int h) {
+        gR = allocGrid(w, h);  gG = allocGrid(w, h);  gB = allocGrid(w, h);
+        tR = allocGrid(w, h);  tG = allocGrid(w, h);  tB = allocGrid(w, h);
+        xProf = (float*)malloc((size_t)w * sizeof(float));
+        yProf = (float*)malloc((size_t)h * sizeof(float));
+        if (xProf) memset(xProf, 0, (size_t)w * sizeof(float));
+        if (yProf) memset(yProf, 0, (size_t)h * sizeof(float));
+    }
+
+    static void freeGrids() {
+        freeGrid(gR); freeGrid(gG); freeGrid(gB); gR = gG = gB = nullptr;
+        freeGrid(tR); freeGrid(tG); freeGrid(tB); tR = tG = tB = nullptr;
+        free(xProf); free(yProf); xProf = yProf = nullptr;
+    }
 
 
     // ═══════════════════════════════════════════════════════════════════

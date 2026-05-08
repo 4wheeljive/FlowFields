@@ -58,13 +58,12 @@ namespace flowFields {
     //  INIT & MAIN LOOP
     // ═══════════════════════════════════════════════════════════════════
 
-    void initFlowFields(uint16_t (*xy_func)(uint8_t, uint8_t)) {
+    void initFlowFields(uint32_t (*xy_func)(uint16_t, uint16_t)) {
+        allocGrids(WIDTH, HEIGHT);
+        allocFluidGrids(WIDTH, HEIGHT);
+
         flowFieldsInstance = true;
         xyFunc = xy_func;
-
-        for (int y = 0; y < HEIGHT; y++)
-            for (int x = 0; x < WIDTH; x++)
-                gR[y][x] = gG[y][x] = gB[y][x] = 0.0f;
 
         lastFrameMs = fl::millis();
         lastEmitter = 255;
@@ -80,6 +79,42 @@ namespace flowFields {
         move = modulators();
         startingPalette();
 
+    void teardownFlowFields() {
+        freeGrids();
+        freeFluidGrids();
+        flowFieldsInstance = false;
+    }
+
+    // Nearest-neighbour scale pixel content to newW×newH, reallocate all grids.
+    // Caller is responsible for updating WIDTH / HEIGHT / MIN_DIMENSION afterward.
+    void resizeFlowFields(int newW, int newH) {
+        if (!gR) return;
+        float** nR = allocGrid(newW, newH);
+        float** nG = allocGrid(newW, newH);
+        float** nB = allocGrid(newW, newH);
+        if (!nR || !nG || !nB) { freeGrid(nR); freeGrid(nG); freeGrid(nB); return; }
+        float scaleX = (float)WIDTH  / newW;
+        float scaleY = (float)HEIGHT / newH;
+        for (int y = 0; y < newH; y++) {
+            int sy = (int)(y * scaleY);
+            if (sy >= HEIGHT) sy = HEIGHT - 1;
+            for (int x = 0; x < newW; x++) {
+                int sx = (int)(x * scaleX);
+                if (sx >= WIDTH) sx = WIDTH - 1;
+                nR[y][x] = gR[sy][sx];
+                nG[y][x] = gG[sy][sx];
+                nB[y][x] = gB[sy][sx];
+            }
+        }
+        freeGrids();
+        freeFluidGrids();
+        gR = nR; gG = nG; gB = nB;
+        tR = allocGrid(newW, newH);
+        tG = allocGrid(newW, newH);
+        tB = allocGrid(newW, newH);
+        xProf = (float*)malloc((size_t)newW * sizeof(float));
+        yProf = (float*)malloc((size_t)newH * sizeof(float));
+        allocFluidGrids(newW, newH);
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -419,12 +454,10 @@ namespace flowFields {
         FLOW_ADVECT[activeFlow]();
 
         // 4. Copy float grid to LED array
-        for (uint8_t y = 0; y < HEIGHT; y++) {
-            for (uint8_t x = 0; x < WIDTH; x++) {
-                uint16_t idx = xyFunc(x, y);
-                if (idx >= NUM_LEDS) {
-                    continue;
-                }
+        for (int y = 0; y < HEIGHT; y++) {
+            for (int x = 0; x < WIDTH; x++) {
+                uint32_t idx = xyFunc((uint16_t)x, (uint16_t)y);
+                if (idx >= (uint32_t)NUM_LEDS) continue;
                 leds[idx].r = f2u8d(gR[y][x], x, y);
                 leds[idx].g = f2u8d(gG[y][x], x, y);
                 leds[idx].b = f2u8d(gB[y][x], x, y);

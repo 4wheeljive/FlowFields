@@ -15,6 +15,7 @@ namespace flowFields {
     //  AUDIO DOTS
     // ═══════════════════════════════════════════════════════════════════
 
+#ifdef AUDIO_ENABLED
     const myAudio::AudioFrame* cFrame = nullptr;
 
     inline void getAudio(myAudio::binConfig& b) {
@@ -24,35 +25,31 @@ namespace flowFields {
 
     struct AudioDotsParams {
         uint8_t dotDiam = 1.0f;
-        //uint8_t numActiveTimers = 0;
     };
 
     AudioDotsParams audioDots;
 
     static void emitAudioDots() {
-
         if (audioEnabled){
             myAudio::binConfig& b = maxBins ? myAudio::bin32 : myAudio::bin16;
             getAudio(b);
         }
-
-        // On each new beat, spawn a dot at a random grid position
         if (myAudio::busC.newBeat) {
             float cx = random8(0, WIDTH  - 1) + random8() / 255.0f;
             float cy = random8(0, HEIGHT - 1) + random8() / 255.0f;
-            // Color from rainbow based on current time
             ColorF c = rainbow(t, colorShift, random8() / 255.0f);
             drawDot(cx, cy, audioDots.dotDiam * 5, c.r, c.g, c.b);
         }
-    
         if (myAudio::busB.newBeat) {
             float cx = random8(0, WIDTH  - 1) + random8() / 255.0f;
             float cy = random8(0, HEIGHT - 1) + random8() / 255.0f;
-            // Color from rainbow based on current time
             ColorF c = rainbow(t, colorShift, random8() / 255.0f);
             drawDot(cx, cy, audioDots.dotDiam, c.r, c.g, c.b);
         }
     }
+#else
+    static void emitAudioDots() {}  // no-op stub when audio is not enabled
+#endif
 
     
     // ═══════════════════════════════════════════════════════════════════
