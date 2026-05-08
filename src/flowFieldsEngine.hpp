@@ -77,7 +77,7 @@ namespace flowFields {
 
         timings = timers();
         move = modulators();
-    }
+        startingPalette();
 
     void teardownFlowFields() {
         freeGrids();
@@ -330,6 +330,7 @@ namespace flowFields {
         globalSpeed = cGlobalSpeed;
         persistence = cPersistence + cPersistFine;
         colorShift = cColorShift;
+        useRainbow = cUseRainbow;
         orbitalDots.numDots = cNumDots;
         orbitalDots.orbitSpeed = cOrbitSpeed;
         orbitalDots.dotDiam  = cDotDiam;
@@ -387,6 +388,35 @@ namespace flowFields {
         syncFlowFromCVars();
     }
 
+    static void updatePaletteState() {
+        if (gGradientPaletteCount == 0) {
+            return;
+        }
+
+        if (cPaletteMode && cRotatePalette) {
+            EVERY_N_SECONDS(15) {
+                gCurrentPaletteNumber = gTargetPaletteNumber;
+                gTargetPaletteNumber = addmod8(gTargetPaletteNumber, 1, gGradientPaletteCount);
+                gTargetPalette = gGradientPalettes[gTargetPaletteNumber];
+            }
+        }
+
+        int maxChanges = (int)(cPaletteBlendRate + 0.5f);
+        if (maxChanges < 1) {
+            maxChanges = 1;
+        } else if (maxChanges > 255) {
+            maxChanges = 255;
+        }
+
+        EVERY_N_MILLISECONDS(40) {
+            if (gCurrentPalette != gTargetPalette) {
+                nblendPaletteTowardPalette(gCurrentPalette, gTargetPalette, (uint8_t)maxChanges);
+            } else {
+                gCurrentPaletteNumber = gTargetPaletteNumber;
+            }
+        }
+    }
+
     void runFlowFields() {
         unsigned long now = fl::millis();
         float rawDt = (now - lastFrameMs) * 0.001f;
@@ -412,6 +442,7 @@ namespace flowFields {
 
         // Sync UI-controlled values into component structs
         syncFromCVars();
+        updatePaletteState();
 
         // 1. Flow field: prepare (build X and Y profiles)
         FLOW_PREPARE[activeFlow]();

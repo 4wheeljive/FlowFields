@@ -21,10 +21,10 @@ BusParamGetterFn getBusParam = nullptr;
 // ═══════════════════════════════════════════════════════════════════
 
 const char* const GLOBAL_PARAMS[] PROGMEM = {
-   "globalSpeed", "persistence", "persistFine", "colorShift"
+   "globalSpeed", "persistence", "persistFine", "colorShift", "paletteBlendRate"
 };
 
-const uint8_t GLOBAL_PARAM_COUNT = 4;
+const uint8_t GLOBAL_PARAM_COUNT = 5;
 
 // ═══════════════════════════════════════════════════════════════════
 //  EMITTERS
@@ -223,6 +223,9 @@ float cPersistence = 0.0f;
 float cPersistFine = 0.05f;
 float cColorShift = 0.10f;
 bool cUseRainbow = false;
+bool cPaletteMode = false;
+bool cRotatePalette = false;
+float cPaletteBlendRate = 16.0f;
 
 // EMITTERS -----------------------
 
@@ -407,6 +410,7 @@ float cExpDecayFactor = 0.9f;
    X(float, NoiseBand, 0.1f) \
    X(float, KaleidoGamma, 0.65f) \
    X(float, ColorShift, 0.10f) \
+   X(float, PaletteBlendRate, 16.0f) \
    X(float, LineAmp, 13.5f) \
    X(float, XFreq, 0.33f) \
    X(float, YFreq, 0.32f) \
